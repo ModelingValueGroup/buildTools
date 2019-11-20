@@ -1,0 +1,17 @@
+name: build
+on: [push]
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: "checkout"
+        uses: actions/checkout@v1
+
+      - name: "build"
+        run: cat src/*.sh > buildTools.sh
+
+      - name: "Upload as package"
+        uses: ModelingValueGroup/upload-maven-package-action@master
+        with:
+          file: "buildTools.sh"
+          token: "${{ secrets.GITHUB_TOKEN }}"
