@@ -2,8 +2,10 @@ name: build
 on: [push]
 jobs:
   build:
+    #if: 
     runs-on: [ubuntu-latest]
     steps:
+      - run: echo "==github.head_ref==${{github.head_ref}}==github.base_ref==${{github.base_ref}}"
       - name: "checkout"
         uses: actions/checkout@v1
 
