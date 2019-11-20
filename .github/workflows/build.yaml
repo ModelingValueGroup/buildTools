@@ -5,15 +5,15 @@ jobs:
     #if: 
     runs-on: [ubuntu-latest]
     steps:
-      - run: echo "==github.head_ref==${{github.head_ref}}==github.base_ref==${{github.base_ref}}"
-      - name: "checkout"
-        uses: actions/checkout@v1
+      - run: echo "==github.head_ref==${{ github.head_ref }}==github.base_ref==${{ github.base_ref }}"
+#       - name: "checkout"
+#         uses: actions/checkout@v1
 
-      - name: "build"
-        run: cat src/*.sh > buildTools.sh
+#       - name: "build"
+#         run: cat src/*.sh > buildTools.sh
 
-      - name: "Upload as package"
-        uses: ModelingValueGroup/upload-maven-package-action@master
-        with:
-          file: "buildTools.sh"
-          token: "${{ secrets.GITHUB_TOKEN }}"
+#       - name: "Upload as package"
+#         uses: ModelingValueGroup/upload-maven-package-action@master
+#         with:
+#           file: "buildTools.sh"
+#           token: "${{ secrets.GITHUB_TOKEN }}"
