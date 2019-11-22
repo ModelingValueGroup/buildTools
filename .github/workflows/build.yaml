@@ -11,7 +11,13 @@ jobs:
         uses: actions/checkout@v1
 
       - name: "build"
-        run: cat src/*.sh > buildTools.sh
+        run: |
+          for f in src/*.sh; do
+            echo "#!/usr/bin/env bash"
+            echo "### $f
+            cat $f
+            echo
+          done > buildTools.sh
 
       - name: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
