@@ -2,12 +2,13 @@
 set -ue
 
 ########################################################################################
+export  GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-??}
 export GITHUB_PACKAGE_URL="https://maven.pkg.github.com/$GITHUB_REPOSITORY"
 export           USERNAME="${GITHUB_REPOSITORY/\/*}"
 export          REPOSNAME="${GITHUB_REPOSITORY/*\/}"
 ########################################################################################
 
-downloadArtifact() {
+downloadArtifactQuick() {
   local token="$1"; shift
   local     g="$1"; shift
   local     a="$1"; shift
@@ -16,6 +17,27 @@ downloadArtifact() {
   local   dir="$1"; shift
 
   curl -s -H "Authorization: bearer $token" -L "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
+}
+downloadArtifact() {
+  local token="$1"; shift
+  local     g="$1"; shift
+  local     a="$1"; shift
+  local     v="$1"; shift
+  local     e="$1"; shift
+  local   dir="$1"; shift
+
+  generateMavenSettings "$token" >settings.xml
+  mvn \
+    -B \
+    -s settings.xml \
+    org.apache.maven.plugins:maven-dependency-plugin:LATEST:get \
+    -DrepositoryId="github" \
+         -DgroupId="$g" \
+      -DartifactId="$a" \
+         -Dversion="$v" \
+       -Dpackaging="$e" \
+            -Ddest="$dir/$a.$e"
+  rm settings.xml
 }
 generateMavenSettings() {
   local password="$1"; shift
