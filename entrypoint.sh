@@ -12,5 +12,5 @@ includeBuildTools() {
   . buildTools.sh
 }
 
-includeBuildTools "$INPUT_TOKEN" "1.0.8"
+includeBuildTools "$INPUT_TOKEN" "1.0.9"
 includeBuildTools "$INPUT_TOKEN" "$(lastPackageVersion "$INPUT_TOKEN" "ModelingValueGroup/buildTools" "com.modelingvalue:buildTools" "")"

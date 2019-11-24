@@ -105,7 +105,9 @@ graphqlQuery() {
   curl -s -H "Authorization: bearer $token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql'
 }
 lastPackageVersion() {
-  listPackageVersions "$@" | tail -1
+  listPackageVersions "$@" \
+    | tee >( (echo "found versions:"; cat) 1>&2 ) \
+    | tail -1
 }
 listPackageVersions() {
   local      token="$1"; shift
@@ -120,7 +122,7 @@ listPackageVersions() {
   local  reposname="${repository/*\/}"
 
   local query
-  query="$(cat <<EOF | sed 's/"/\\"/g' | tr '\n\r' '  '
+  query="$(cat <<EOF | sed 's/"/\\"/g' | tr '\n\r' '  ' | sed 's/  */ /g'
 query {
     repository(owner:"$username", name:"$reposname"){
         registryPackages(name:"$g.$a",first:1) {
