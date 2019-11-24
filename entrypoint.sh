@@ -12,5 +12,11 @@ includeBuildTools() {
   . buildTools.sh
 }
 
+# we do not have the 'lastPackageVersion' function defined here yet. So we first load a known version here and then overwrite it with the latest:
+echo "================================================="
 includeBuildTools "$INPUT_TOKEN" "1.0.10"
+echo "================================================="
+listPackageVersions "$INPUT_TOKEN" "ModelingValueGroup/buildTools" "com.modelingvalue:buildTools" ""
+echo "================================================="
 includeBuildTools "$INPUT_TOKEN" "$(lastPackageVersion "$INPUT_TOKEN" "ModelingValueGroup/buildTools" "com.modelingvalue:buildTools" "")"
+echo "================================================="
