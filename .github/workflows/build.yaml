@@ -28,7 +28,7 @@ jobs:
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: upload as package"
+      - name: "upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         with:
           file: "buildTools.sh"
