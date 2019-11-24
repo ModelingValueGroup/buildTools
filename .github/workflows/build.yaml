@@ -12,6 +12,7 @@ jobs:
 
       - name: "build"
         run: |
+          ## concat all script to for one:
           for f in src/*.sh; do
             echo "#!/usr/bin/env bash"
             echo "### $f"
@@ -19,8 +20,12 @@ jobs:
             echo
           done > buildTools.sh
 
+      - run: ls -la
+
       - name: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         with:
           file: "buildTools.sh"
           token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - run: ls -la
