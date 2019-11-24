@@ -30,13 +30,10 @@ downloadArtifact() {
   mvn \
     -B \
     -s settings.xml \
-    org.apache.maven.plugins:maven-dependency-plugin:LATEST:get \
-    -DrepositoryId="github" \
-         -DgroupId="$g" \
-      -DartifactId="$a" \
-         -Dversion="$v" \
-       -Dpackaging="$e" \
-            -Ddest="$dir/$a.$e"
+    org.apache.maven.plugins:maven-dependency-plugin:LATEST:copy \
+               -Dartifact="$g:$a:$v:$e" \
+        -DoutputDirectory="$dir" \
+      -Dmdep.stripVersion="true"
   rm settings.xml
 }
 generateMavenSettings() {
