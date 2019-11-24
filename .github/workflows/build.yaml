@@ -10,6 +10,9 @@ jobs:
       - name: "checkout"
         uses: actions/checkout@v1
 
+      - name: "install packages"
+        uses: apt-get install xmlstarlet jq maven
+
       - name: "build"
         run: |
           ## concat all script to for one:
