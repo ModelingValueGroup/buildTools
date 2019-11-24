@@ -3,7 +3,7 @@
     <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tst/test.sh" />
     <option name="SCRIPT_OPTIONS" value="" />
     <option name="INTERPRETER_PATH" value="/usr/bin/env" />
-    <option name="INTERPRETER_OPTIONS" value="GITHUB_REPOSITORY=ModelingValueGroup/buildTools bash" />
+    <option name="INTERPRETER_OPTIONS" value="bash" />
     <method v="2" />
   </configuration>
 </component>

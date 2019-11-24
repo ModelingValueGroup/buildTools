@@ -8,6 +8,11 @@ export           USERNAME="${GITHUB_REPOSITORY/\/*}"
 export          REPOSNAME="${GITHUB_REPOSITORY/*\/}"
 ########################################################################################
 
+group() {
+  echo "::group::$1 log" 1>&2
+  "$@"
+  echo "::endgroup::" 1>&2
+}
 downloadArtifactQuick() {
   local token="$1"; shift
   local     g="$1"; shift
@@ -16,7 +21,7 @@ downloadArtifactQuick() {
   local     e="$1"; shift
   local   dir="$1"; shift
 
-  curl -s -H "Authorization: bearer $token" -L "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
+  group curl -H "Authorization: bearer $token" -L "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
 }
 downloadArtifact() {
   local token="$1"; shift
@@ -27,7 +32,7 @@ downloadArtifact() {
   local   dir="$1"; shift
 
   generateMavenSettings "$token" >settings.xml
-  mvn \
+  group mvn \
     -B \
     -s settings.xml \
     org.apache.maven.plugins:maven-dependency-plugin:LATEST:copy \
