@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ue
+set -euo pipefail
 
 if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
   echo "::error:: variable GITHUB_REPOSITORY undefined"

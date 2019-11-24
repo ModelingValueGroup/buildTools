@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
-set -ue
+set -euo pipefail
 
-###############################################################################
-export   GITHUB_URL="https://api.github.com"
-export        OWNER="$(git remote -v | head -1 | sed 's|.*https://github.com/||;s|.*:||;s|\.git .*||;s/ .*//' | sed 's|\([^/]*\)/\(.*\)|\1|')"
-export        REPOS="$(git remote -v | head -1 | sed 's|.*https://github.com/||;s|.*:||;s|\.git .*||;s/ .*//' | sed 's|\([^/]*\)/\(.*\)|\2|')"
-export    REPOS_URL="$GITHUB_URL/repos/$OWNER/$REPOS"
-export ARTIFACT_DIR="out/artifacts" # default for IntelliJ
-export   OUR_DOMAIN="you.need.to.set.OUR_DOMAIN"
-export  OUR_PRODUCT="youNeedToSet_OUR_PRODUCT"
-###############################################################################
 contains() {
     local find="$1"; shift
     local  str="$1"; shift

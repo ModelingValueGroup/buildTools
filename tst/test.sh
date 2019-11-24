@@ -47,11 +47,11 @@ test_00() {
   rm buildTools.sh
 }
 test_01() {
-  downloadArtifact      "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
+  downloadArtifact "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
   local sum="$(md5sum < buildTools.sh | sed 's/ .*//')"
   local exp="da493bbcf960af426c47a51f876395d0"
   if [[ "$sum" != "$exp" ]]; then
-    echo "::error::downloadArtifactQuick failed (md5sum unexpected: $sum and $exp expected)"
+    echo "::error::downloadArtifact failed (md5sum unexpected: $sum and $exp expected)"
     exit 65
   fi
   rm buildTools.sh

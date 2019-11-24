@@ -4,32 +4,31 @@
 ### bash functions to access maven repositories
 ### see: https://repository.sonatype.org/nexus-restlet1x-plugin/default/docs/rest.html
 ######################################################
-
-declare -A mavenBases=(
+### in browser:
+###    basename           gives UI
+###    basename/content/  gives simple tree browser
+######################################################
+declare -Ax mavenBases=(
      [maven]="https://repo.maven.apache.org/maven2"
   [sonatype]="https://repository.sonatype.org"
     [github]="https://maven.pkg.github.com/$GITHUB_REPOSITORY"
 )
 
-         NEXUS_BASE="${mavenBases[maven]}"
-          REST_PATH="service/local"
-     VERSION_LATEST="LATEST"
-    VERSION_RELEASE="RELEASE"
-     REPOS_RELEASES="releases"
-    REPOS_SNAPSHOTS="snapshots"
+export          NEXUS_BASE="${mavenBases[maven]}"
+export           REST_PATH="service/local"
+export      VERSION_LATEST="LATEST"
+export     VERSION_RELEASE="RELEASE"
+export      REPOS_RELEASES="releases"
+export     REPOS_SNAPSHOTS="snapshots"
+export
+export         R_ALL_REPOS="all_repositories"
+export R_ARTIFACT_REDIRECT="artifact/maven/redirect"
+export  R_ARTIFACT_CONTENT="artifact/maven/content"
+export  R_ARTIFACT_RESOLVE="artifact/maven/resolve"
+export   R_CONTENT_CLASSES="components/repo_content_classes"
+export        R_REPO_TYPES="components/repo_types"
+export       R_REPO_GROUPS="repo_groups"
 
-        R_ALL_REPOS="all_repositories"
-R_ARTIFACT_REDIRECT="artifact/maven/redirect"
- R_ARTIFACT_CONTENT="artifact/maven/content"
- R_ARTIFACT_RESOLVE="artifact/maven/resolve"
-  R_CONTENT_CLASSES="components/repo_content_classes"
-       R_REPO_TYPES="components/repo_types"
-      R_REPO_GROUPS="repo_groups"
-
-######################################################
-# in browser:
-#    basename           gives UI
-#    basename/content/  gives simple tree browser
 ######################################################
 selectBase() {
   local name="$1"; shift

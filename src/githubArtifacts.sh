@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-set -ue
-
-########################################################################################
-export  GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-??}
-export GITHUB_PACKAGE_URL="https://maven.pkg.github.com/$GITHUB_REPOSITORY"
-export           USERNAME="${GITHUB_REPOSITORY/\/*}"
-export          REPOSNAME="${GITHUB_REPOSITORY/*\/}"
-########################################################################################
+set -euo pipefail
 
 group() {
   echo "::group::$1 log" 1>&2
