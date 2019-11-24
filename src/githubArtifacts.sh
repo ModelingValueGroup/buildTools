@@ -105,9 +105,7 @@ graphqlQuery() {
   curl -s -H "Authorization: bearer $token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql'
 }
 lastPackageVersion() {
-  listPackageVersions "$@" \
-    | tee >( (echo "found versions:"; cat) 1>&2 ) \
-    | tail -1
+  listPackageVersions "$@" | head -1
 }
 listPackageVersions() {
   local      token="$1"; shift

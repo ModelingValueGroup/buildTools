@@ -10,9 +10,6 @@ jobs:
       - name: "checkout"
         uses: actions/checkout@v1
 
-      - name: "install packages"
-        run: sudo apt-get install xmlstarlet jq maven
-
       - name: "build"
         run: |
           ## concat all script to for one:
@@ -22,6 +19,9 @@ jobs:
             cat $f
             echo
           done > buildTools.sh
+
+      - name: "install packages for tests"
+        run: sudo apt-get install xmlstarlet jq maven
 
       - name: "test"
         run: tst/test.sh
