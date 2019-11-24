@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-group() {
-  echo "::group::$1 log" 1>&2
-  "$@"
-  echo "::endgroup::" 1>&2
+mvn_() {
+  local token="$1"; shift
+
+  generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" >settings.xml
+  group ${DRY:-} mvn \
+    -B \
+    -s settings.xml \
+    "$@"
+  rm settings.xml
 }
 downloadArtifactQuick() {
   local token="$1"; shift
@@ -14,7 +19,7 @@ downloadArtifactQuick() {
   local     e="$1"; shift
   local   dir="$1"; shift
 
-  group curl -H "Authorization: bearer $token" -L "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
+  group curl_ "$token" "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
 }
 downloadArtifact() {
   local token="$1"; shift
@@ -24,15 +29,11 @@ downloadArtifact() {
   local     e="$1"; shift
   local   dir="$1"; shift
 
-  generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" >settings.xml
-  group mvn \
-    -B \
-    -s settings.xml \
+  mvn_ "$token" \
     org.apache.maven.plugins:maven-dependency-plugin:LATEST:copy \
                -Dartifact="$g:$a:$v:$e" \
         -DoutputDirectory="$dir" \
       -Dmdep.stripVersion="true"
-  rm settings.xml
 }
 uploadArtifact() {
   local token="$1"; shift
@@ -43,11 +44,7 @@ uploadArtifact() {
   local g a v e
   gave2vars "$gave" "$pom" "$file"
 
-  generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" > settings.xml
-
-  ${DRY:-} mvn \
-    -B \
-    -s settings.xml \
+  mvn_ "$token" \
     deploy:deploy-file \
          -DgroupId="$g" \
       -DartifactId="$a" \
@@ -97,12 +94,6 @@ generateMavenSettings() {
     </servers>
   </settings>
 EOF
-}
-graphqlQuery() {
-  local token="$1"; shift
-  local query="$1"; shift
-
-  curl -s -H "Authorization: bearer $token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql'
 }
 lastPackageVersion() {
   listPackageVersions "$@" | head -1
