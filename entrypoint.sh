@@ -8,9 +8,8 @@ includeBuildTools() {
 
   local buildToolsUrl="https://maven.pkg.github.com/ModelingValueGroup/buildTools/com.modelingvalue.buildTools/$version/buildTools-$version.sh"
 
-  curl -s -H "Authorization: bearer $token" -L "$buildToolsUrl" -o buildTools-tmp.sh
-  . buildTools-tmp.sh
-  rm buildTools-tmp.sh
+  curl -s -H "Authorization: bearer $token" -L "$buildToolsUrl" -o buildTools.sh
+  . buildTools.sh
 }
 
 # we do not have the 'lastPackageVersion' function defined here yet
