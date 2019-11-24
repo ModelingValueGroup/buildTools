@@ -24,7 +24,7 @@ downloadArtifact() {
   local     e="$1"; shift
   local   dir="$1"; shift
 
-  generateMavenSettings "$token" >settings.xml
+  generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" >settings.xml
   group mvn \
     -B \
     -s settings.xml \
@@ -34,8 +34,34 @@ downloadArtifact() {
       -Dmdep.stripVersion="true"
   rm settings.xml
 }
+uploadArtifact() {
+  local token="$1"; shift
+  local  gave="$1"; shift
+  local   pom="$1"; shift
+  local  file="$1"; shift
+
+  local g a v e
+  gave2vars "$gave" "$pom" "$file"
+
+  generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" > settings.xml
+
+  ${DRY:-} mvn \
+    -B \
+    -s settings.xml \
+    deploy:deploy-file \
+         -DgroupId="$g" \
+      -DartifactId="$a" \
+         -Dversion="$v" \
+       -Dpackaging="$e" \
+    -DrepositoryId="github" \
+            -Dfile="$file" \
+         -DpomFile="$pom" \
+             -Durl="$GITHUB_PACKAGE_URL"
+}
 generateMavenSettings() {
-  local password="$1"; shift
+  local   username="$1"; shift
+  local   password="$1"; shift
+  local repository="$1"; shift
 
   cat  <<EOF
   <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
@@ -56,7 +82,7 @@ generateMavenSettings() {
           <repository>
             <id>github</id>
             <name>GitHub Apache Maven Packages</name>
-            <url>$GITHUB_PACKAGE_URL</url>
+            <url>$repository</url>
           </repository>
         </repositories>
       </profile>
@@ -65,7 +91,7 @@ generateMavenSettings() {
     <servers>
       <server>
         <id>github</id>
-        <username>$USERNAME</username>
+        <username>$username</username>
         <password>$password</password>
       </server>
     </servers>
@@ -78,18 +104,25 @@ graphqlQuery() {
 
   curl -s -H "Authorization: bearer $token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql'
 }
-latestPackageVersions() {
+lastPackageVersion() {
   listPackageVersions "$@" | tail -1
 }
 listPackageVersions() {
-  local     g="$1"; shift
-  local     a="$1"; shift
-  local token="$1"; shift
+  local      token="$1"; shift
+  local repository="$1"; shift
+  local       gave="$1"; shift
+  local        pom="$1"; shift
+
+  local g a v e
+  gave2vars "$gave" "$pom" ""
+
+  local   username="${repository/\/*}"
+  local  reposname="${repository/*\/}"
 
   local query
   query="$(cat <<EOF | sed 's/"/\\"/g' | tr '\n\r' '  '
 query {
-    repository(owner:"$USERNAME", name:"$REPOSNAME"){
+    repository(owner:"$username", name:"$reposname"){
         registryPackages(name:"$g.$a",first:1) {
             nodes {
                 versions(last:100) {
@@ -106,16 +139,23 @@ EOF
   graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version'
 }
 gave2vars() {
-  local file="$1"; shift
+  local gave="$1"; shift
   local  pom="$1"; shift
-  local gave="${1:-}"; shift || :
+  local file="$1"; shift
 
-  if [[ $gave == "" ]]; then
+  if [[ $gave == "" && -f "$pom" ]]; then
     gave="$(extractGaveFromPom "$pom")"
+  fi
+  if [[ $gave == "" && -f "pom.xml" ]]; then
+    gave="$(extractGaveFromPom "pom.xml")"
+  fi
+  if [[ "$gave" == "" ]]; then
+    echo "::error::can not determine group and artifact from '$gave' and '$pom'"
+    exit 55
   fi
   export g a v e
   IFS=: read -r g a v e <<<"$gave"
-  if [[ $e == "" ]]; then
+  if [[ $e == "" && "$file" != "" ]]; then
     e="${file##*.}"
   fi
 }
