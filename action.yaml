@@ -1,0 +1,15 @@
+name: 'buildTools'
+description: 'load the buildTools script in the workspace'
+author: 'Tom Brus'
+
+inputs:
+  token:
+    description: 'github token'
+    required: true
+  version:
+    description: 'the version to get'
+    required: false
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
