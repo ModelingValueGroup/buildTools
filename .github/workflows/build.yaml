@@ -21,7 +21,7 @@ jobs:
           done > buildTools.sh
 
       - name: "test"
-        run: test/test.sh
+        run: tst/test.sh
 
       - name: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
