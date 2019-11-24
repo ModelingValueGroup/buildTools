@@ -10,7 +10,7 @@ graphqlQuery() {
   local token="$1"; shift
   local query="$1"; shift
 
-  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql'
+  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql' -o -
 }
 contains() {
     local find="$1"; shift
@@ -30,12 +30,11 @@ curl_() {
         --remote-header-name \
         --silent \
         --show-error \
-        -o - \
         --header "Authorization: token $token" \
         "$@"
 }
 validateToken() {
     local token="$1"; shift
 
-    curl_ "$token" "$GIHUB_API_URL" >/dev/null
+    curl_ "$token" "$GIHUB_API_URL"  -o - >/dev/null
 }
