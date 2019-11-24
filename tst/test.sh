@@ -41,8 +41,6 @@ test_00() {
   local sum="$(md5sum < buildTools.sh)"
   local exp="da493bbcf960af426c47a51f876395d0"
   if [[ "$sum" != "$exp" ]]; then
-    echo "$sum" | hexdump -C
-    echo "$exp" | hexdump -C
     echo "::error::downloadArtifactQuick failed (md5sum unexpected: $sum and $exp expected)"
     exit 65
   fi
