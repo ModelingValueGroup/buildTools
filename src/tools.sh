@@ -26,18 +26,18 @@ curl_() {
 validateToken() {
     local token="$1"; shift
 
-    curl_ "$token" "$REPOS_URL" >/dev/null
+    curl_ "$token" "$GIHUB_API_URL" >/dev/null
 }
 getRelease() {
     local token="$1"; shift
     local   tag="$1"; shift
 
-    curl_ "$token" "$REPOS_URL/releases/tags/$tag"
+    curl_ "$token" "$GIHUB_API_URL/releases/tags/$tag"
 }
 getLatestRelease() {
     local token="$1"; shift
 
-    curl_ "$token" "$REPOS_URL/releases/latest"
+    curl_ "$token" "$GIHUB_API_URL/releases/latest"
 }
 downloadLatestRelease() {
     local token="$1"; shift
@@ -65,7 +65,7 @@ removeTag() {
         echo "ERROR: trying to delete a release that does not exist" 1>&2
         exit 99
     fi
-    curl_ "$token" -X DELETE "$REPOS_URL/releases/$id"
+    curl_ "$token" -X DELETE "$GIHUB_API_URL/releases/$id"
 }
 publishTag() {
     local  branch="$1"; shift
@@ -104,7 +104,7 @@ publishTag() {
 }
 EOF
 )"
-    local relJson="$(curl_ "$token" -X POST -d "$json" "$REPOS_URL/releases")"
+    local relJson="$(curl_ "$token" -X POST -d "$json" "$GIHUB_API_URL/releases")"
     local uploadUrl="$(jq --raw-output '.upload_url' <<<"$relJson")"
     if [[ $uploadUrl == null ]]; then
         echo "ERROR: unable to create the release: $relJson" 1>&2
