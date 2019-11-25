@@ -62,7 +62,9 @@ generateAllPoms() {
 generatePom() {
     local pom="$1"; shift
 
+    local g a v e
     gave2vars "$(extractGaveFromPom "$pom")" "" ""
+    e="${e:-jar}"
 
     cat <<EOF | xmlstarlet fo >"$pom"
 <project xmlns="http://maven.apache.org/POM/4.0.0"
