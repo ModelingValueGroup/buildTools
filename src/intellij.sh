@@ -6,12 +6,15 @@ cleanupIntellijAntFiles() {
 
     for xml in build.xml */module_*.xml "${extraAntFiles[@]}"; do
         if [[ -f "$xml" ]]; then
-            # - unfortunately IntellJ generates absolute paths for some zipfileset:
+
             # - add includeantruntime="false" for all <javac> calls:
-            cat "$xml" \
-                | sed 's|<zipfileset dir="/.*/jdclare/|<zipfileset dir="${basedir}/|' \
-                | sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|' \
-                | compareAndOverwrite "$xml"
+            sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|' "$xml" | compareAndOverwrite "$xml"
+
+            # - unfortunately IntellJ generates absolute paths for some zipfileset, I cant find a way to correct this automatically....
+            if grep -Fq '="/' "$xml"; then
+                echo "::error::the ant file '$xml' may contain an absolute path: $(grep -F '="/' "$xml")"
+                exit 83
+            fi
         fi
     done
 }
@@ -66,10 +69,7 @@ generateAntTestFileFromIntellij() {
         done
     }
     genTestFileSets() {
-        ls -d out/test/* \
-            | while read d; do
-                echo "<fileset dir=\"$d\"><include name=\"**/*Test.*\"/><include name=\"**/*Tests.*\"/></fileset>"
-            done
+        find out/test/* -maxdepth 0 -type d -exec echo "<fileset dir=\"{}\"><include name=\"**/*Test.*\"/><include name=\"**/*Tests.*\"/></fileset>" \;
     }
 
     cat <<EOF | xmlstarlet fo | compareAndOverwrite "test.xml"
@@ -99,27 +99,22 @@ $(genTestFileSets)
     </target>
 
     <target name="artifact.test-results" depends="init.artifacts" description="Build &#39;TEST-results&#39; artifact">
-        <property name="artifact.temp.output.test-results" value="${artifacts.temp.dir}/TEST_results"/>
-        <mkdir dir="${artifact.temp.output.test-results}"/>
-        <jar destfile="${temp.jar.path.TEST-results.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.AgeTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.DefaultMapTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.LambdaTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.ListTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.MapTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.SerializeTest.xml"/>
-            <zipfileset file="${basedir}/TEST-org.modelingvalue.collections.test.SetTest.xml"/>
+        <property name="artifact.temp.output.test-results" value="\${artifacts.temp.dir}/TEST_results"/>
+        <mkdir dir="\${artifact.temp.output.test-results}"/>
+        <jar destfile="\${temp.jar.path.TEST-results.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.AgeTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.DefaultMapTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.LambdaTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.ListTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.MapTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.SerializeTest.xml"/>
+            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.SetTest.xml"/>
         </jar>
-        <copy file="${temp.jar.path.TEST-results.jar}" tofile="${artifact.temp.output.test-results}/TEST-results.jar"/>
+        <copy file="\${temp.jar.path.TEST-results.jar}" tofile="\${artifact.temp.output.test-results}/TEST-results.jar"/>
     </target>
 </project>
 EOF
-    if [[ -f build.xml ]]; then
-        cat "build.xml" \
-            | sed 's|<import file="${basedir}/test.xml"/>||' \
-            | sed 's|</project>|<import file="${basedir}/test.xml"/>&|' \
-            | compareAndOverwrite "build.xml"
-    fi
+    importIntoAntFile "build.xml" "test.xml"
 }
 generateAntJavadocFilesFromIntellij() {
     local mm
@@ -136,24 +131,36 @@ generateAntJavadocFileFromIntellij() {
     cat <<EOF | compareAndOverwrite "$modDir/javadoc.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="javadoc.$modName" default="javadoc.module.$modName">
-    <property name="$modName.javadoc.dir" value="${module.$modName.basedir}/../out/javadoc/$modName"/>
-    <property name="$modName.javadoc.tmp" value="${$modName.javadoc.dir}/tmp"/>
-    <property name="$modName.javadoc.jar" value="${$modName.javadoc.dir}/$modName-javadoc.jar"/>
+    <property name="$modName.javadoc.dir" value="\${module.$modName.basedir}/../out/javadoc/$modName"/>
+    <property name="$modName.javadoc.tmp" value="\${$modName.javadoc.dir}/tmp"/>
+    <property name="$modName.javadoc.jar" value="\${$modName.javadoc.dir}/$modName-javadoc.jar"/>
 
     <target name="javadoc.module.$modName">
-        <javadoc sourcepathref="$modName.module.test.sourcepath" destdir="${$modName.javadoc.tmp}" classpathref="$modName.module.classpath"/>
-        <jar destfile="${$modName.javadoc.jar}" duplicate="preserve" filesetmanifest="skip">
-            <zipfileset dir="${$modName.javadoc.tmp}"/>
+        <javadoc sourcepathref="$modName.module.test.sourcepath" destdir="\${$modName.javadoc.tmp}" classpathref="$modName.module.classpath"/>
+        <jar destfile="\${$modName.javadoc.jar}" duplicate="preserve" filesetmanifest="skip">
+            <zipfileset dir="\${$modName.javadoc.tmp}"/>
         </jar>
-        <delete dir="${$modName.javadoc.tmp}"/>
+        <delete dir="\${$modName.javadoc.tmp}"/>
     </target>
 </project>
 EOF
-    if [[ -f build.xml ]]; then
-        cat "build.xml" \
-            | sed 's|<import file="${basedir}/$modDir/javadoc.xml"/>||' \
-            | sed 's|</project>|<import file="${basedir}/$modDir/javadoc.xml"/>&|' \
-            | compareAndOverwrite "build.xml"
+    importIntoAntFile "build.xml" "$modDir/javadoc.xml"
+}
+importIntoAntFile() {
+    local   into="$1"; shift
+    local import="$1"; shift
+
+    if [[ ! -f "$into" ]]; then
+        echo "::error::importIntoAntFile can not find $into"
+        exit 72
+    fi
+    if [[ ! -f "$import" ]]; then
+        echo "::error::importIntoAntFile can not find $import"
+        exit 72
+    fi
+    local statement="<import file=\"\${basedir}/$import\"/>"
+    if ! grep -F "$statement"; then
+        sed "s|</project>|$statement&|" "$into" | compareAndOverwrite "$into"
     fi
 }
 intellijDependenciesGaves() {
