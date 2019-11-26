@@ -38,3 +38,24 @@ validateToken() {
 
     curl_ "$token" "$GIHUB_API_URL"  -o - >/dev/null
 }
+sedi() {
+    if [[ "$OSTYPE" =~ darwin* ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+compareAndOverwrite() {
+    local file="$1"; shift
+
+    local tmp=$(mktemp)
+
+    cat > $tmp
+    if [[ -f "$file" ]] && cmp -s "$tmp" "$file"; then
+        rm "$tmp"
+    else
+        mv "$tmp" "$file"
+        echo "$file" >> "$CHANGES_MADE_MARKER"
+    fi
+
+}

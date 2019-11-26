@@ -51,53 +51,6 @@ generateMavenSettings() {
   </settings>
 EOF
 }
-generateAllPoms() {
-  local pom
-  for pom in *pom.xml; do
-    if [[ -f "$pom" ]]; then
-      generatePom "$pom"
-    fi
-  done
-}
-generatePom() {
-    local pom="$1"; shift
-
-    local g a v e
-    gave2vars "$(extractGaveFromPom "$pom")" "" ""
-    e="${e:-jar}"
-
-    cat <<EOF | xmlstarlet fo >"$pom"
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>$g</groupId>
-    <artifactId>$a</artifactId>
-    <version>$v</version>
-    <packaging>$e</packaging>
-
-    <dependencies>
-$(generateDependencies)
-    </dependencies>
-</project>
-EOF
-}
-generateDependencies() {
-  local gave
-  for gave in $(findAllGaves); do
-      local g a v e
-      gave2vars "$gave" "" ""
-      echo "<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version></dependency>"
-  done
-}
-findAllGaves() {
-    local libxml
-    for libxml in .idea/libraries/*.xml; do
-      xmlstarlet sel -t -v component/library/@name <"$libxml" | sed 's/^Maven: *//'
-      echo
-    done | sort -u
-}
 gave2vars() {
   local gave="$1"; shift
   local  pom="$1"; shift

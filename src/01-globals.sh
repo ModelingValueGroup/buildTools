@@ -23,3 +23,5 @@ export           ARTIFACT_DIR="out/artifacts" # default for IntelliJ
 export             OUR_DOMAIN="you.need.to.set.OUR_DOMAIN"
 export            OUR_PRODUCT="youNeedToSet_OUR_PRODUCT"
 ###############################################################################
+export    CHANGES_MADE_MARKER=changes-made
+###############################################################################
