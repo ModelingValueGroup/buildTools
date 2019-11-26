@@ -113,7 +113,7 @@ $(genTestLibPaths)
 
     <target name="test.results.jar.$modName" depends="test.$modName">
         <mkdir dir="\${basedir}/out/artifacts"/>
-        <jar destfile="\${basedir}/out/artifacts/test-results-$modName.jar" filesetmanifest="skip">
+        <jar destfile="\${basedir}/out/artifacts/$modName-testresults.jar" filesetmanifest="skip">
             <zipfileset file="\${basedir}/TEST-*.xml"/>
         </jar>
     </target>
