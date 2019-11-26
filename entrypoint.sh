@@ -13,5 +13,5 @@ includeBuildTools() {
 
 # we do not have the 'lastPackageVersion' function defined here yet
 # so we first load a known version here and then overwrite it with the latest:
-includeBuildTools "$INPUT_TOKEN" "1.0.12"
+includeBuildTools "$INPUT_TOKEN" "1.0.19"
 includeBuildTools "$INPUT_TOKEN" "$(lastPackageVersion "$INPUT_TOKEN" "ModelingValueGroup/buildTools" "com.modelingvalue:buildTools" "")"
