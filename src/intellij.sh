@@ -167,7 +167,7 @@ importIntoAntFile() {
         exit 72
     fi
     local statement="<import file=\"\${basedir}/$import\"/>"
-    if ! grep -F "$statement"; then
+    if ! grep -Fq "$statement" "$into"; then
         sed "s|</project>|$statement&|" "$into" | compareAndOverwrite "$into"
     fi
 }

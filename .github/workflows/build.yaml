@@ -20,11 +20,10 @@ jobs:
             echo
           done > buildTools.sh
 
-      - name: "install packages for tests"
-        run: sudo apt-get install xmlstarlet jq maven
-
       - name: "test"
-        run: tst/test.sh
+        run: |
+          sudo apt-get install xmlstarlet jq maven
+          tst/test.sh
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
