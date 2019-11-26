@@ -62,7 +62,7 @@ generateAntTestFileFromIntellij() {
         for gave in $(intellijDependenciesGaves); do
             local g a v e
             gave2vars "$gave" "" ""
-            echo "<pathelement location=\"\${path.variable.maven_repository}/$g/$a/$v/$a-$v.jar\"/>"
+            echo "<pathelement location=\"\${path.variable.maven_repository}/${g//.//}/$a/$v/$a-$v.jar\"/>"
         done
     }
     genTestFileSets() {
