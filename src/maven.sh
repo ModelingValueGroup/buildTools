@@ -77,9 +77,9 @@ extractGaveFromPom() {
 
   if [[ -f "$pom" ]]; then
     printf "%s:%s:%s:%s" \
-      "$(xmlstarlet sel -t -v /_:project/_:groupId    <"$pom" 2>/dev/null)" \
-      "$(xmlstarlet sel -t -v /_:project/_:artifactId <"$pom" 2>/dev/null)" \
-      "$(xmlstarlet sel -t -v /_:project/_:version    <"$pom" 2>/dev/null)" \
-      "$(xmlstarlet sel -t -v /_:project/_:packaging  <"$pom" 2>/dev/null)"
+      "$(xmlstarlet sel -t -v /_:project/_:groupId    "$pom" 2>/dev/null)" \
+      "$(xmlstarlet sel -t -v /_:project/_:artifactId "$pom" 2>/dev/null)" \
+      "$(xmlstarlet sel -t -v /_:project/_:version    "$pom" 2>/dev/null)" \
+      "$(xmlstarlet sel -t -v /_:project/_:packaging  "$pom" 2>/dev/null)"
   fi
 }

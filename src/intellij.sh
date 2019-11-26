@@ -158,7 +158,7 @@ importIntoAntFile() {
 intellijDependenciesGaves() {
     local libxml
     for libxml in .idea/libraries/*.xml; do
-      xmlstarlet sel -t -v component/library/@name <"$libxml" | sed 's/^Maven: *//'
+      xmlstarlet sel -t -v component/library/@name "$libxml" | sed 's/^Maven: *//'
       echo
     done | sort -u
 }
@@ -168,5 +168,5 @@ intellijModules() {
         echo "::error::intellij modules.xml file not found"
         exit 45
     fi
-    xmlstarlet sel -t -v project/component/modules/module/@filepath -n <x.xml |sed 's/\$[^$]*\$//g;s|^/||;s|\.iml$||'
+    xmlstarlet sel -t -v project/component/modules/module/@filepath -n "$modules" |sed 's/\$[^$]*\$//g;s|^/||;s|\.iml$||'
 }
