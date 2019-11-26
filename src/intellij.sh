@@ -74,7 +74,7 @@ generateAntTestFileFromIntellij() {
 
     cat <<EOF | xmlstarlet fo | compareAndOverwrite "test.xml"
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="test" default="test">
+<project name="test" default="TEST-results.jar">
     <property file="build.properties"/>
     <path id="cp">
         <path>
@@ -98,19 +98,11 @@ $(genTestFileSets)
         </junit>
     </target>
 
-    <target name="artifact.test-results" depends="init.artifacts" description="Build &#39;TEST-results&#39; artifact">
-        <property name="artifact.temp.output.test-results" value="\${artifacts.temp.dir}/TEST_results"/>
-        <mkdir dir="\${artifact.temp.output.test-results}"/>
-        <jar destfile="\${temp.jar.path.TEST-results.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.AgeTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.DefaultMapTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.LambdaTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.ListTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.MapTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.SerializeTest.xml"/>
-            <zipfileset file="\${basedir}/TEST-org.modelingvalue.collections.test.SetTest.xml"/>
+    <target name="TEST-results.jar" depends="test">
+        <mkdir dir="\${basedir}/out/artifacts"/>
+        <jar destfile="\${basedir}/out/artifacts/TEST-results.jar" filesetmanifest="skip">
+            <zipfileset file="\${basedir}/TEST-*.xml"/>
         </jar>
-        <copy file="\${temp.jar.path.TEST-results.jar}" tofile="\${artifact.temp.output.test-results}/TEST-results.jar"/>
     </target>
 </project>
 EOF
@@ -137,7 +129,7 @@ generateAntJavadocFileFromIntellij() {
 
     <target name="javadoc.module.$modName">
         <javadoc sourcepathref="$modName.module.test.sourcepath" destdir="\${$modName.javadoc.tmp}" classpathref="$modName.module.classpath"/>
-        <jar destfile="\${$modName.javadoc.jar}" duplicate="preserve" filesetmanifest="skip">
+        <jar destfile="\${$modName.javadoc.jar}" filesetmanifest="skip">
             <zipfileset dir="\${$modName.javadoc.tmp}"/>
         </jar>
         <delete dir="\${$modName.javadoc.tmp}"/>
