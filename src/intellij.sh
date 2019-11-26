@@ -59,24 +59,34 @@ $(intellijDependenciesToPom)
 </project>
 EOF
 }
+generateAntTestFilesFromIntellij() {
+    local mm
+    for mm in $(intellijModules); do
+        local modDir modName
+        IFS=/ read -r modDir modName <<<"$mm"
+        generateAntTestFileFromIntellij "$modDir" "$modName"
+    done
+}
 generateAntTestFileFromIntellij() {
-    genTestLibPaths() {
-        local gave
-        for gave in $(intellijDependenciesGaves); do
-            local g a v e
-            gave2vars "$gave" "" ""
-            echo "<pathelement location=\"\${path.variable.maven_repository}/${g//.//}/$a/$v/$a-$v.jar\"/>"
-        done
-    }
-    genTestFileSets() {
-        find out/test/* -maxdepth 0 -type d -exec echo "<fileset dir=\"{}\"><include name=\"**/*Test.*\"/><include name=\"**/*Tests.*\"/></fileset>" \;
-    }
+    local  modDir="$1"; shift
+    local modName="$1"; shift
 
-    cat <<EOF | xmlstarlet fo | compareAndOverwrite "test.xml"
+    if [[ -d "$modDir/tst" ]]; then
+        local xml="$modDir/test.xml"
+
+        genTestLibPaths() {
+            local gave
+            for gave in $(intellijDependenciesGaves); do
+                local g a v e
+                gave2vars "$gave" "" ""
+                echo "<pathelement location=\"\${path.variable.maven_repository}/${g//.//}/$a/$v/$a-$v.jar\"/>"
+            done
+        }
+
+        cat <<EOF | xmlstarlet fo | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="test" default="TEST-results.jar">
-    <property file="build.properties"/>
-    <path id="cp">
+<project name="test.$modName" default="test.results.jar.$modName">
+    <path id="classpath.test.$modName">
         <path>
 $(genTestLibPaths)
         </path>
@@ -88,25 +98,29 @@ $(genTestLibPaths)
         </dirset>
     </path>
 
-    <target name="test">
+    <target name="test.$modName">
         <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once"><!-- fork="on" forkmode="perTest" threads="8" -->
-            <classpath refid="cp"/>
+            <classpath refid="classpath.test.$modName"/>
             <batchtest todir=".">
-$(genTestFileSets)
+                <fileset dir="out/test/$modDir">
+                    <include name="**/*Test.*"/>
+                    <include name="**/*Tests.*"/>
+                </fileset>
                 <formatter type="xml"/>
             </batchtest>
         </junit>
     </target>
 
-    <target name="TEST-results.jar" depends="test">
+    <target name="test.results.jar.$modName" depends="test.$modName">
         <mkdir dir="\${basedir}/out/artifacts"/>
-        <jar destfile="\${basedir}/out/artifacts/TEST-results.jar" filesetmanifest="skip">
+        <jar destfile="\${basedir}/out/artifacts/test-results-$modName.jar" filesetmanifest="skip">
             <zipfileset file="\${basedir}/TEST-*.xml"/>
         </jar>
     </target>
 </project>
 EOF
-    importIntoAntFile "build.xml" "test.xml"
+        importIntoAntFile "build.xml" "$xml"
+    fi
 }
 generateAntJavadocFilesFromIntellij() {
     local mm
@@ -120,10 +134,12 @@ generateAntJavadocFileFromIntellij() {
     local  modDir="$1"; shift
     local modName="$1"; shift
 
-    cat <<EOF | compareAndOverwrite "$modDir/javadoc.xml"
+    local xml="$modDir/javadoc.xml"
+
+    cat <<EOF | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="javadoc.$modName" default="javadoc.module.$modName">
-    <property name="$modName.javadoc.dir" value="\${module.$modName.basedir}/../out/javadoc/$modName"/>
+    <property name="$modName.javadoc.dir" value="\${basedir}/out/artifacts"/>
     <property name="$modName.javadoc.tmp" value="\${$modName.javadoc.dir}/tmp"/>
     <property name="$modName.javadoc.jar" value="\${$modName.javadoc.dir}/$modName-javadoc.jar"/>
 
@@ -136,7 +152,7 @@ generateAntJavadocFileFromIntellij() {
     </target>
 </project>
 EOF
-    importIntoAntFile "build.xml" "$modDir/javadoc.xml"
+    importIntoAntFile "build.xml" "$xml"
 }
 importIntoAntFile() {
     local   into="$1"; shift
