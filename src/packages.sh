@@ -77,5 +77,5 @@ query {
 }
 EOF
 )"
-  graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version'
+  graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version' 2>/dev/null
 }
