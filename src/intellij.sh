@@ -10,7 +10,7 @@ cleanupIntellijAntFiles() {
             # - add includeantruntime="false" for all <javac> calls:
             cat "$xml" \
                 | sed 's|<zipfileset dir="/.*/jdclare/|<zipfileset dir="${basedir}/|' \
-                | sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|' "$xml" \
+                | sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|' \
                 | compareAndOverwrite "$xml"
         fi
     done
