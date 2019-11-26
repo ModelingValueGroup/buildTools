@@ -75,7 +75,7 @@ generateAntTestFileFromIntellij() {
     cat <<EOF | xmlstarlet fo | compareAndOverwrite "test.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="test" default="all">
-
+    <property file="build.properties"/>
     <path id="cp">
         <path>
 $(genTestLibPaths)
