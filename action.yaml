@@ -11,5 +11,5 @@ inputs:
     required: false
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'node12'
+  main : 'entrypoint.js'
