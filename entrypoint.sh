@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+echo "::group::install extra packages"
+apt-get install -y xmlstarlet jq maven
+echo "::endgroup::"
+
 includeBuildTools() {
   local   token="$1"; shift
   local version="$1"; shift
