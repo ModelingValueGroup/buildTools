@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "::group::install extra packages"
-apt-get install -y xmlstarlet jq maven
+sudo apt-get install -y xmlstarlet jq maven
 echo "::endgroup::"
 
 includeBuildTools() {
