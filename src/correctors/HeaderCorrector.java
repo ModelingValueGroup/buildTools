@@ -1,4 +1,4 @@
-package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 //                                                                                                                     ~
 // Licensed under the GNU Lesser General Public License v3.0 (the 'License'). You may not use this file except in      ~
@@ -13,6 +13,8 @@ package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //     Arjan Kok, Ronald Krijgsheld                                                                                    ~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+package correctors;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -21,7 +23,7 @@ import java.util.stream.*;
 import static java.lang.Integer.*;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-public class HeaderGenerator extends ScavangerBase {
+public class HeaderCorrector extends CorrectorBase {
     private static final Set<String> EXT_WITH_HEADER = new HashSet<>(Arrays.asList(
             "java"
     ));
@@ -30,10 +32,10 @@ public class HeaderGenerator extends ScavangerBase {
     private List<String> header;
 
     public static void main(String[] args) throws IOException {
-        new HeaderGenerator().prepare(Arrays.asList(args)).generate();
+        new HeaderCorrector().prepare(Arrays.asList(args)).generate();
     }
 
-    private HeaderGenerator prepare(List<String> args) {
+    private HeaderCorrector prepare(List<String> args) {
         if (args.size() != 1) {
             System.err.println("arg error: one arg expected: <header-template-file>");
             System.exit(53);

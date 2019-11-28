@@ -1,4 +1,4 @@
-package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 //                                                                                                                     ~
 // Licensed under the GNU Lesser General Public License v3.0 (the 'License'). You may not use this file except in      ~
@@ -13,18 +13,20 @@ package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //     Arjan Kok, Ronald Krijgsheld                                                                                    ~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+package correctors;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
 @SuppressWarnings({"WeakerAccess"})
-public abstract class ScavangerBase {
+public abstract class CorrectorBase {
     static final Set<Path> FORBIDDEN_DIRS = new HashSet<>(Arrays.asList(
-            Paths.get(".git"),
-            Paths.get(".idea"),
-            Paths.get("out"),
-            Paths.get("lib")
+            Paths.get("./.git"),
+            Paths.get("./.idea"),
+            Paths.get("./out"),
+            Paths.get("./lib")
     ));
 
     Stream<Path> allFiles() throws IOException {

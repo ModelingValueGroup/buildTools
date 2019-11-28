@@ -1,4 +1,4 @@
-package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 //                                                                                                                     ~
 // Licensed under the GNU Lesser General Public License v3.0 (the 'License'). You may not use this file except in      ~
@@ -13,12 +13,14 @@ package correctors;//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //     Arjan Kok, Ronald Krijgsheld                                                                                    ~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+package correctors;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-public class EolCorrector extends ScavangerBase {
+public class EolCorrector extends CorrectorBase {
     private static final Set<String> TEXT_FILES         = new HashSet<>(Arrays.asList(
             "LICENSE",
             ".gitignore",
@@ -36,6 +38,7 @@ public class EolCorrector extends ScavangerBase {
             "sh",
             "pom",
             "java",
+            "js",
             "xml"
     ));
     private static final Set<String> NO_TEXT_EXTENSIONS = new HashSet<>(Arrays.asList(
@@ -45,7 +48,7 @@ public class EolCorrector extends ScavangerBase {
     ));
 
     public static void main(String[] args) throws IOException {
-        if (args.length!=0){
+        if (args.length != 0) {
             System.err.println("no args expected");
             System.exit(31);
         }

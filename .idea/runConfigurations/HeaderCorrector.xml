@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HeaderCorrector" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="correctors.HeaderCorrector" />
+    <module name="buildTools" />
+    <option name="PROGRAM_PARAMETERS" value="header" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="correctors.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
