@@ -21,9 +21,5 @@
         <module name="buildTools" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="buildTools" target="1.5" />
-      <module name="yyy" target="1.5" />
-    </bytecodeTargetLevel>
   </component>
 </project>
