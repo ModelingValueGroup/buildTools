@@ -75,13 +75,18 @@ public class HeaderCorrector extends CorrectorBase {
     }
 
     private void replaceHeader(Path f) {
-        String       ext   = getExtension(f.getFileName().toString()).orElseThrow();
-        List<String> lines = f.equals(headerFile) ? new ArrayList<>() : readAllLines(f);
-        while (!lines.isEmpty() && isHeaderLine(ext, lines.get(0))) {
-            lines.remove(0);
-        }
+        String       ext    = getExtension(f.getFileName().toString()).orElseThrow();
         List<String> header = ext2header.computeIfAbsent(ext, e -> readHeader(EXT_TO_PRE.get(e)));
-        lines.addAll(0, header);
+
+        List<String> lines      = f.equals(headerFile) ? new ArrayList<>() : readAllLines(f);
+        boolean      isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
+        int          baseIndex  = isHashBang ? 1 : 0;
+        while (baseIndex < lines.size() && isHeaderLine(lines.get(baseIndex), ext)) {
+            lines.remove(baseIndex);
+        }
+        isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
+        baseIndex = isHashBang ? 1 : 0;
+        lines.addAll(baseIndex, header);
         overwrite(f, lines);
     }
 
@@ -94,20 +99,13 @@ public class HeaderCorrector extends CorrectorBase {
         return border(pre, cleanup(pre, readAllLines(f)));
     }
 
-    private List<String> readAllLines(Path f) {
-        try {
-            return Files.readAllLines(f);
-        } catch (IOException e) {
-            throw new Error("could not read lines: " + f, e);
-        }
-    }
-
     private List<String> cleanup(String pre, List<String> inFile) {
         List<String> h = inFile
                 .stream()
                 .map(String::stripTrailing)
-                .filter(l -> !l.matches("^" + pre + "~~*$"))
+                .filter(l -> !l.matches("^" + pre + "~~*$") && !l.matches("^//" + "~~*$"))
                 .map(l -> l.replaceAll("^" + pre, ""))
+                .map(l -> l.replaceAll("^//", ""))
                 .map(l -> l.replaceAll("~$", ""))
                 .map(String::stripTrailing)
                 .collect(Collectors.toList());
@@ -146,5 +144,13 @@ public class HeaderCorrector extends CorrectorBase {
             }
         }
         return indent;
+    }
+
+    private static List<String> readAllLines(Path f) {
+        try {
+            return Files.readAllLines(f);
+        } catch (IOException e) {
+            throw new Error("could not read lines: " + f, e);
+        }
     }
 }
