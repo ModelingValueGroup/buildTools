@@ -35,22 +35,26 @@ public abstract class CorrectorBase {
                 .filter(Files::isRegularFile);
     }
 
-    void overwrite(Path file, List<String> lines) throws IOException {
+    void overwrite(Path file, List<String> lines) {
         overwrite(file, lines, false);
     }
 
-    void overwrite(Path file, List<String> lines, boolean forced) throws IOException {
-        if (forced || !Files.isRegularFile(file)) {
-            System.err.println("+ generated  : " + file);
-            Files.write(file, lines);
-        } else {
-            List<String> old = Files.readAllLines(file);
-            if (!lines.equals(old)) {
-                System.err.println("+ regenerated: " + file);
+    void overwrite(Path file, List<String> lines, boolean forced) {
+        try {
+            if (forced || !Files.isRegularFile(file)) {
+                System.err.println("+ generated  : " + file);
                 Files.write(file, lines);
             } else {
-                System.err.println("+ already ok : " + file);
+                List<String> old = Files.readAllLines(file);
+                if (!lines.equals(old)) {
+                    System.err.println("+ regenerated: " + file);
+                    Files.write(file, lines);
+                } else {
+                    System.err.println("+ already ok : " + file);
+                }
             }
+        } catch (IOException e) {
+            throw new Error("could not overwrite: " + file, e);
         }
     }
 

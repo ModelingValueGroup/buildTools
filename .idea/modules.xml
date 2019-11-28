@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/buildTools.iml" filepath="$PROJECT_DIR$/buildTools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/correctors/correctors.iml" filepath="$PROJECT_DIR$/correctors/correctors.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shellTools/shellTools.iml" filepath="$PROJECT_DIR$/shellTools/shellTools.iml" />
     </modules>
   </component>
 </project>

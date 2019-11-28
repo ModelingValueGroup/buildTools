@@ -6,21 +6,5 @@
 
     <groupId>com.modelingvalue</groupId>
     <artifactId>buildTools</artifactId>
-    <version>1.0.28</version>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>7</source>
-                    <target>7</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <dependencies>
-        <!-- none -->
-    </dependencies>
+    <version>1.0.29</version>
 </project>

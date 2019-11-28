@@ -22,14 +22,16 @@ import java.util.stream.*;
 
 import static java.lang.Integer.*;
 
-@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class HeaderCorrector extends CorrectorBase {
-    private static final Set<String> EXT_WITH_HEADER = new HashSet<>(Arrays.asList(
-            "java"
-    ));
+    private static final Map<String, String> EXT_TO_PRE = new HashMap<>();
 
-    private Path         headerFile = Paths.get("build", "header").toAbsolutePath();
-    private List<String> header;
+    static {
+        EXT_TO_PRE.put("java", "//");
+        EXT_TO_PRE.put("sh", "##");
+    }
+
+    private Path                      headerFile = Paths.get("build", "header").toAbsolutePath();
+    private Map<String, List<String>> ext2header = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         new HeaderCorrector().prepare(Arrays.asList(args)).generate();
@@ -55,8 +57,7 @@ public class HeaderCorrector extends CorrectorBase {
     }
 
     private boolean needsHeader(Path f) {
-        String           filename = f.getFileName().toString();
-        Optional<String> ext      = getExtension(filename);
+        Optional<String> ext = getExtension(f.getFileName().toString());
         try {
             if (Files.size(f) == 0) {
                 return false;
@@ -67,39 +68,46 @@ public class HeaderCorrector extends CorrectorBase {
             if (ext.isEmpty()) {
                 return false;
             }
-            return EXT_WITH_HEADER.contains(ext.get());
+            return EXT_TO_PRE.containsKey(ext.get());
         } catch (IOException e) {
             throw new Error("file size failed", e);
         }
     }
 
     private void replaceHeader(Path f) {
+        String       ext   = getExtension(f.getFileName().toString()).orElseThrow();
+        List<String> lines = f.equals(headerFile) ? new ArrayList<>() : readAllLines(f);
+        while (!lines.isEmpty() && isHeaderLine(ext, lines.get(0))) {
+            lines.remove(0);
+        }
+        List<String> header = ext2header.computeIfAbsent(ext, e -> readHeader(EXT_TO_PRE.get(e)));
+        lines.addAll(0, header);
+        overwrite(f, lines);
+    }
+
+    private boolean isHeaderLine(String line, String ext) {
+        return (line.startsWith(EXT_TO_PRE.get(ext)) && line.endsWith("~")) || line.trim().isEmpty();
+    }
+
+    private List<String> readHeader(String pre) {
+        Path f = this.headerFile;
+        return border(pre, cleanup(pre, readAllLines(f)));
+    }
+
+    private List<String> readAllLines(Path f) {
         try {
-            List<String> lines = f.equals(headerFile) ? new ArrayList<>() : Files.readAllLines(f);
-            while (!lines.isEmpty() && isHeaderLine(lines.get(0))) {
-                lines.remove(0);
-            }
-            lines.addAll(0, getHeader());
-            overwrite(f, lines);
+            return Files.readAllLines(f);
         } catch (IOException e) {
             throw new Error("could not read lines: " + f, e);
         }
     }
 
-    private boolean isHeaderLine(String line) {
-        return (line.startsWith("//") && line.endsWith("~")) || line.trim().isEmpty();
-    }
-
-    private List<String> readHeader() throws IOException {
-        return border(cleanup(Files.readAllLines(headerFile)));
-    }
-
-    private List<String> cleanup(List<String> inFile) {
+    private List<String> cleanup(String pre, List<String> inFile) {
         List<String> h = inFile
                 .stream()
                 .map(String::stripTrailing)
-                .filter(l -> !l.matches("^//~~*$"))
-                .map(l -> l.replaceAll("^//", ""))
+                .filter(l -> !l.matches("^" + pre + "~~*$"))
+                .map(l -> l.replaceAll("^" + pre, ""))
                 .map(l -> l.replaceAll("~$", ""))
                 .map(String::stripTrailing)
                 .collect(Collectors.toList());
@@ -119,11 +127,11 @@ public class HeaderCorrector extends CorrectorBase {
         return h;
     }
 
-    private List<String> border(List<String> cleaned) {
+    private List<String> border(String pre, List<String> cleaned) {
         //noinspection OptionalGetWithoutIsPresent
         int          len      = cleaned.stream().mapToInt(String::length).max().getAsInt();
-        String       border   = "//~" + String.format("%" + len + "s", "").replace(' ', '~') + "~~";
-        List<String> bordered = cleaned.stream().map(l -> String.format("// %-" + len + "s ~", l)).collect(Collectors.toList());
+        String       border   = pre + "~" + String.format("%" + len + "s", "").replace(' ', '~') + "~~";
+        List<String> bordered = cleaned.stream().map(l -> String.format(pre + " %-" + len + "s ~", l)).collect(Collectors.toList());
         bordered.add(0, border);
         bordered.add(border);
         bordered.add("");
@@ -139,16 +147,4 @@ public class HeaderCorrector extends CorrectorBase {
         }
         return indent;
     }
-
-    private List<String> getHeader() {
-        try {
-            if (header == null) {
-                header = readHeader();
-            }
-            return header;
-        } catch (IOException e) {
-            throw new Error("could not read header: " + headerFile);
-        }
-    }
-
 }
