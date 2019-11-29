@@ -12,9 +12,20 @@ jobs:
       - name: "attach head"
         run: git checkout "${GITHUB_REF#refs/heads/}"
 
-      - name: "build"
-        run: |
-          ant
+      - name: "setup JDK"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: "prepare ant"
+        run:  |
+          cat <<EOF >build.properties
+          jdk.home.11=$JAVA_HOME
+          path.variable.maven_repository=$HOME/.m2/repository
+          EOF
+
+      - name: "ant build"
+        run: ant
 
       - name: "test"
         run: |
