@@ -25,7 +25,9 @@ jobs:
           EOF
 
       - name: "ant build"
-        run: ant
+        run: |
+          sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/'
+          ant
 
       - name: "test"
         run: |
