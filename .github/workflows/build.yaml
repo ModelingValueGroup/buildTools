@@ -23,11 +23,19 @@ jobs:
           jdk.home.11=$JAVA_HOME
           path.variable.maven_repository=$HOME/.m2/repository
           EOF
+          sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/' build.xml
 
       - name: "ant build"
-        run: |
-          sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/' build.xml
-          ant
+        run: ant
+
+      - name: "correct eols"
+        run: java -cp out/artifacts/buildTools.jar correctors.EolCorrector
+
+      - name: "correct headers"
+        run: java -cp out/artifacts/buildTools.jar correctors.HeaderCorrector header
+
+      - name: "ant rebuild"
+        run: rm -rf out; ant
 
       - name: "test"
         run: |
