@@ -1,8 +1,7 @@
 name: build
 on:
   push:
-    branches:
-      - master
+
 jobs:
   build:
     runs-on: [ubuntu-latest]
@@ -10,25 +9,23 @@ jobs:
       - name: "checkout"
         uses: actions/checkout@v1
 
+      - name: "attach head"
+        run: git checkout "${GITHUB_REF#refs/heads/}"
+
       - name: "build"
         run: |
-          ## concat all script to for one:
-          for f in src/*.sh; do
-            echo "#!/usr/bin/env bash"
-            echo "### $f"
-            cat $f
-            echo
-          done > buildTools.sh
+          ant
 
       - name: "test"
         run: |
           sudo apt-get install xmlstarlet jq maven
-          tst/test.sh
+          shellTools/tst/test.sh
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: "upload as package"
-        uses: ModelingValueGroup/upload-maven-package-action@master
-        with:
-          file: "buildTools.sh"
-          token: "${{ secrets.GITHUB_TOKEN }}"
+#      - name: "upload as package"
+#        uses: ModelingValueGroup/upload-maven-package-action@master
+#        if: github.ref == 'refs/heads/master'
+#        with:
+#          file: "buildTools.sh"
+#          token: "${{ secrets.GITHUB_TOKEN }}"
