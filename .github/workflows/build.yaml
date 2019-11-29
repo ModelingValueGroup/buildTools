@@ -47,6 +47,7 @@ jobs:
 
       - name: "push changes back to github"
         run:  |
+          git ls-files -o --exclude-standard || :
           if [[ "$(git ls-files -o --exclude-standard)" ]]; then
             echo "changes need to be pushed back to github"
 
