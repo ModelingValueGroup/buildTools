@@ -5,7 +5,7 @@ set -euo pipefail
 extraPackages=(xmlstarlet jq maven)
       ourUser="ModelingValueGroup"
       product="buildTools"
-      groupId="com.modelingvalue"
+      groupId="org.modelingvalue"
    artifactId="$product"
 
 ##########################################################################################################################
