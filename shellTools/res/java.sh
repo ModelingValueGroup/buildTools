@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,36 +16,32 @@
 
 set -euo pipefail
 
-##########################################################################################################################
-extraPackages=(xmlstarlet jq maven)
-      ourUser="ModelingValueGroup"
-      product="buildTools"
-      groupId="org.modelingvalue"
-   artifactId="$product"
+makeJavaDocJar() {
+    local   sjar="$1"; shift
+    local   djar="$1"; shift
 
-##########################################################################################################################
-echo "::group::install extra packages"
-sudo apt-get install -y "${extraPackages[@]}"
-echo "::endgroup::"
+    mkdir tmp-src
+    (cd tmp-src; jar xf "../$sjar")
+    javadoc -d tmp-doc -sourcepath tmp-src -subpackages "$OUR_DOMAIN"
 
-includeBuildTools() {
-  local   token="$1"; shift
-  local version="$1"; shift
-
-  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.jar"
-
-  curl -s -H "Authorization: bearer $token" -L "$url" -o "$artifactId.jar"
-  . <(java -jar "$artifactId.jar")
-  echo "INFO: installed $artifactId version $version"
+    mkdir -p "$(dirname "$djar")"
+    jar cf "$djar" -C tmp-doc .
+    rm -rf tmp-src tmp-doc
 }
+makeJarName() {
+    local      name="$1"; shift
+    local variation="${1:-}"
 
-##########################################################################################################################
-# we do not have the 'lastPackageVersion' function defined here yet
-# so we first load a known version here....
-v="1.0.30"
-includeBuildTools "$INPUT_TOKEN" "$v"
-
-##########################################################################################################################
-# ...and then overwrite it with the latest:
-v="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
-includeBuildTools "$INPUT_TOKEN" "$v"
+    echo "$ARTIFACT_DIR/$name-SNAPSHOT$variation.jar"
+}
+makeJarNameSources() {
+    makeJarName "$1" -sources
+}
+makeJarNameJavadoc() {
+    makeJarName "$1" -javadoc
+}
+makeAllJavaDocJars() {
+    for n in "$@"; do
+        makeJavaDocJar "$(makeJarNameSources $n)" "$(makeJarNameJavadoc $n)"
+    done
+}

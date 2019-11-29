@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,36 +16,27 @@
 
 set -euo pipefail
 
-##########################################################################################################################
-extraPackages=(xmlstarlet jq maven)
-      ourUser="ModelingValueGroup"
-      product="buildTools"
-      groupId="org.modelingvalue"
-   artifactId="$product"
-
-##########################################################################################################################
-echo "::group::install extra packages"
-sudo apt-get install -y "${extraPackages[@]}"
-echo "::endgroup::"
-
-includeBuildTools() {
-  local   token="$1"; shift
-  local version="$1"; shift
-
-  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.jar"
-
-  curl -s -H "Authorization: bearer $token" -L "$url" -o "$artifactId.jar"
-  . <(java -jar "$artifactId.jar")
-  echo "INFO: installed $artifactId version $version"
-}
-
-##########################################################################################################################
-# we do not have the 'lastPackageVersion' function defined here yet
-# so we first load a known version here....
-v="1.0.30"
-includeBuildTools "$INPUT_TOKEN" "$v"
-
-##########################################################################################################################
-# ...and then overwrite it with the latest:
-v="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
-includeBuildTools "$INPUT_TOKEN" "$v"
+###############################################################################
+export         GITHUB_BASEURL="https://github.com"
+export GITHUB_PACKAGE_BASEURL="https://maven.pkg.github.com"
+export     GITHUB_API_BASEURL="https://api.github.com"
+###############################################################################
+if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
+  # not on github actions, probably a localbuild
+  export           USERNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_BASEURL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\1|')"
+  export          REPOSNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_BASEURL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\2|')"
+  export  GITHUB_REPOSITORY="$USERNAME/$REPOSNAME"
+else
+  # on github actions
+  export           USERNAME="${GITHUB_REPOSITORY/\/*}"
+  export          REPOSNAME="${GITHUB_REPOSITORY/*\/}"
+fi
+###############################################################################
+export     GITHUB_PACKAGE_URL="$GITHUB_PACKAGE_BASEURL/$GITHUB_REPOSITORY"
+export          GIHUB_API_URL="$GITHUB_API_BASEURL/repos/$USERNAME/$REPOSNAME"
+export           ARTIFACT_DIR="out/artifacts" # default for IntelliJ
+export             OUR_DOMAIN="you.need.to.set.OUR_DOMAIN"
+export            OUR_PRODUCT="youNeedToSet_OUR_PRODUCT"
+###############################################################################
+export    CHANGES_MADE_MARKER=changes-made
+###############################################################################

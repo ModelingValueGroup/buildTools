@@ -6,9 +6,5 @@
 
     <groupId>org.modelingvalue</groupId>
     <artifactId>buildTools</artifactId>
-    <version>1.0.28</version>
-
-    <dependencies>
-        <!-- none -->
-    </dependencies>
+    <version>1.0.30</version>
 </project>

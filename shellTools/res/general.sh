@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,36 +16,61 @@
 
 set -euo pipefail
 
-##########################################################################################################################
-extraPackages=(xmlstarlet jq maven)
-      ourUser="ModelingValueGroup"
-      product="buildTools"
-      groupId="org.modelingvalue"
-   artifactId="$product"
-
-##########################################################################################################################
-echo "::group::install extra packages"
-sudo apt-get install -y "${extraPackages[@]}"
-echo "::endgroup::"
-
-includeBuildTools() {
-  local   token="$1"; shift
-  local version="$1"; shift
-
-  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.jar"
-
-  curl -s -H "Authorization: bearer $token" -L "$url" -o "$artifactId.jar"
-  . <(java -jar "$artifactId.jar")
-  echo "INFO: installed $artifactId version $version"
+group() {
+  echo "::group::$1 log" 1>&2
+  "$@"
+  echo "::endgroup::" 1>&2
 }
+graphqlQuery() {
+  local token="$1"; shift
+  local query="$1"; shift
 
-##########################################################################################################################
-# we do not have the 'lastPackageVersion' function defined here yet
-# so we first load a known version here....
-v="1.0.30"
-includeBuildTools "$INPUT_TOKEN" "$v"
+  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql' -o -
+}
+contains() {
+    local find="$1"; shift
+    local  str="$1"; shift
 
-##########################################################################################################################
-# ...and then overwrite it with the latest:
-v="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
-includeBuildTools "$INPUT_TOKEN" "$v"
+    if [[ "$str" =~ .*$find.* ]]; then
+        echo true
+    else
+        echo false
+    fi
+}
+curl_() {
+    local token="$1"; shift
+
+    curl \
+        --location \
+        --remote-header-name \
+        --silent \
+        --show-error \
+        --header "Authorization: token $token" \
+        "$@"
+}
+validateToken() {
+    local token="$1"; shift
+
+    curl_ "$token" "$GIHUB_API_URL"  -o - >/dev/null
+}
+sedi() {
+    if [[ "$OSTYPE" =~ darwin* ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+compareAndOverwrite() {
+    local file="$1"; shift
+
+    local tmp=$(mktemp)
+
+    cat > $tmp
+    if [[ -f "$file" ]] && cmp -s "$tmp" "$file"; then
+        rm "$tmp"
+    else
+        mv "$tmp" "$file"
+        echo "$file" >> "$CHANGES_MADE_MARKER"
+    fi
+
+}
