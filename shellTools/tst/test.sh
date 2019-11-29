@@ -44,12 +44,6 @@ cd $tmp
 [[ -f ../buildTools.jar               ]] && cp ../buildTools.jar .               || :
 [[ -f ../out/artifacts/buildTools.jar ]] && cp ../out/artifacts/buildTools.jar . || :
 
-set -x
-find .. -type f             2>&1 | sed 's/^/@A@/'
-jar xf ./buildTools.jar     2>&1 | sed 's/^/@B@/'
-cat META-INF/MANIFEST.MF    2>&1 | sed 's/^/@C@/'
-java -jar ./buildTools.jar  2>&1 | sed 's/^/@D@/'
-
 . <(java -jar ./buildTools.jar)
 
 ##### tests ###########################################################################################################
