@@ -36,7 +36,6 @@
   
   <patternset id="excluded.from.module.shelltools">
     <patternset refid="ignored.files"/>
-    <exclude name="unfinished/**"/>
   </patternset>
   
   <patternset id="excluded.from.compilation.shelltools">

@@ -11,13 +11,14 @@ public class Extractor {
     private static final String CLASS_PATH = System.getProperty("java.class.path", ".");
     private static final String HASH_BANG  = "#!/usr/bin/env bash";
     private static final String SH_EXT     = ".sh";
+    private static final String UNFINISHED = "unfinished";
 
     public static void main(final String[] args) {
-        //classpathStream().forEach(el -> System.err.println("   = " + el));
         Path ourClassPathElement = whereInClassPath(getMyPath()).orElseThrow();
 
         List<String> lines = walk(ourClassPathElement)
                 .filter(p -> p.getFileName().toString().endsWith(SH_EXT))
+                .filter(p -> !p.startsWith(UNFINISHED))
                 .sorted()
                 .flatMap(p -> Stream.concat(Stream.of("###@@@ " + p), readAllLines(p)))
                 .filter(l -> !l.equals(HASH_BANG))
