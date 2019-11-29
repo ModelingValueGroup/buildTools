@@ -5,7 +5,8 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tst" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/src/unfinished" />
+      <sourceFolder url="file://$MODULE_DIR$/res" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/res/unfinished" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

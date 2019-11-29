@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="shellTools:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/shellTools_jar</output-path>
-    <root id="archive" name="shellTools.jar">
-      <element id="module-output" name="shellTools" />
-    </root>
-  </artifact>
-</component>

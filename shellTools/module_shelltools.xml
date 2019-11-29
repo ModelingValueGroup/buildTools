@@ -46,6 +46,7 @@
   <path id="shelltools.module.sourcepath">
     <dirset dir="${module.shelltools.basedir}">
       <include name="src"/>
+      <include name="res"/>
     </dirset>
   </path>
   
@@ -70,6 +71,10 @@
     
     <copy todir="${shelltools.output.dir}">
       <fileset dir="${module.shelltools.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.shelltools.basedir}/res">
         <patternset refid="compiler.resources"/>
         <type type="file"/>
       </fileset>

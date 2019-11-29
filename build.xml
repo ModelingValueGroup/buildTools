@@ -156,24 +156,26 @@
   
   <target name="init.artifacts">
     <property name="artifacts.temp.dir" value="${basedir}/__artifacts_temp"/>
-    <property name="artifact.output.shelltools:jar" value="${basedir}/out/artifacts/shellTools_jar"/>
+    <property name="artifact.output.buildtools:jar" value="${basedir}/out/artifacts"/>
     <mkdir dir="${artifacts.temp.dir}"/>
-    <property name="temp.jar.path.shellTools.jar" value="${artifacts.temp.dir}/shellTools.jar"/>
+    <property name="temp.jar.path.buildTools.jar" value="${artifacts.temp.dir}/buildTools.jar"/>
   </target>
   
-  <target name="artifact.shelltools:jar" depends="init.artifacts, compile.module.shelltools" description="Build &#39;shellTools:jar&#39; artifact">
-    <property name="artifact.temp.output.shelltools:jar" value="${artifacts.temp.dir}/shellTools_jar"/>
-    <mkdir dir="${artifact.temp.output.shelltools:jar}"/>
-    <jar destfile="${temp.jar.path.shellTools.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+  <target name="artifact.buildtools:jar" depends="init.artifacts, compile.module.shelltools, compile.module.correctors" description="Build &#39;buildTools:jar&#39; artifact">
+    <property name="artifact.temp.output.buildtools:jar" value="${artifacts.temp.dir}/buildTools_jar"/>
+    <mkdir dir="${artifact.temp.output.buildtools:jar}"/>
+    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
       <zipfileset dir="${shelltools.output.dir}"/>
+      <zipfileset dir="${correctors.output.dir}"/>
+      <zipfileset file="${basedir}/shellTools/src/META-INF/MANIFEST.MF" prefix="META-INF"/>
     </jar>
-    <copy file="${temp.jar.path.shellTools.jar}" tofile="${artifact.temp.output.shelltools:jar}/shellTools.jar"/>
+    <copy file="${temp.jar.path.buildTools.jar}" tofile="${artifact.temp.output.buildtools:jar}/buildTools.jar"/>
   </target>
   
-  <target name="build.all.artifacts" depends="artifact.shelltools:jar" description="Build all artifacts">
-    <mkdir dir="${artifact.output.shelltools:jar}"/>
-    <copy todir="${artifact.output.shelltools:jar}">
-      <fileset dir="${artifact.temp.output.shelltools:jar}"/>
+  <target name="build.all.artifacts" depends="artifact.buildtools:jar" description="Build all artifacts">
+    <mkdir dir="${artifact.output.buildtools:jar}"/>
+    <copy todir="${artifact.output.buildtools:jar}">
+      <fileset dir="${artifact.temp.output.buildtools:jar}"/>
     </copy>
     
     <!-- Delete temporary files -->

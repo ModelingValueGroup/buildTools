@@ -31,6 +31,7 @@ public class EolCorrector extends CorrectorBase {
     ));
     private static final Set<String> TEXT_EXTENSIONS    = new HashSet<>(Arrays.asList(
             "java",
+            "txt",
             "properties",
             "md",
             "yaml",
@@ -70,6 +71,8 @@ public class EolCorrector extends CorrectorBase {
             if (numcr > 0 || lines.size() != numlf) {
                 System.err.printf("rewriting file: %4d lines (%4d cr and %4d lf) - %s\n", lines.size(), numcr, numlf, f);
                 overwrite(f, lines, true);
+                //} else{
+                //System.err.printf("NOT rewriting file: %4d lines (%4d cr and %4d lf) - %s\n", lines.size(), numcr, numlf, f);
             }
         } catch (IOException e) {
             e.printStackTrace();
