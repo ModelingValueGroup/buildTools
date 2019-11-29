@@ -66,5 +66,5 @@ jobs:
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
         with:
-          file: "buildTools.jar"
+          file: "out/artifacts/buildTools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
