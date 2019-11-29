@@ -155,7 +155,7 @@
   <target name="artifact.buildtools:jar" depends="init.artifacts, compile.module.shelltools, compile.module.correctors" description="Build &#39;buildTools:jar&#39; artifact">
     <property name="artifact.temp.output.buildtools:jar" value="${artifacts.temp.dir}/buildTools_jar"/>
     <mkdir dir="${artifact.temp.output.buildtools:jar}"/>
-    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="merge">
       <zipfileset dir="${shelltools.output.dir}"/>
       <zipfileset dir="${correctors.output.dir}"/>
       <zipfileset file="${basedir}/shellTools/src/META-INF/MANIFEST.MF" prefix="META-INF"/>
