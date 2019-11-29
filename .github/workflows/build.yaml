@@ -37,16 +37,34 @@ jobs:
       - name: "ant rebuild"
         run: rm -rf out; ant
 
+      - name: "install some packages"
+        run: sudo apt-get install xmlstarlet jq maven
+
       - name: "test"
-        run: |
-          sudo apt-get install xmlstarlet jq maven
-          shellTools/tst/test.sh
+        run: shellTools/tst/test.sh
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
-#      - name: "upload as package"
-#        uses: ModelingValueGroup/upload-maven-package-action@master
-#        if: github.ref == 'refs/heads/master'
-#        with:
-#          file: "buildTools.sh"
-#          token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "push changes back to github"
+        run:  |
+          if [[ "$(git ls-files -o --exclude-standard)" ]]; then
+            echo "changes need to be pushed back to github"
+
+            echo "::group::git commit and push"
+              git config user.email "automation@modelingvalue.com"
+              git config user.name "$GITHUB_ACTOR"
+              git add .
+              git commit -m "adjusted files [by github actions]"
+              git push "https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git"
+            echo "::endgroup::"
+
+          else
+            echo "no changes need to be pushed back to github"
+          fi
+
+      - name: "upload as package"
+        uses: ModelingValueGroup/upload-maven-package-action@master
+        if: github.ref == 'refs/heads/master'
+        with:
+          file: "buildTools.jar"
+          token: "${{ secrets.GITHUB_TOKEN }}"
