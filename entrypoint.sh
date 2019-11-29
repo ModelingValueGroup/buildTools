@@ -32,18 +32,20 @@ includeBuildTools() {
   local   token="$1"; shift
   local version="$1"; shift
 
-  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.sh"
+  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.jar"
 
-  curl -s -H "Authorization: bearer $token" -L "$url" -o $artifactId.sh
-  . $artifactId.sh
+  curl -s -H "Authorization: bearer $token" -L "$url" -o "$artifactId.jar"
+  . <(java -jar "$artifactId.jar")
+  echo "INFO: installed $artifactId version $version"
 }
 
 ##########################################################################################################################
 # we do not have the 'lastPackageVersion' function defined here yet
 # so we first load a known version here....
-includeBuildTools "$INPUT_TOKEN" "1.0.19"
+v="1.0.30"
+includeBuildTools "$INPUT_TOKEN" "$v"
 
+##########################################################################################################################
 # ...and then overwrite it with the latest:
-latest="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
-includeBuildTools "$INPUT_TOKEN" "$latest"
-echo "INFO: installed $artifactId version $latest"
+v="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
+includeBuildTools "$INPUT_TOKEN" "$v"
