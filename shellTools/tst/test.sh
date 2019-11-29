@@ -43,6 +43,8 @@ cd $tmp
 
 [[ -f ../buildTools.jar               ]] && cp ../buildTools.jar .               || :
 [[ -f ../out/artifacts/buildTools.jar ]] && cp ../out/artifacts/buildTools.jar . || :
+set -x
+find .. -type f
 . <(java -jar ./buildTools.jar)
 
 ##### tests ###########################################################################################################
