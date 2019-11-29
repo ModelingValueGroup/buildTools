@@ -37,6 +37,12 @@ jobs:
       - name: "ant rebuild"
         run: rm -rf out; ant
 
+      - name: "upload buildTools.jar"
+        uses: actions/upload-artifact@v1
+        with:
+          name: buildTools.jar
+          path: out/artifacts/buildTools.jar
+
       - name: "install some packages"
         run: sudo apt-get install xmlstarlet jq maven
 
