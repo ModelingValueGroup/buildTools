@@ -6,7 +6,7 @@
   <property name="module.jdk.bin.shelltools" value="${project.jdk.bin}"/>
   <property name="module.jdk.classpath.shelltools" value="${project.jdk.classpath}"/>
   
-  <property name="compiler.args.shelltools" value="-encoding UTF-8 -source 11 -target 11 ${compiler.args}"/>
+  <property name="compiler.args.shelltools" value="-encoding UTF-8 -source 11 -target 8 ${compiler.args}"/>
   
   <property name="shelltools.output.dir" value="${module.shelltools.basedir}/../out/production/shellTools"/>
   <property name="shelltools.testoutput.dir" value="${module.shelltools.basedir}/../out/test/shellTools"/>
