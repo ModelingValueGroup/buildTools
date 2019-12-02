@@ -6,7 +6,7 @@
   <property name="module.jdk.bin.correctors" value="${project.jdk.bin}"/>
   <property name="module.jdk.classpath.correctors" value="${project.jdk.classpath}"/>
   
-  <property name="compiler.args.correctors" value="-encoding UTF-8 -source 11 -target 8 ${compiler.args}"/>
+  <property name="compiler.args.correctors" value="-encoding UTF-8 -source 11 -target 11 ${compiler.args}"/>
   
   <property name="correctors.output.dir" value="${module.correctors.basedir}/../out/production/correctors"/>
   <property name="correctors.testoutput.dir" value="${module.correctors.basedir}/../out/test/correctors"/>
