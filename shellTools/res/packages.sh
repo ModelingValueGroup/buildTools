@@ -9,9 +9,9 @@
 ## specific language governing permissions and limitations under the License.                                          ~
 ##                                                                                                                     ~
 ## Maintainers:                                                                                                        ~
-##     Wim Bast, Carel Bast, Tom Brus                                                                                  ~
+##     Wim Bast, Tom Brus, Ronald Krijgsheld                                                                           ~
 ## Contributors:                                                                                                       ~
-##     Arjan Kok, Ronald Krijgsheld                                                                                    ~
+##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 set -euo pipefail
