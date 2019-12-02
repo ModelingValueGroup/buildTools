@@ -62,12 +62,15 @@ updatePomFromIntellijDependencies() {
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    <!--==============================================================-->
+    <!-- WARNING: this file will be overwritten by the build scripts! -->
+    <!--==============================================================-->
+    <!-- only the 4 lines below will survive -->
     <groupId>$g</groupId>
     <artifactId>$a</artifactId>
     <version>$v</version>
     <packaging>$e</packaging>
-
+    <!--==============================================================-->
     <dependencies>
 $(intellijDependenciesToPom)
     </dependencies>
@@ -101,6 +104,9 @@ generateAntTestFileFromIntellij() {
         cat <<EOF | xmlstarlet fo | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="test.$modName" default="test.results.jar.$modName">
+    <!--==============================================================-->
+    <!-- WARNING: this file will be overwritten by the build scripts! -->
+    <!--==============================================================-->
     <path id="classpath.test.$modName">
         <path>
 $(genTestLibPaths)
@@ -154,6 +160,9 @@ generateAntJavadocFileFromIntellij() {
     cat <<EOF | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="javadoc.$modName" default="javadoc.module.$modName">
+    <!--==============================================================-->
+    <!-- WARNING: this file will be overwritten by the build scripts! -->
+    <!--==============================================================-->
     <property name="$modName.javadoc.dir" value="\${basedir}/out/artifacts"/>
     <property name="$modName.javadoc.tmp" value="\${$modName.javadoc.dir}/tmp"/>
     <property name="$modName.javadoc.jar" value="\${$modName.javadoc.dir}/$modName-javadoc.jar"/>

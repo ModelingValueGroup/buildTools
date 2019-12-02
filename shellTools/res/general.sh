@@ -70,7 +70,6 @@ compareAndOverwrite() {
         rm "$tmp"
     else
         mv "$tmp" "$file"
-        echo "$file" >> "$CHANGES_MADE_MARKER"
     fi
 
 }

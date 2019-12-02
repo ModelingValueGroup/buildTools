@@ -1,0 +1,77 @@
+name: build and test
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: "checkout"
+        uses: actions/checkout@v1
+
+      - name: "attach head"
+        run: git checkout "${GITHUB_REF#refs/heads/}"
+
+      - name: "setup JDK"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: "prepare ant"
+        run:  |
+          cat <<EOF >build.properties
+          jdk.home.11=$JAVA_HOME
+          path.variable.maven_repository=$HOME/.m2/repository
+          EOF
+          sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/' build.xml
+
+      - name: "ant build"
+        run: ant
+
+      - name: "correct eols"
+        run: java -cp out/artifacts/buildTools.jar correctors.EolCorrector
+
+      - name: "correct headers"
+        run: java -cp out/artifacts/buildTools.jar correctors.HeaderCorrector header
+
+      - name: "ant rebuild"
+        run: rm -rf out; ant
+
+      - name: "upload buildTools.jar"
+        uses: actions/upload-artifact@v1
+        with:
+          name: buildTools.jar
+          path: out/artifacts/buildTools.jar
+
+      - name: "install some packages"
+        run: sudo apt-get install xmlstarlet jq maven
+
+      - name: "test"
+        run: shellTools/tst/test.sh
+        env:
+          INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: "push changes back to github"
+        run:  |
+          git ls-files --deleted --modified --others --exclude-standard || :
+          if [[ "$(git ls-files --deleted --modified --others --exclude-standard)" ]]; then
+            echo "changes need to be pushed back to github"
+
+            echo "::group::git commit and push"
+              git config user.email "automation@modelingvalue.com"
+              git config user.name "$GITHUB_ACTOR"
+              git add .
+              git commit -m "adjusted files [by github actions]"
+              git push "https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git"
+            echo "::endgroup::"
+
+          else
+            echo "no changes need to be pushed back to github"
+          fi
+
+      - name: "upload as package"
+        uses: ModelingValueGroup/upload-maven-package-action@master
+        if: github.ref == 'refs/heads/master'
+        with:
+          file: "out/artifacts/buildTools.jar"
+          token: "${{ secrets.GITHUB_TOKEN }}"
