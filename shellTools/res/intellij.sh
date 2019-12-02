@@ -155,8 +155,8 @@ generateAntJavadocFileFromIntellij() {
     local  modDir="$1"; shift
     local modName="$1"; shift
 
-    local xml="$modDir/javadoc.xml"
-    locaL modNameLow="${modName,,}"
+    local        xml="$modDir/javadoc.xml"
+    local modNameLow="${modName,,}"
 
     cat <<EOF | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
