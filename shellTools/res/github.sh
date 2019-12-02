@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-pushBack() {
+pushBackToGithub() {
     local token="$1"; shift
     local email="$1"; shift
     local   msg="$1"; shift
