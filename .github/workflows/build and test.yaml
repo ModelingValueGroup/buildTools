@@ -17,6 +17,9 @@ jobs:
         with:
           java-version: 11
 
+      - name: "get generic info"
+        uses: ModelingValueGroup/generic-info@master
+
       - name: "prepare ant"
         run:  |
           cat <<EOF >build.properties
