@@ -156,6 +156,7 @@ generateAntJavadocFileFromIntellij() {
     local modName="$1"; shift
 
     local xml="$modDir/javadoc.xml"
+    locaL modNameLow="${modName,,}"
 
     cat <<EOF | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -163,16 +164,16 @@ generateAntJavadocFileFromIntellij() {
     <!--==============================================================-->
     <!-- WARNING: this file will be overwritten by the build scripts! -->
     <!--==============================================================-->
-    <property name="$modName.javadoc.dir" value="\${basedir}/out/artifacts"/>
-    <property name="$modName.javadoc.tmp" value="\${$modName.javadoc.dir}/tmp"/>
-    <property name="$modName.javadoc.jar" value="\${$modName.javadoc.dir}/$modName-javadoc.jar"/>
+    <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
+    <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
+    <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
 
     <target name="javadoc.module.$modName">
-        <javadoc sourcepathref="$modName.module.test.sourcepath" destdir="\${$modName.javadoc.tmp}" classpathref="$modName.module.classpath"/>
-        <jar destfile="\${$modName.javadoc.jar}" filesetmanifest="skip">
-            <zipfileset dir="\${$modName.javadoc.tmp}"/>
+        <javadoc sourcepathref="$modNameLow.module.test.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
+        <jar destfile="\${$modNameLow.javadoc.jar}" filesetmanifest="skip">
+            <zipfileset dir="\${$modNameLow.javadoc.tmp}"/>
         </jar>
-        <delete dir="\${$modName.javadoc.tmp}"/>
+        <delete dir="\${$modNameLow.javadoc.tmp}"/>
     </target>
 </project>
 EOF
