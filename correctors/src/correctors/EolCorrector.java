@@ -45,6 +45,10 @@ public class EolCorrector extends CorrectorBase {
     private static final Set<String> NO_TEXT_EXTENSIONS = new HashSet<>(Arrays.asList(
             "iml",
             "jar",
+            "png",
+            "jar",
+            "jpeg",
+            "jpg",
             "class"
     ));
 
