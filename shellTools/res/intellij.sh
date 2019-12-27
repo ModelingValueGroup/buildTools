@@ -50,7 +50,7 @@ updatePomFromIntellijDependencies() {
 
     intellijDependenciesToPom() {
       local gave
-      for gave in $(intellijDependenciesGaves); do
+      for gave in $(getdependencyGaves); do
           local g a v e
           gave2vars "$gave" "" ""
           echo "<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version></dependency>"
@@ -77,6 +77,40 @@ $(intellijDependenciesToPom)
 </project>
 EOF
 }
+generateIntellijLibraryFilesFromDependencies() {
+    while read flags g a v e; do
+        generateIntellijLibraryFileFromDependencies "$flags" "$g" "$a" "$v" "$e"
+    done < <(sed 's/ *#.*//;/^$/d' dependencies)
+}
+generateIntellijLibraryFileFromDependencies() {
+    local flags="$1"; shift
+    local     g="$1"; shift
+    local     a="$1"; shift
+    local     v="$1"; shift
+    local     e="$1"; shift
+
+    cat <<EOF > ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
+<component name="libraryTable">
+  <library name="Maven: $g:$a">
+    <CLASSES>
+$(if [[ "$flags" == 1.. ]]; then
+    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v.$e!/\" />"
+fi)
+    </CLASSES>
+    <JAVADOC>
+$(if [[ "$flags" == .1. ]]; then
+    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v-javadoc.$e!/\" />"
+fi)
+    </JAVADOC>
+    <SOURCES>
+$(if [[ "$flags" == ..1 ]]; then
+    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v-sources.$e!/\" />"
+fi)
+    </SOURCES>
+  </library>
+</component>
+EOF
+}
 generateAntTestFilesFromIntellij() {
     local mm
     for mm in $(intellijModules); do
@@ -94,7 +128,7 @@ generateAntTestFileFromIntellij() {
 
         genTestLibPaths() {
             local gave
-            for gave in $(intellijDependenciesGaves); do
+            for gave in $(getdependencyGaves); do
                 local g a v e
                 gave2vars "$gave" "" ""
                 echo "<pathelement location=\"\${path.variable.maven_repository}/${g//.//}/$a/$v/$a-$v.jar\"/>"
@@ -196,12 +230,18 @@ importIntoAntFile() {
         sed "s|</project>|$statement&|" "$into" | compareAndOverwrite "$into"
     fi
 }
-intellijDependenciesGaves() {
-    local libxml
-    for libxml in .idea/libraries/*.xml; do
-      xmlstarlet sel -t -v component/library/@name "$libxml" | sed 's/^Maven: *//'
-      echo
-    done | sort -u
+getdependencyGaves() {
+    if [[ -f dependencies ]]; then
+        while read flags g a v e; do
+            echo "$g:$a:$v:$e"
+        done < <(sed 's/ *#.*//;/^$/d' dependencies)
+    else
+        local libxml
+        for libxml in .idea/libraries/*.xml; do
+          xmlstarlet sel -t -v component/library/@name "$libxml" | sed 's/^Maven: *//'
+          echo
+        done
+    fi | sort -u
 }
 intellijModules() {
     local modules=".idea/modules.xml"
