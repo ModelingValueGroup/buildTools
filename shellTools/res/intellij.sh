@@ -79,6 +79,11 @@ EOF
 }
 generateIntellijLibraryFilesFromDependencies() {
     while read flags g a v e; do
+        generateIntellijLibraryFileFromDependencies "$flags" "$g" "$a" "$v" "$e" > ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
+    done < <(sed 's/ *#.*//;/^$/d' dependencies)
+}
+generateIntellijLibraryFilesFromDependencies() {
+    while read flags g a v e; do
         generateIntellijLibraryFileFromDependencies "$flags" "$g" "$a" "$v" "$e"
     done < <(sed 's/ *#.*//;/^$/d' dependencies)
 }
@@ -89,24 +94,36 @@ generateIntellijLibraryFileFromDependencies() {
     local     v="$1"; shift
     local     e="$1"; shift
 
-    cat <<EOF > ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
+    cat <<EOF
 <component name="libraryTable">
   <library name="Maven: $g:$a">
-    <CLASSES>
-$(if [[ "$flags" == 1.. ]]; then
-    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v.$e!/\" />"
-fi)
-    </CLASSES>
-    <JAVADOC>
-$(if [[ "$flags" == .1. ]]; then
-    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v-javadoc.$e!/\" />"
-fi)
-    </JAVADOC>
-    <SOURCES>
-$(if [[ "$flags" == ..1 ]]; then
-    echo "      <root url=\"jar://$MAVEN_REPOSITORY$/${g//.//}/$a/$v/$a-$v-sources.$e!/\" />"
-fi)
-    </SOURCES>
+$(
+if [[ "$flags" =~ 1.. ]]; then
+    echo "    <CLASSES>"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v.$e!/\" />"
+    echo "    </CLASSES>"
+else
+    echo "    <CLASSES />"
+fi
+)
+$(
+if [[ "$flags" =~ .1. ]]; then
+    echo "    <JAVADOC>"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v-javadoc.$e!/\" />"
+    echo "    </JAVADOC>"
+else
+    echo "    <JAVADOC />"
+fi
+)
+$(
+if [[ "$flags" =~ ..1 ]]; then
+    echo "    <SOURCES>"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v-sources.$e!/\" />"
+    echo "    </SOURCES>"
+else
+    echo "    <SOURCES />"
+fi
+)
   </library>
 </component>
 EOF
