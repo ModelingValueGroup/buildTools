@@ -136,6 +136,7 @@ dependencies=(
 )
 EOF
         cp ../../.idea/modules.xml .idea/modules.xml
+        cp ../../build.xml build.xml
         set -x
         generateAll
     )
