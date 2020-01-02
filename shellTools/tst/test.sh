@@ -135,8 +135,7 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds"
 )
 EOF
-        cat <<'EOF' > .idea/modules.xml
-EOF
+        cp ../../.idea/modules.xml .idea/modules.xml
         generateAll
     )
     if [[ "$(md5sum <test_05/pom.xml)" != "ece269313ce9aa1951eedc58e0ca5247" ]]; then
