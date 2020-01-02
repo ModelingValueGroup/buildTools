@@ -78,7 +78,7 @@ gave2vars() {
     gave="$(extractGaveFromPom "pom.xml")"
   fi
   if [[ "$gave" == "" ]]; then
-    echo "::error::can not determine group and artifact from '$gave' and '$pom'"
+    echo "::error::can not determine group and artifact from '$gave' and '$pom'" 1>&2
     exit 55
   fi
   export g a v e

@@ -17,14 +17,14 @@
 set -euo pipefail
 
 if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
-  echo "::error:: variable GITHUB_REPOSITORY undefined"
+  echo "::error:: variable GITHUB_REPOSITORY undefined" 1>&2
   exit 67
 fi
 if ! command -v mvn &>/dev/null; then
-  echo "::error:: mvn not installed"
+  echo "::error:: mvn not installed" 1>&2
   exit 68
 fi
 if ! command -v xmlstarlet &>/dev/null; then
-  echo "::error:: xmlstarlet not installed"
+  echo "::error:: xmlstarlet not installed" 1>&2
   exit 69
 fi

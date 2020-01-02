@@ -47,7 +47,7 @@ uploadArtifact() {
     local  file="$1"; shift
 
     if [[ ! -f "$file" ]]; then
-        echo "::error::uploadArtifact: can not find file $file"
+        echo "::error::uploadArtifact: can not find file $file" 1>&2
         exit 75
     fi
 
