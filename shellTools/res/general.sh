@@ -67,6 +67,7 @@ compareAndOverwrite() {
 
     cat > $tmp
     if [[ ! -f "$file" ]] || ! cmp -s "$tmp" "$file"; then
+        mkdir -p "$(dirname "$file")"
         cp "$tmp" "$file"
     fi
     rm "$tmp"
