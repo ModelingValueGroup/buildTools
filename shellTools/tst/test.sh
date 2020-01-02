@@ -136,6 +136,7 @@ dependencies=(
 )
 EOF
         cp ../../.idea/modules.xml .idea/modules.xml
+        set -x
         generateAll
     )
     if [[ "$(md5sum <test_05/pom.xml)" != "ece269313ce9aa1951eedc58e0ca5247" ]]; then

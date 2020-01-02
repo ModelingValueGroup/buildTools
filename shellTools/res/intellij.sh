@@ -180,8 +180,9 @@ generateAntJavadocFilesFromIntellij() {
         local modDir modName
         IFS=/ read -r modDir modName <<<"$modDirAndName"
         local modNameLow="${modName,,}"
+        local xml="$modDir/javadoc.xml"
 
-        cat <<EOF | compareAndOverwrite "$modDir/javadoc.xml"
+        cat <<EOF | compareAndOverwrite "$xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
