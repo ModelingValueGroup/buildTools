@@ -35,14 +35,28 @@ if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
   }
 fi
 
+checksum() {
+    local f="$1"; shift
+    local c="$1"; shift
+
+    local sum="$(md5sum < "$f" | sed 's/ .*//')"
+    if [[ "$sum" != "$c" ]]; then
+        echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
+        exit 46
+    fi
+}
+
 ##### make tmp dir
 tmp=./tmp
 rm -rf $tmp
 mkdir $tmp
 cd $tmp
 
-[[ -f ../buildTools.jar               ]] && cp ../buildTools.jar .               || :
-[[ -f ../out/artifacts/buildTools.jar ]] && cp ../out/artifacts/buildTools.jar . || :
+if [[ -f ../buildTools.jar               ]]; then
+    cp ../buildTools.jar .
+elif [[ -f ../out/artifacts/buildTools.jar ]]; then
+    cp ../out/artifacts/buildTools.jar .
+fi
 
 . <(java -jar ./buildTools.jar)
 
@@ -71,24 +85,14 @@ test_00() {
 #######################################################################################################################
 test_01() {
   downloadArtifactQuick "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  local sum="$(md5sum < buildTools.sh | sed 's/ .*//')"
-  local exp="da493bbcf960af426c47a51f876395d0"
-  if [[ "$sum" != "$exp" ]]; then
-    echo "::error::downloadArtifactQuick failed (md5sum unexpected: $sum and $exp expected)" 1>&2
-    exit 65
-  fi
+  checksum "buildTools.sh" "da493bbcf960af426c47a51f876395d0"
   rm buildTools.sh
   echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_02() {
   downloadArtifact "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  local sum="$(md5sum < buildTools.sh | sed 's/ .*//')"
-  local exp="da493bbcf960af426c47a51f876395d0"
-  if [[ "$sum" != "$exp" ]]; then
-    echo "::error::downloadArtifact failed (md5sum unexpected: $sum and $exp expected)" 1>&2
-    exit 65
-  fi
+  checksum "buildTools.sh" "da493bbcf960af426c47a51f876395d0"
   rm buildTools.sh
   echo "test OK: downloadArtifact is working correctly"
 }
@@ -137,24 +141,11 @@ dependencies=(
 EOF
         cp ../../.idea/modules.xml .idea/modules.xml
         cp ../../build.xml build.xml
-        set -x
         generateAll
     )
-    local sum1="$(md5sum < test_05/pom.xml                                               | sed 's/ .*//')"
-    local sum2="$(md5sum < test_05/.idea/libraries/Maven__junit_junit.xml                | sed 's/ .*//')"
-    local sum3="$(md5sum < test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml | sed 's/ .*//')"
-    if [[ $sum1 != ece269313ce9aa1951eedc58e0ca5247 ]]; then
-        echo "::error::test failed: test_05/pom.xml is not genereted correctly (md5sum is $sum1)" 1>&2
-        exit 46
-    elif [[ $sum2 != 50f4e5517c5891fb37d7fd93f18e1e72 ]]; then
-        echo "::error::test failed: test_05/.idea/libraries/Maven__junit_junit.xml is not genereted correctly (md5sum is $sum2)" 1>&2
-        exit 46
-    elif [[ $sum3 != ba2140517389305e2276df33aad7db7c ]]; then
-        echo "::error::test failed: test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml is not genereted correctly (md5sum is $sum3)" 1>&2
-        exit 46
-    else
-        echo "test OK: all generated correctly"
-    fi
+    checksum test_05/pom.xml ece269313ce9aa1951eedc58e0ca5247
+    checksum test_05/.idea/libraries/Maven__junit_junit.xml 50f4e5517c5891fb37d7fd93f18e1e72
+    checksum test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml ba2140517389305e2276df33aad7db7c
 }
 #######################################################################################################################
 ##### test execution:
