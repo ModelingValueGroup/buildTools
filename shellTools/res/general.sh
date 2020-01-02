@@ -66,10 +66,8 @@ compareAndOverwrite() {
     local tmp=$(mktemp)
 
     cat > $tmp
-    if [[ -f "$file" ]] && cmp -s "$tmp" "$file"; then
-        rm "$tmp"
-    else
-        mv "$tmp" "$file"
+    if [[ ! -f "$file" ]] || ! cmp -s "$tmp" "$file"; then
+        cp "$tmp" "$file"
     fi
-
+    rm "$tmp"
 }
