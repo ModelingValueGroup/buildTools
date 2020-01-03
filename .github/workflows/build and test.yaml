@@ -33,7 +33,7 @@ jobs:
 
       - name: "generate/adjust if needed"
         run:
-          . <(java -jar buildTools.jar)
+          . <(java -jar out/artifacts/buildTools.jar)
           generateAll
           correctEols
           correctHeaders header
