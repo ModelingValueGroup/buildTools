@@ -32,23 +32,29 @@ jobs:
           sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/' build.xml
 
       - name: "ant build"
-        run: ant
-
-      - name: "generate/adjust if needed"
         run: |
-          . <(java -jar out/artifacts/buildTools.jar)
+          rm -rf out
+          ant
+          cp out/artifacts/buildTools.jar .
+
+      - name: "generate/adjust some files if needed"
+        run: |
+          . <(java -jar buildTools.jar)
           generateAll
           correctEols
           correctHeaders header
 
       - name: "ant build again (in case something was adjusted in previous step)"
-        run: rm -rf out; ant
+        run: |
+          rm -rf out
+          ant
+          cp out/artifacts/buildTools.jar .
 
       - name: "upload buildTools.jar"
         uses: actions/upload-artifact@v1
         with:
           name: buildTools.jar
-          path: out/artifacts/buildTools.jar
+          path: buildTools.jar
 
       - name: "test"
         run: shellTools/tst/test.sh
@@ -57,12 +63,12 @@ jobs:
 
       - name: "push changes back to github"
         run:  |
-          . <(java -jar out/artifacts/buildTools.jar)
+          . <(java -jar buildTools.jar)
           pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
         with:
-          file: "out/artifacts/buildTools.jar"
+          file: "buildTools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
