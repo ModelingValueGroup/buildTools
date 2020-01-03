@@ -31,13 +31,14 @@ jobs:
       - name: "ant build"
         run: ant
 
-      - name: "correct eols"
-        run: java -cp out/artifacts/buildTools.jar correctors.EolCorrector
+      - name: "generate/adjust if needed"
+        run:
+          . <(java -jar buildTools.jar)
+          generateAll
+          correctEols
+          correctHeaders header
 
-      - name: "correct headers"
-        run: java -cp out/artifacts/buildTools.jar correctors.HeaderCorrector header
-
-      - name: "ant rebuild"
+      - name: "ant build again (in case something was adjusted in previous step)"
         run: rm -rf out; ant
 
       - name: "upload buildTools.jar"
