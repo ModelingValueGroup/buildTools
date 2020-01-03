@@ -52,7 +52,7 @@ set -x
 <!--==============================================================-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>$g</groupId>
     <artifactId>$a</artifactId>
@@ -61,7 +61,9 @@ set -x
     <dependencies>
 $(
     getDependencyGavesWithFlags | while read g a v e flags; do
-        echo "<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version></dependency>"
+        if [[ $g != '' ]]; then
+            echo "<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version></dependency>"
+        fi
     done
 )
     </dependencies>
@@ -73,7 +75,8 @@ generateIntellijLibraryFilesFromDependencies() {
     local g a v e flags
     mkdir -p ".idea/libraries"
     getDependencyGavesWithFlags | while read g a v e flags; do
-        cat <<EOF | compareAndOverwrite ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
+        if [[ $g != '' ]]; then
+            cat <<EOF | compareAndOverwrite ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
 <!--          change  project.sh  instead                         -->
@@ -110,6 +113,7 @@ fi
   </library>
 </component>
 EOF
+        fi
     done
 }
 generateAntTestFilesFromIntellij() {
