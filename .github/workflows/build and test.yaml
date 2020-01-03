@@ -17,6 +17,9 @@ jobs:
         with:
           java-version: 11
 
+      - name: "install xmlstarlet/jq/maven"
+        run: sudo apt-get install xmlstarlet jq maven
+
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master
 
@@ -46,9 +49,6 @@ jobs:
         with:
           name: buildTools.jar
           path: out/artifacts/buildTools.jar
-
-      - name: "install some packages"
-        run: sudo apt-get install xmlstarlet jq maven
 
       - name: "test"
         run: shellTools/tst/test.sh
