@@ -42,6 +42,7 @@ cleanupIntellijGeneratedAntFiles() {
     done
 }
 generatePomFromDependencies() {
+set -x
     local g a v e flags
     read g a v e flags < <(getFirstArtifactWithFlags)
     cat <<EOF | compareAndOverwrite "pom.xml"
@@ -66,6 +67,7 @@ $(
     </dependencies>
 </project>
 EOF
+set +x
 }
 generateIntellijLibraryFilesFromDependencies() {
     local g a v e flags
