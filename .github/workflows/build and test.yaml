@@ -35,7 +35,7 @@ jobs:
         run: ant
 
       - name: "generate/adjust if needed"
-        run:
+        run: |
           . <(java -jar out/artifacts/buildTools.jar)
           generateAll
           correctEols
