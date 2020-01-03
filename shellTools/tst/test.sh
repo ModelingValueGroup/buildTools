@@ -36,8 +36,8 @@ if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
 fi
 
 checksum() {
-    local f="$1"; shift
     local c="$1"; shift
+    local f="$1"; shift
 
     local sum="$(md5sum < "$f" | sed 's/ .*//')"
     if [[ "$sum" != "$c" ]]; then
@@ -85,14 +85,14 @@ test_00() {
 #######################################################################################################################
 test_01() {
   downloadArtifactQuick "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  checksum "buildTools.sh" "da493bbcf960af426c47a51f876395d0"
+  checksum "da493bbcf960af426c47a51f876395d0" "buildTools.sh"
   rm buildTools.sh
   echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_02() {
   downloadArtifact "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  checksum "buildTools.sh" "da493bbcf960af426c47a51f876395d0"
+  checksum "da493bbcf960af426c47a51f876395d0" "buildTools.sh"
   rm buildTools.sh
   echo "test OK: downloadArtifact is working correctly"
 }
@@ -143,9 +143,9 @@ EOF
         cp ../../build.xml build.xml
         generateAll
     )
-    checksum test_05/pom.xml ece269313ce9aa1951eedc58e0ca5247
-    checksum test_05/.idea/libraries/Maven__junit_junit.xml 50f4e5517c5891fb37d7fd93f18e1e72
-    checksum test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml ba2140517389305e2276df33aad7db7c
+    checksum "a189c3c641c14feeed3100aa3883aa3f" "test_05/pom.xml"
+    checksum "50f4e5517c5891fb37d7fd93f18e1e72" "test_05/.idea/libraries/Maven__junit_junit.xml"
+    checksum "ba2140517389305e2276df33aad7db7c" "test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
 }
 #######################################################################################################################
 ##### test execution:
