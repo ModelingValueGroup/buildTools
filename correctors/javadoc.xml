@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--==============================================================-->
+<!-- WARNING: this file will be overwritten by the build scripts! -->
+<!--          change  project.sh  instead                         -->
+<!--==============================================================-->
+<project name="javadoc.correctors" default="javadoc.module.correctors">
+    <property name="correctors.javadoc.dir" value="${basedir}/out/artifacts"/>
+    <property name="correctors.javadoc.tmp" value="${correctors.javadoc.dir}/tmp"/>
+    <property name="correctors.javadoc.jar" value="${correctors.javadoc.dir}/correctors-javadoc.jar"/>
+
+    <target name="javadoc.module.correctors">
+        <javadoc sourcepathref="correctors.module.test.sourcepath" destdir="${correctors.javadoc.tmp}" classpathref="correctors.module.classpath"/>
+        <jar destfile="${correctors.javadoc.jar}" filesetmanifest="skip">
+            <zipfileset dir="${correctors.javadoc.tmp}"/>
+        </jar>
+        <delete dir="${correctors.javadoc.tmp}"/>
+    </target>
+</project>

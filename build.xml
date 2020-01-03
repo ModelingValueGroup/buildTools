@@ -174,4 +174,4 @@
   </target>
   
   <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
-</project>
+<import file="${basedir}/shellTools/test.xml"/><import file="${basedir}/correctors/javadoc.xml"/><import file="${basedir}/shellTools/javadoc.xml"/></project>

@@ -60,7 +60,7 @@
   
   <target name="compile.module.shelltools.production" description="Compile module shellTools; production classes">
     <mkdir dir="${shelltools.output.dir}"/>
-    <javac destdir="${shelltools.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
+    <javac includeantruntime="false" destdir="${shelltools.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
       <compilerarg line="${compiler.args.shelltools}"/>
       <bootclasspath refid="shelltools.module.bootclasspath"/>
       <classpath refid="shelltools.module.production.classpath"/>
@@ -82,7 +82,7 @@
   
   <target name="compile.module.shelltools.tests" depends="compile.module.shelltools.production" description="compile module shellTools; test classes" unless="skip.tests">
     <mkdir dir="${shelltools.testoutput.dir}"/>
-    <javac destdir="${shelltools.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
+    <javac includeantruntime="false" destdir="${shelltools.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
       <compilerarg line="${compiler.args.shelltools}"/>
       <bootclasspath refid="shelltools.module.bootclasspath"/>
       <classpath refid="shelltools.module.classpath"/>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--==============================================================-->
+<!-- WARNING: this file will be overwritten by the build scripts! -->
+<!--          change  project.sh  instead                         -->
+<!--==============================================================-->
+<project name="test.shellTools" default="test.results.jar.shellTools">
+  <path id="classpath.test.shellTools">
+    <path>
+      <pathelement location="${path.variable.maven_repository}////-.jar"/>
+    </path>
+    <dirset dir="out/production">
+      <include name="*"/>
+    </dirset>
+    <dirset dir="out/test">
+      <include name="*"/>
+    </dirset>
+  </path>
+  <target name="test.shellTools">
+    <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
+      <!-- fork="on" forkmode="perTest" threads="8" -->
+      <classpath refid="classpath.test.shellTools"/>
+      <batchtest todir=".">
+        <fileset dir="out/test/shellTools">
+          <include name="**/*Test.*"/>
+          <include name="**/*Tests.*"/>
+        </fileset>
+        <formatter type="xml"/>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="test.results.jar.shellTools" depends="test.shellTools">
+    <mkdir dir="${basedir}/out/artifacts"/>
+    <jar destfile="${basedir}/out/artifacts/shellTools-testresults.jar" filesetmanifest="skip">
+      <zipfileset file="${basedir}/TEST-*.xml"/>
+    </jar>
+  </target>
+</project>
