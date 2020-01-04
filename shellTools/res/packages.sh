@@ -41,29 +41,45 @@ downloadArtifact() {
           -Dmdep.stripVersion="true"
 }
 uploadArtifact() {
-    local token="$1"; shift
-    local  gave="$1"; shift
-    local   pom="$1"; shift
-    local  file="$1"; shift
+    local   token="$1"; shift
+    local    gave="$1"; shift
+    local     pom="$1"; shift
+    local    file="$1"; shift
+    local sources="${1:-}"
+    local javadoc="${2:-}"
 
     if [[ ! -f "$file" ]]; then
         echo "::error::uploadArtifact: can not find file $file" 1>&2
         exit 75
+    fi
+    local args=("-Dfile=$file")
+    if [[ "$sources" != "" ]]; then
+        if [[ ! -f "$sources" ]]; then
+            echo "::error::uploadArtifact: can not find sources file $sources" 1>&2
+            exit 75
+        fi
+        args+=("-Dsources=$sources")
+        if [[ "$javadoc" != "" ]]; then
+            if [[ ! -f "$javadoc" ]]; then
+                echo "::error::uploadArtifact: can not find javadoc file $javadoc" 1>&2
+                exit 75
+            fi
+            args+=("-Djavadoc=$javadoc")
+        fi
     fi
 
     local g a v e
     gave2vars "$gave" "$pom" "$file"
 
     mvn_ "$token" \
-    deploy:deploy-file \
-         -DgroupId="$g" \
-      -DartifactId="$a" \
-         -Dversion="$v" \
-       -Dpackaging="$e" \
-    -DrepositoryId="github" \
-            -Dfile="$file" \
-         -DpomFile="$pom" \
-             -Durl="$GITHUB_PACKAGE_URL"
+        deploy:deploy-file \
+             -DgroupId="$g" \
+          -DartifactId="$a" \
+             -Dversion="$v" \
+           -Dpackaging="$e" \
+        -DrepositoryId="github" \
+                 -Durl="$GITHUB_PACKAGE_URL" \
+                       "${args[@]}"
 }
 lastPackageVersion() {
     listPackageVersions "$@" | head -1
