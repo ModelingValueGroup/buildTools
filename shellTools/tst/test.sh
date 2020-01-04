@@ -143,7 +143,7 @@ EOF
         cp ../../build.xml build.xml
         generateAll
     )
-    checksum "a189c3c641c14feeed3100aa3883aa3f" "test_05/pom.xml"
+    checksum "f9b0eed046613097151f3a749bc133bb" "test_05/pom.xml"
     checksum "50f4e5517c5891fb37d7fd93f18e1e72" "test_05/.idea/libraries/Maven__junit_junit.xml"
     checksum "ba2140517389305e2276df33aad7db7c" "test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
 }
