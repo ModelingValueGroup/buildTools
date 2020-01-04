@@ -73,13 +73,14 @@ uploadArtifact() {
 
     mvn_ "$token" \
         deploy:deploy-file \
-             -DgroupId="$g" \
-          -DartifactId="$a" \
-             -Dversion="$v" \
-           -Dpackaging="$e" \
-        -DrepositoryId="github" \
-                 -Durl="$GITHUB_PACKAGE_URL" \
-                       "${args[@]}"
+                         -DgroupId="$g" \
+                      -DartifactId="$a" \
+                         -Dversion="$v" \
+                       -Dpackaging="$e" \
+                    -DrepositoryId="github" \
+                             -Durl="$GITHUB_PACKAGE_URL" \
+           -Dmaven.wagon.http.pool=false \
+        "${args[@]}"
 }
 lastPackageVersion() {
     listPackageVersions "$@" | head -1
