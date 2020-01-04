@@ -58,6 +58,9 @@ set -x
     <artifactId>$a</artifactId>
     <version>$v</version>
     <packaging>$e</packaging>
+    <scm>
+        <url>$GITHUB_PACKAGE_URL</url>
+    </scm>
     <dependencies>
 $(
     getDependencyGavesWithFlags | while read g a v e flags; do
