@@ -14,7 +14,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 artifacts=(
-  "org.modelingvalue   buildTools           1.1.4        jar j--"
+  "org.modelingvalue   buildTools           1.1.5        jar j--"
 )
 dependencies=(
 )
