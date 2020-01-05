@@ -81,6 +81,13 @@ uploadArtifact() {
                              -Durl="$GITHUB_PACKAGE_URL" \
            -Dmaven.wagon.http.pool=false \
         "${args[@]}"
+
+    # alternative example:
+    #    curl -X PUT \
+    #        "https://maven.pkg.github.com/igabaydulin/github-package-registry-example/com/github/igabaydulin/groovy-ping/1.0.0/groovy-ping-1.0.0.jar" \
+    #        -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
+    #        --upload-file "/full/path/to/groovy-ping-1.0.0.jar" \
+    #        -vvv
 }
 lastPackageVersion() {
     listPackageVersions "$@" | head -1
