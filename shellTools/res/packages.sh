@@ -69,39 +69,36 @@ downloadArtifact() {
 }
 uploadArtifactQuick() {
     local   token="$1"; shift
-    local    gave="$1"; shift
+    local       g="$1"; shift
+    local       a="$1"; shift
+    local       v="$1"; shift
     local     pom="$1"; shift
     local    file="$1"; shift
-    local sources="${1:-}"
-    local javadoc="${2:-}"
-
-    local g a v e
-    gave2vars "$gave" "$pom" "$file"
 
     if [[ ! -f "$file" ]]; then
         echo "::error::uploadArtifactQuick: can not find file $file" 1>&2
         exit 75
     fi
-    curl_ "$token" -X PUT --upload-file "$file" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "")"
-    if [[ "$pom" != "" ]]; then
-        if [[ -f "$pom" ]]; then
-            curl_ "$token" -X PUT --upload-file "$pom" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "pom" "")"
+
+    uploadArtifactQuick_upload() {
+        local  file="$1"; shift
+        local     e="$1"; shift
+        local extra="$1"; shift
+
+        if [[ "$file" != "" ]]; then
+            local url="$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "$extra")"
+            curl_ "$token" -X PUT --upload-file "$file" "$url"
         fi
-    fi
-    if [[ "$sources" != "" ]]; then
-        if [[ ! -f "$sources" ]]; then
-            echo "::error::uploadArtifactQuick: can not find sources file $sources" 1>&2
-            exit 75
-        fi
-        curl_ "$token" -X PUT --upload-file "$sources" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")"
-        if [[ "$javadoc" != "" ]]; then
-            if [[ ! -f "$javadoc" ]]; then
-                echo "::error::uploadArtifactQuick: can not find javadoc file $javadoc" 1>&2
-                exit 75
-            fi
-            curl_ "$token" -X PUT --upload-file "$javadoc" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")"
-        fi
-    fi
+    }
+
+    local       e="${file##*.}"
+    local sources="$(sed "s/[.]$e\$/-sources&/" <<<"$file")"
+    local javadoc="$(sed "s/[.]$e\$/-javadoc&/" <<<"$file")"
+
+    uploadArtifactQuick_upload "$pom"     "pom" ""
+    uploadArtifactQuick_upload "$file"    "$e"  ""
+    uploadArtifactQuick_upload "$sources" "$e"  "sources"
+    uploadArtifactQuick_upload "$javadoc" "$e"  "javadoc"
 }
 uploadArtifact() {
     local   token="$1"; shift
@@ -177,4 +174,43 @@ query {
 EOF
 )"
     graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version' 2>/dev/null
+}
+runUploadArtifactTest() {
+    local     g="$1"; shift
+    local     a="$1"; shift
+    local token="$1"; shift
+
+    local   tmp="tst-$RANDOM"
+    local   dwn="$tmp-dwn"
+    local     v="$(date +%Y%m%d.%H%M%S)"
+    local   pom="tst.pom"
+
+    mkdir "$tmp"
+    (   cd "$tmp"
+        cat <<EOF > "tst.pom"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>$g</groupId>
+    <artifactId>$a</artifactId>
+    <version>$v</version>
+    <packaging>jar</packaging>
+</project>
+EOF
+        echo "#tst.jar"         > tst
+        echo "#tst-sources.jar" > tst-sources
+        echo "#tst-javadoc.jar" > tst-javadoc
+        jar cf tst.jar         tst
+        jar cf tst-sources.jar tst-sources
+        jar cf tst-javadoc.jar tst-javadoc
+    )
+    uploadArtifactQuick   "$token" "$g" "$a" "$v" "$tmp/tst.pom" "$tmp/tst.jar"
+
+    downloadArtifactQuick "$token" "$g" "$a" "$v" "jar" "$dwn"
+    mustBeSameContents "$tmp/tst.pom"         "$dwn/$a.pom"
+    mustBeSameContents "$tmp/tst.jar"         "$dwn/$a.jar"
+    mustBeSameContents "$tmp/tst-sources.jar" "$dwn/$a-sources.jar"
+    mustBeSameContents "$tmp/tst-javadoc.jar" "$dwn/$a-javadoc.jar"
+    rm -rf "$tmp" "$dwn"
 }

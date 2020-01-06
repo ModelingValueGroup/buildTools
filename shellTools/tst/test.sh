@@ -17,25 +17,6 @@
 set -euo pipefail
 
 #######################################################################################################################
-checksum() {
-    local c="$1"; shift
-    local f="$1"; shift
-
-    local sum="$(md5sum < "$f" | sed 's/ .*//')"
-    if [[ "$sum" != "$c" ]]; then
-        echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
-        exit 46
-    fi
-}
-mustBeSame() {
-    local exp="$1"; shift
-    local act="$1"; shift
-
-    if [[ "$(uuencode x <"$exp")" != "$(uuencode x <"$act")" ]]; then
-        echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
-        exit 46
-    fi
-}
 prepareForTesting() {
     if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
         export GITHUB_WORKSPACE="$PWD"
@@ -82,16 +63,16 @@ test_00() {
 test_01() {
     echo "...expect 2 warnings"
     downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    checksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
-    checksum "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
+    mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
+    mustBeSameChecksum "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
     rm -rf downloaded
     echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_02() {
     downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    checksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
-    checksum "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir
+    mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
+    mustBeSameChecksum "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir
     rm -rf downloaded
     echo "test OK: downloadArtifact is working correctly"
 }
@@ -139,39 +120,12 @@ EOF
     cp ../../.idea/modules.xml .idea/modules.xml
     cp ../../build.xml         build.xml
     generateAll
-    checksum "f9b0eed046613097151f3a749bc133bb" "pom.xml"
-    checksum "50f4e5517c5891fb37d7fd93f18e1e72" ".idea/libraries/Maven__junit_junit.xml"
-    checksum "ba2140517389305e2276df33aad7db7c" ".idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
+    mustBeSameChecksum "f9b0eed046613097151f3a749bc133bb" "pom.xml"
+    mustBeSameChecksum "50f4e5517c5891fb37d7fd93f18e1e72" ".idea/libraries/Maven__junit_junit.xml"
+    mustBeSameChecksum "ba2140517389305e2276df33aad7db7c" ".idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
 }
 test_06() {
-    local v="$(date +%Y%m%d.%H%M%S)"
-
-    cat <<EOF    > pom.xml
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>tst.modelingvalue</groupId>
-    <artifactId>buildTools</artifactId>
-    <version>$v</version>
-    <packaging>jar</packaging>
-</project>
-EOF
-    echo "#tst.jar"         > tst
-    echo "#tst-sources.jar" > tst-sources
-    echo "#tst-javadoc.jar" > tst-javadoc
-    jar cf tst.jar         tst
-    jar cf tst-sources.jar tst-sources
-    jar cf tst-javadoc.jar tst-javadoc
-
-    uploadArtifactQuick "$INPUT_TOKEN" "tst.modelingvalue:buildTools:$v:jar" "pom.xml" "tst.jar" "tst-sources.jar" "tst-javadoc.jar"
-
-    downloadArtifactQuick "$INPUT_TOKEN" "tst.modelingvalue" "buildTools" "$v" "jar" "downloaded"
-    mustBeSame "pom.xml"         "downloaded/buildTools.pom"
-    mustBeSame "tst.jar"         "downloaded/buildTools.jar"
-    mustBeSame "tst-sources.jar" "downloaded/buildTools-sources.jar"
-    mustBeSame "tst-javadoc.jar" "downloaded/buildTools-javadoc.jar"
-    rm -rf downloaded
+    runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
     echo "test OK: uploadArtifactQuick is working correctly"
 }
 #######################################################################################################################

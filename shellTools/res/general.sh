@@ -73,3 +73,22 @@ compareAndOverwrite() {
     fi
     rm "$tmp"
 }
+mustBeSameChecksum() {
+    local c="$1"; shift
+    local f="$1"; shift
+
+    local sum="$(md5sum < "$f" | sed 's/ .*//')"
+    if [[ "$sum" != "$c" ]]; then
+        echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
+        exit 46
+    fi
+}
+mustBeSameContents() {
+    local exp="$1"; shift
+    local act="$1"; shift
+
+    if [[ "$(uuencode x <"$exp")" != "$(uuencode x <"$act")" ]]; then
+        echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
+        exit 46
+    fi
+}
