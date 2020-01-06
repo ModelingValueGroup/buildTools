@@ -8,7 +8,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.modelingvalue</groupId>
     <artifactId>buildTools</artifactId>
-    <version>1.1.5</version>
+    <version>1.2.1</version>
     <packaging>jar</packaging>
     <scm>
         <url>https://maven.pkg.github.com/ModelingValueGroup/buildTools</url>

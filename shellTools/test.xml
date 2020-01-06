@@ -6,7 +6,7 @@
 <project name="test.shellTools" default="test.results.jar.shellTools">
   <path id="classpath.test.shellTools">
     <path>
-      <pathelement location="${path.variable.maven_repository}////-.jar"/>
+      <pathelement location="${path.variable.maven_repository}////-."/>
     </path>
     <dirset dir="out/production">
       <include name="*"/>
