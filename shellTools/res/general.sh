@@ -87,7 +87,13 @@ mustBeSameContents() {
     local exp="$1"; shift
     local act="$1"; shift
 
-    if [[ "$(uuencode x <"$exp")" != "$(uuencode x <"$act")" ]]; then
+    local expAsTxt
+    local actAsTxt
+
+    expAsTxt="$(base64 <"$exp")"
+    actAsTxt="$(base64 <"$act")"
+
+    if [[ "$expAsTxt" != "$actAsTxt" ]]; then
         echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
         exit 46
     fi
