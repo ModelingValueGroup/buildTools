@@ -16,6 +16,18 @@
 
 set -euo pipefail
 
+makeArtifactPath() {
+    local     g="$1"; shift
+    local     a="$1"; shift
+    local     v="$1"; shift
+    local     e="$1"; shift
+    local extra="${1:-}"       # <empty> | javadoc | sources
+
+    if [[ "$extra" != "" ]]; then
+        extra="-$extra"
+    fi
+    printf "%s/%s/%s/%s-%s%s.%s" "${g//.//}" "$a" "$v" "$a" "$v" "$extra" "$e"
+}
 downloadArtifactQuick() {
     local token="$1"; shift
     local     g="$1"; shift
@@ -24,7 +36,22 @@ downloadArtifactQuick() {
     local     e="$1"; shift
     local   dir="$1"; shift
 
-    group curl_ "$token" "$GITHUB_PACKAGE_URL/$g.$a/$v/$a-$v.$e" -o "$dir/$a.$e"
+    mkdir -p "$dir"
+
+    local f="$dir/$a.$e"
+    local fs="$dir/$a-sources.$e"
+    local fd="$dir/$a-javadoc.$e"
+    local fp="$dir/$a.pom"
+    rm -f "$f" "$fs" "$fd" "$fp"
+
+    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "")" -o "$f"
+    if [[ ! -f "$f" || -z "$f"  ]]; then
+        echo "::error::could not download artifact to $f"
+        return 88
+    fi
+    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")" -o "$fs" 2>/dev/null || echo "::warning::no sources available for $g:$a:$v"
+    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")" -o "$fd" 2>/dev/null || echo "::warning::no javadoc available for $g:$a:$v"
+    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "pom" ""      )" -o "$fp" 2>/dev/null || echo "::warning::no pom available for $g:$a:$v"
 }
 downloadArtifact() {
     local token="$1"; shift
@@ -40,6 +67,42 @@ downloadArtifact() {
             -DoutputDirectory="$dir" \
           -Dmdep.stripVersion="true"
 }
+uploadArtifactQuick() {
+    local   token="$1"; shift
+    local    gave="$1"; shift
+    local     pom="$1"; shift
+    local    file="$1"; shift
+    local sources="${1:-}"
+    local javadoc="${2:-}"
+
+    local g a v e
+    gave2vars "$gave" "$pom" "$file"
+
+    if [[ ! -f "$file" ]]; then
+        echo "::error::uploadArtifactQuick: can not find file $file" 1>&2
+        exit 75
+    fi
+    curl_ "$token" -X PUT --upload-file "$file" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "")"
+    if [[ "$pom" != "" ]]; then
+        if [[ -f "$pom" ]]; then
+            curl_ "$token" -X PUT --upload-file "$pom" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "pom" "")"
+        fi
+    fi
+    if [[ "$sources" != "" ]]; then
+        if [[ ! -f "$sources" ]]; then
+            echo "::error::uploadArtifactQuick: can not find sources file $sources" 1>&2
+            exit 75
+        fi
+        curl_ "$token" -X PUT --upload-file "$sources" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")"
+        if [[ "$javadoc" != "" ]]; then
+            if [[ ! -f "$javadoc" ]]; then
+                echo "::error::uploadArtifactQuick: can not find javadoc file $javadoc" 1>&2
+                exit 75
+            fi
+            curl_ "$token" -X PUT --upload-file "$javadoc" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")"
+        fi
+    fi
+}
 uploadArtifact() {
     local   token="$1"; shift
     local    gave="$1"; shift
@@ -47,6 +110,9 @@ uploadArtifact() {
     local    file="$1"; shift
     local sources="${1:-}"
     local javadoc="${2:-}"
+
+    local g a v e
+    gave2vars "$gave" "$pom" "$file"
 
     if [[ ! -f "$file" ]]; then
         echo "::error::uploadArtifact: can not find file $file" 1>&2
@@ -68,9 +134,6 @@ uploadArtifact() {
         fi
     fi
 
-    local g a v e
-    gave2vars "$gave" "$pom" "$file"
-
     mvn_ "$token" \
         deploy:deploy-file \
                          -DgroupId="$g" \
@@ -79,15 +142,7 @@ uploadArtifact() {
                        -Dpackaging="$e" \
                     -DrepositoryId="github" \
                              -Durl="$GITHUB_PACKAGE_URL" \
-           -Dmaven.wagon.http.pool=false \
         "${args[@]}"
-
-    # alternative example:
-    #    curl -X PUT \
-    #        "https://maven.pkg.github.com/igabaydulin/github-package-registry-example/com/github/igabaydulin/groovy-ping/1.0.0/groovy-ping-1.0.0.jar" \
-    #        -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
-    #        --upload-file "/full/path/to/groovy-ping-1.0.0.jar" \
-    #        -vvv
 }
 lastPackageVersion() {
     listPackageVersions "$@" | head -1

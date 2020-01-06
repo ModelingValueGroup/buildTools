@@ -89,7 +89,7 @@ generateIntellijLibraryFilesFromDependencies() {
 $(
 if [[ "$flags" =~ .*j.* ]]; then
     echo "    <CLASSES>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v.$e!/\" />"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "")!/\" />"
     echo "    </CLASSES>"
 else
     echo "    <CLASSES />"
@@ -98,7 +98,7 @@ fi
 $(
 if [[ "$flags" =~ .*d.* ]]; then
     echo "    <JAVADOC>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v-javadoc.$e!/\" />"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")!/\" />"
     echo "    </JAVADOC>"
 else
     echo "    <JAVADOC />"
@@ -107,7 +107,7 @@ fi
 $(
 if [[ "$flags" =~ .*s.* ]]; then
     echo "    <SOURCES>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/${g//.//}/$a/$v/$a-$v-sources.$e!/\" />"
+    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")!/\" />"
     echo "    </SOURCES>"
 else
     echo "    <SOURCES />"
@@ -133,7 +133,7 @@ generateAntTestFilesFromIntellij() {
             genTestLibPaths() {
                 local g a v e flags
                 getDependencyGavesWithFlags | while read g a v e flags; do
-                    echo "<pathelement location=\"\${path.variable.maven_repository}/${g//.//}/$a/$v/$a-$v.jar\"/>"
+                    echo "<pathelement location=\"\${path.variable.maven_repository}/$(makeArtifactPath "$g" "$a" "$v" "$e" "")\"/>"
                 done
             }
 

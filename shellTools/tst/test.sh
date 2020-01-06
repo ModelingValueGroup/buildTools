@@ -16,25 +16,7 @@
 
 set -euo pipefail
 
-if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
-  export GITHUB_WORKSPACE="$PWD"
-  export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
-
-  ##### mimic github actions env for local execution:
-  . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
-  if [[ "${INPUT_TOKEN:-}" == "" ]]; then
-    echo ":error:: local test runs require a file ~/sercrets.sh that defines at least INPUT_TOKEN"
-    exit 67
-  fi
-
-  if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
-    md5sum() { md5; }
-  fi
-  xmlstarlet() {
-    :
-  }
-fi
-
+#######################################################################################################################
 checksum() {
     local c="$1"; shift
     local f="$1"; shift
@@ -45,92 +27,107 @@ checksum() {
         exit 46
     fi
 }
+mustBeSame() {
+    local exp="$1"; shift
+    local act="$1"; shift
 
-##### make tmp dir
-tmp=./tmp
-rm -rf $tmp
-mkdir $tmp
-cd $tmp
+    if [[ "$(uuencode x <"$exp")" != "$(uuencode x <"$act")" ]]; then
+        echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
+        exit 46
+    fi
+}
+prepareForTesting() {
+    if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
+        export GITHUB_WORKSPACE="$PWD"
+        export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
 
-if [[ -f ../buildTools.jar               ]]; then
-    cp ../buildTools.jar .
-elif [[ -f ../out/artifacts/buildTools.jar ]]; then
-    cp ../out/artifacts/buildTools.jar .
-fi
+        ##### mimic github actions env for local execution:
+        . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
+        if [[ "${INPUT_TOKEN:-}" == "" ]]; then
+            echo ":error:: local test runs require a file ~/sercrets.sh that defines at least INPUT_TOKEN"
+            exit 67
+        fi
 
-. <(java -jar ./buildTools.jar)
+        if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
+            md5sum() { md5; }
+        fi
+        xmlstarlet() {
+            :
+        }
+    fi
+}
 
 #######################################################################################################################
 ##### tests ###########################################################################################################
 test_00() {
-  fromjar() {
-    java -jar ./buildTools.jar
-  }
-  fromdir() {
-    echo "#!/usr/bin/env bash"
-    for sh in ../shellTools/res/*.sh; do
-      echo "###@@@ $(basename "$sh")"
-      sed '/^#!\/usr\/bin\/env bash$/d' "$sh"
-    done
-  }
+    textFromJar() {
+        java -jar buildTools.jar
+    }
+    textFromDir() {
+        echo "#!/usr/bin/env bash"
+        for sh in ../../shellTools/res/*.sh; do
+            echo "###@@@ $(basename "$sh")"
+            sed '/^#!\/usr\/bin\/env bash$/d' "$sh"
+        done
+    }
 
-  if [[ "$(fromjar)" != "$(fromdir)" ]]; then
-    echo "::error::test failed: jar does not correctly deliver scripts" 1>&2
-    diff <(printf "%s" "$(fromjar)") <(printf "%s" "$(fromdir)")
-    exit 46
-  else
+    if [[ "$(textFromJar)" != "$(textFromDir)" ]]; then
+        echo "::error::test failed: jar does not correctly deliver scripts" 1>&2
+        diff <(printf "%s" "$(textFromJar)") <(printf "%s" "$(textFromDir)")
+        exit 46
+    fi
     echo "test OK: jar does correctly deliver scripts"
-  fi
 }
 #######################################################################################################################
 test_01() {
-  downloadArtifactQuick "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  checksum "da493bbcf960af426c47a51f876395d0" "buildTools.sh"
-  rm buildTools.sh
-  echo "test OK: downloadArtifactQuick is working correctly"
+    echo "...expect 2 warnings"
+    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
+    checksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
+    checksum "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
+    rm -rf downloaded
+    echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_02() {
-  downloadArtifact "$INPUT_TOKEN" "com.modelingvalue" "buildTools" "1.0.4" "sh" "."
-  checksum "da493bbcf960af426c47a51f876395d0" "buildTools.sh"
-  rm buildTools.sh
-  echo "test OK: downloadArtifact is working correctly"
+    downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
+    checksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
+    checksum "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir
+    rm -rf downloaded
+    echo "test OK: downloadArtifact is working correctly"
 }
 #######################################################################################################################
 test_03() {
-  printf "aap\r\nnoot\r\n" > testfile_crlf.txt
-  printf "aap\nnoot\n"     > testfile_lf.txt
-  if cmp -s testfile_crlf.txt testfile_lf.txt; then
-    echo "::error::correctEols failed (precheck)" 1>&2
-    exit 67
-  fi
-  correctEols
-  if ! cmp -s testfile_crlf.txt testfile_lf.txt; then
-    echo "::error::correctEols failed" 1>&2
-    exit 67
-  fi
-  rm testfile_crlf.txt testfile_lf.txt
-  echo "test OK: correctEols is working correctly"
+    printf "aap\r\nnoot\r\n" > testfile_crlf.txt
+    printf "aap\nnoot\n"     > testfile_lf.txt
+    if cmp -s testfile_crlf.txt testfile_lf.txt; then
+        echo "::error::correctEols precheck failed" 1>&2
+        exit 67
+    fi
+    correctEols
+    if ! cmp -s testfile_crlf.txt testfile_lf.txt; then
+        echo "::error::correctEols failed" 1>&2
+        exit 67
+    fi
+    rm testfile_crlf.txt testfile_lf.txt
+    echo "test OK: correctEols is working correctly"
 }
 #######################################################################################################################
 test_04() {
-  printf "xxx" > hdr
-  printf "aap\nnoot\n" > testfile.java
-  printf "//~~~~~~\n// xxx ~\n//~~~~~~\n\naap\nnoot\n" > testfileref.java
-  correctHeaders hdr
-  if ! cmp -s testfile.java testfileref.java; then
-    echo "::error::correctHeaders failed" 1>&2
-    exit 67
-  fi
-  rm hdr testfile.java testfileref.java
-  echo "test OK: correctEols is working correctly"
+    printf "xxx" > hdr
+    printf "aap\nnoot\n" > testfile.java
+    printf "//~~~~~~\n// xxx ~\n//~~~~~~\n\naap\nnoot\n" > testfileref.java
+    correctHeaders hdr
+    if ! cmp -s testfile.java testfileref.java; then
+        echo "::error::correctHeaders failed" 1>&2
+        exit 67
+    fi
+    rm hdr testfile.java testfileref.java
+    echo "test OK: correctEols is working correctly"
 }
 #######################################################################################################################
 test_05() {
-    rm -rf test_05
-    mkdir -p test_05/.idea
-    (   cd test_05
-        cat <<EOF >project.sh
+    mkdir -p .idea
+    cat <<EOF >project.sh
 artifacts=(
     "test.modelingvalue  qqq                     9.9.9       jar j--"
 )
@@ -139,23 +136,73 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds"
 )
 EOF
-        cp ../../.idea/modules.xml .idea/modules.xml
-        cp ../../build.xml build.xml
-        generateAll
-    )
-    checksum "f9b0eed046613097151f3a749bc133bb" "test_05/pom.xml"
-    checksum "50f4e5517c5891fb37d7fd93f18e1e72" "test_05/.idea/libraries/Maven__junit_junit.xml"
-    checksum "ba2140517389305e2276df33aad7db7c" "test_05/.idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
+    cp ../../.idea/modules.xml .idea/modules.xml
+    cp ../../build.xml         build.xml
+    generateAll
+    checksum "f9b0eed046613097151f3a749bc133bb" "pom.xml"
+    checksum "50f4e5517c5891fb37d7fd93f18e1e72" ".idea/libraries/Maven__junit_junit.xml"
+    checksum "ba2140517389305e2276df33aad7db7c" ".idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
+}
+test_06() {
+    local v="$(date +%Y%m%d.%H%M%S)"
+
+    cat <<EOF    > pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>tst.modelingvalue</groupId>
+    <artifactId>buildTools</artifactId>
+    <version>$v</version>
+    <packaging>jar</packaging>
+</project>
+EOF
+    echo "#tst.jar"         > tst
+    echo "#tst-sources.jar" > tst-sources
+    echo "#tst-javadoc.jar" > tst-javadoc
+    jar cf tst.jar         tst
+    jar cf tst-sources.jar tst-sources
+    jar cf tst-javadoc.jar tst-javadoc
+
+    uploadArtifactQuick "$INPUT_TOKEN" "tst.modelingvalue:buildTools:$v:jar" "pom.xml" "tst.jar" "tst-sources.jar" "tst-javadoc.jar"
+
+    downloadArtifactQuick "$INPUT_TOKEN" "tst.modelingvalue" "buildTools" "$v" "jar" "downloaded"
+    mustBeSame "pom.xml"         "downloaded/buildTools.pom"
+    mustBeSame "tst.jar"         "downloaded/buildTools.jar"
+    mustBeSame "tst-sources.jar" "downloaded/buildTools-sources.jar"
+    mustBeSame "tst-javadoc.jar" "downloaded/buildTools-javadoc.jar"
+    rm -rf downloaded
+    echo "test OK: uploadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 ##### test execution:
-group test_00
-group test_01
-group test_02
-group test_03
-group test_04
-group test_05
+if [[ "$#" == 0 ]]; then
+    tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
+else
+    tests=("$@")
+fi
+prepareForTesting
+for i in "${tests[@]}"; do
+    printf "\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$i"
 
-#######################################################################################################################
-##### ok if we end up here
-echo "all tests OK"
+    rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
+
+    ##### make tmp dir:
+    tmp="tmp/$i"
+    rm -rf "$tmp"
+    mkdir "$tmp"
+    (
+        cd "$tmp"
+
+        ##### copy the produced jar over to here:
+        if [[ -f ../../buildTools.jar               ]]; then
+            cp ../../buildTools.jar               buildTools.jar
+        elif [[ -f ../../out/artifacts/buildTools.jar ]]; then
+            cp ../../out/artifacts/buildTools.jar buildTools.jar
+        fi
+        . <(java -jar buildTools.jar)
+
+        "$i"
+    )
+done
+printf "\n\nall tests OK\n\n"

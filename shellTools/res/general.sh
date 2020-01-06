@@ -43,6 +43,7 @@ curl_() {
     curl \
         --location \
         --remote-header-name \
+        --fail \
         --silent \
         --show-error \
         --header "Authorization: token $token" \
