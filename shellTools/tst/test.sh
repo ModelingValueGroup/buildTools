@@ -190,7 +190,7 @@ for i in "${tests[@]}"; do
     ##### make tmp dir:
     tmp="tmp/$i"
     rm -rf "$tmp"
-    mkdir "$tmp"
+    mkdir -p "$tmp"
     (
         cd "$tmp"
 
