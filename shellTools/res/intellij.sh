@@ -240,6 +240,15 @@ importIntoAntFile() {
         sed "s|</project>|$statement&|" "$into" | compareAndOverwrite "$into"
     fi
 }
+getAllDependencies() {
+    local token="$1"; shift
+
+    local lib="lib"
+    mkdir -p "$lib"
+    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib"
+    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=javadoc
+    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=sources
+}
 getFirstArtifactWithFlags() {
     if [[ ! -f "project.sh" ]]; then
         echo "::error::project.sh file not found" 1>&2
