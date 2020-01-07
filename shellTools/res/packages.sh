@@ -85,7 +85,7 @@ uploadArtifactQuick() {
         local     e="$1"; shift
         local extra="$1"; shift
 
-        if [[ "$file" != "" ]]; then
+        if [[ -f "$file" ]]; then
             local url="$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "$extra")"
             curl_ "$token" -X PUT --upload-file "$file" "$url"
         fi
