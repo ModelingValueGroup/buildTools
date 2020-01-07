@@ -36,8 +36,8 @@
     <include name="*.swc"/>
     <include name="*.apk"/>
     <include name="*.zip"/>
-    <include name="*.egg"/>
     <include name="*.ane"/>
+    <include name="*.egg"/>
     <include name="*.jar"/>
     <include name="*.ear"/>
     <include name="*.klib"/>
@@ -128,9 +128,6 @@
   <property name="project.jdk.bin" value="${jdk.bin.11}"/>
   <property name="project.jdk.classpath" value="jdk.classpath.11"/>
   
-  
-  <!-- Global Libraries -->
-  
   <!-- Modules -->
   
   <import file="${basedir}/correctors/module_correctors.xml"/>
@@ -155,7 +152,7 @@
   <target name="artifact.buildtools:jar" depends="init.artifacts, compile.module.shelltools, compile.module.correctors" description="Build &#39;buildTools:jar&#39; artifact">
     <property name="artifact.temp.output.buildtools:jar" value="${artifacts.temp.dir}/buildTools_jar"/>
     <mkdir dir="${artifact.temp.output.buildtools:jar}"/>
-    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="merge">
+    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
       <zipfileset dir="${shelltools.output.dir}"/>
       <zipfileset dir="${correctors.output.dir}"/>
       <zipfileset file="${basedir}/shellTools/src/META-INF/MANIFEST.MF" prefix="META-INF"/>
@@ -174,4 +171,4 @@
   </target>
   
   <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
-<import file="${basedir}/shellTools/test.xml"/><import file="${basedir}/correctors/javadoc.xml"/><import file="${basedir}/shellTools/javadoc.xml"/></project>
+</project>
