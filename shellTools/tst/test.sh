@@ -128,6 +128,8 @@ EOF
 </project>
 EOF
     generateAntTestTargets
+    generateAntTestTargets
+    generateAntTestTargets
     mustBeSameChecksum "af0666e7cb6f6a04238e192bc1a3bb8c" "aaa/module_qqq.xml"
     echo "test OK: generateAntTestTargets is working correctly"
 }

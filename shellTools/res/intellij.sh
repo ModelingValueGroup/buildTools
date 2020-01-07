@@ -146,9 +146,8 @@ generateAntTestTargets() {
                 exit 77
             fi
             cp "$xml" "$tmp"
-            ed "$tmp" <<EOF >/dev/null
-/<[/]project>
-i
+            rmTargetFromAntFile "$tmp" "test.$modNameLow"
+            addTargetToAntFile  "$tmp" <<EOF
   <target name="test.$modNameLow">
     <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
       <!-- fork="on" forkmode="perTest" threads="8" -->
@@ -162,17 +161,15 @@ i
       </batchtest>
     </junit>
   </target>
-
+EOF
+            rmTargetFromAntFile "$tmp" "test.results.jar.$modNameLow"
+            addTargetToAntFile  "$tmp" <<EOF
   <target name="test.results.jar.$modNameLow" depends="test.$modNameLow">
     <mkdir dir="\${basedir}/out/artifacts"/>
     <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
       <zipfileset file="\${basedir}/TEST-*.xml"/>
     </jar>
   </target>
-
-.
-w
-q
 EOF
             cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
             rm "$tmp"
@@ -211,6 +208,31 @@ generateAntJavadocFilesFromIntellij() {
 EOF
         importIntoAntFile "build.xml" "$xml"
     done
+}
+addTargetToAntFile() {
+    local xml="$1"; shift
+
+    ed "$xml" <<EOF >/dev/null
+/<[/]project>
+i
+$(cat)
+.
+w
+q
+EOF
+}
+rmTargetFromAntFile() {
+    local  xml="$1"; shift
+    local name="$1"; shift
+
+    if grep -Fq "<target name=\"$name\"" "$xml"; then
+        ed "$xml" <<EOF >/dev/null
+/<target name="$name"[ >]
+.,/<[/]target>/d
+w
+q
+EOF
+    fi
 }
 importIntoAntFile() {
     local   into="$1"; shift
