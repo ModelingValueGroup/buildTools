@@ -107,6 +107,30 @@ test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
     echo "test OK: uploadArtifactQuick is working correctly"
 }
+test_generateAntTestTargets() {
+    mkdir -p .idea aaa/tst sss
+    cat <<'EOF' >.idea/modules.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/correctors/correctors.iml" filepath="$PROJECT_DIR$/aaa/qqq.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shellTools/shellTools.iml" filepath="$PROJECT_DIR$/sss/www.iml" />
+    </modules>
+  </component>
+</project>
+EOF
+    cat <<EOF >aaa/module_qqq.xml
+<project>
+    <target>
+        <echo/>
+    </target>
+</project>
+EOF
+    generateAntTestTargets
+    mustBeSameChecksum "af0666e7cb6f6a04238e192bc1a3bb8c" "aaa/module_qqq.xml"
+    echo "test OK: generateAntTestTargets is working correctly"
+}
 #######################################################################################################################
 prepareForTesting() {
     if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
@@ -123,11 +147,6 @@ prepareForTesting() {
         if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
             md5sum() { md5; }
         fi
-        xmlstarlet() {
-            if [[ "$1" == fo ]]; then
-                xmllint --format -
-            fi
-        }
     fi
 }
 #######################################################################################################################

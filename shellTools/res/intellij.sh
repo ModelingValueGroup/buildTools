@@ -20,7 +20,7 @@ generateAll() {
     cleanupIntellijGeneratedAntFiles
     generatePomFromDependencies
     generateIntellijLibraryFilesFromDependencies
-    generateAntTestFilesFromIntellij
+    generateAntTestTargets
     generateAntJavadocFilesFromIntellij
 }
 # shellcheck disable=SC2120
@@ -128,7 +128,7 @@ EOF
         fi
     done
 }
-generateAntTestFilesFromIntellij() {
+generateAntTestTargets() {
     local modDirAndName
     local all
     all="$(getIntellijModules)"
@@ -137,56 +137,44 @@ generateAntTestFilesFromIntellij() {
         IFS=/ read -r modDir modName <<<"$modDirAndName"
 
         if [[ -d "$modDir/tst" ]]; then
-            local xml="$modDir/test.xml"
+            local xml="$modDir/module_$modName.xml"
+            local tmp="$modDir/module_$modName.xml.tmp"
 
-            genTestLibPaths() {
-                local g a v e flags
-                getDependencyGavesWithFlags | while read g a v e flags; do
-                    echo "<pathelement location=\"\${path.variable.maven_repository}/$(makeArtifactPath "$g" "$a" "$v" "$e" "")\"/>"
-                done
-            }
+            if [[ ! -f "$xml" ]]; then
+                echo "::error::there is no ant file in module $modName, please generate it first"
+                exit 77
+            fi
+            cp "$xml" "$tmp"
+            ed "$tmp" <<EOF >/dev/null
+/<[/]project>
+i
+  <target name="test.$modName">
+    <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
+      <!-- fork="on" forkmode="perTest" threads="8" -->
+      <classpath refid="$modName.runtime.module.classpath"/>
+      <batchtest todir=".">
+        <fileset dir="\${$modName.testoutput.dir}">
+          <include name="**/*Test.*"/>
+          <include name="**/*Tests.*"/>
+        </fileset>
+        <formatter type="xml"/>
+      </batchtest>
+    </junit>
+  </target>
 
-            cat <<EOF | xmlstarlet fo | compareAndOverwrite "$xml"
-<?xml version="1.0" encoding="UTF-8"?>
-<!--==============================================================-->
-<!-- WARNING: this file will be overwritten by the build scripts! -->
-<!--          change  project.sh  instead                         -->
-<!--==============================================================-->
-<project name="test.$modName" default="test.results.jar.$modName">
-    <path id="classpath.test.$modName">
-        <path>
-$(genTestLibPaths)
-        </path>
-        <dirset dir="out/production">
-            <include name="*"/>
-        </dirset>
-        <dirset dir="out/test">
-            <include name="*"/>
-        </dirset>
-    </path>
+  <target name="test.results.jar.$modName" depends="test.$modName">
+    <mkdir dir="\${basedir}/out/artifacts"/>
+    <jar destfile="\${basedir}/out/artifacts/$modName-testresults.jar" filesetmanifest="skip">
+      <zipfileset file="\${basedir}/TEST-*.xml"/>
+    </jar>
+  </target>
 
-    <target name="test.$modName">
-        <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once"><!-- fork="on" forkmode="perTest" threads="8" -->
-            <classpath refid="classpath.test.$modName"/>
-            <batchtest todir=".">
-                <fileset dir="out/test/$modDir">
-                    <include name="**/*Test.*"/>
-                    <include name="**/*Tests.*"/>
-                </fileset>
-                <formatter type="xml"/>
-            </batchtest>
-        </junit>
-    </target>
-
-    <target name="test.results.jar.$modName" depends="test.$modName">
-        <mkdir dir="\${basedir}/out/artifacts"/>
-        <jar destfile="\${basedir}/out/artifacts/$modName-testresults.jar" filesetmanifest="skip">
-            <zipfileset file="\${basedir}/TEST-*.xml"/>
-        </jar>
-    </target>
-</project>
+.
+w
+q
 EOF
-            importIntoAntFile "build.xml" "$xml"
+            cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
+            rm "$tmp"
         fi
     done
 }
@@ -237,7 +225,7 @@ importIntoAntFile() {
     fi
     local statement="<import file=\"\${basedir}/$import\"/>"
     if ! grep -Fq "$statement" "$into"; then
-        sed "s|</project>|$statement&|" "$into" | compareAndOverwrite "$into"
+        sed "s|</project>|$statement\\n&|" "$into" | compareAndOverwrite "$into"
     fi
 }
 getAllDependencies() {
