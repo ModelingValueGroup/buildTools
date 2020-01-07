@@ -98,6 +98,7 @@ EOF
     cp ../../.idea/modules.xml .idea/modules.xml
     cp ../../build.xml         build.xml
     generateAll
+sed 's/^/@@pom.xml@@/' pom.xml
     mustBeSameChecksum "(755a33c448a6943952933fe4f22cd151|755a33c448a6943952933fe4f22cd151)"    "pom.xml"
     mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e"                                       ".idea/libraries/gen__hamcrest_core.xml"
     mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8"                                       ".idea/libraries/gen__junit.xml"
