@@ -142,6 +142,8 @@ generateAntTestTargets() {
 
             if [[ ! -f "$xml" ]]; then
                 echo "::error::there is no ant file $xml, please generate it first"
+                ls -l $modDir
+                ls -l "$xml"
                 exit 77
             fi
             cp "$xml" "$tmp"
