@@ -137,25 +137,24 @@ generateAntTestTargets() {
         IFS=/ read -r modDir modName <<<"$modDirAndName"
 
         if [[ -d "$modDir/tst" ]]; then
-            local xml="$modDir/module_$modName.xml"
-            local tmp="$modDir/module_$modName.xml.tmp"
+            local modNameLow="${modName,,}"
+            local xml="$modDir/module_modNameLow.xml"
+            local tmp="$modDir/module_modNameLow.xml.tmp"
 
             if [[ ! -f "$xml" ]]; then
                 echo "::error::there is no ant file $xml, please generate it first"
-                ls -l $modDir
-                ls -l "$xml"
                 exit 77
             fi
             cp "$xml" "$tmp"
             ed "$tmp" <<EOF >/dev/null
 /<[/]project>
 i
-  <target name="test.$modName">
+  <target name="test.modNameLow">
     <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
       <!-- fork="on" forkmode="perTest" threads="8" -->
-      <classpath refid="$modName.runtime.module.classpath"/>
+      <classpath refid="modNameLow.runtime.module.classpath"/>
       <batchtest todir=".">
-        <fileset dir="\${$modName.testoutput.dir}">
+        <fileset dir="\${modNameLow.testoutput.dir}">
           <include name="**/*Test.*"/>
           <include name="**/*Tests.*"/>
         </fileset>
@@ -164,9 +163,9 @@ i
     </junit>
   </target>
 
-  <target name="test.results.jar.$modName" depends="test.$modName">
+  <target name="test.results.jar.modNameLow" depends="test.modNameLow">
     <mkdir dir="\${basedir}/out/artifacts"/>
-    <jar destfile="\${basedir}/out/artifacts/$modName-testresults.jar" filesetmanifest="skip">
+    <jar destfile="\${basedir}/out/artifacts/modNameLow-testresults.jar" filesetmanifest="skip">
       <zipfileset file="\${basedir}/TEST-*.xml"/>
     </jar>
   </target>
