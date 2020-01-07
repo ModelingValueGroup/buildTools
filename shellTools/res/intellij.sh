@@ -42,10 +42,10 @@ cleanupIntellijGeneratedAntFiles() {
     done
 }
 generatePomFromDependencies() {
-set -x
     local g a v e flags
     read g a v e flags < <(getFirstArtifactWithFlags)
-    cat <<EOF | compareAndOverwrite "pom.xml"
+    cat <<EOF | xmlstarlet fo | compareAndOverwrite "pom.xml"
+<?xml version="1.0" encoding="UTF-8"?>
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
 <!--          change  project.sh  instead                         -->
@@ -65,31 +65,40 @@ set -x
 $(
     getDependencyGavesWithFlags | while read g a v e flags; do
         if [[ $g != '' ]]; then
-            echo "<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version></dependency>"
+            local dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
+            if [[ "$flags" =~ .*t.* ]]; then
+                dep+="<scope>test</scope>"
+            fi
+            echo "<dependency>$dep</dependency>"
         fi
     done
 )
     </dependencies>
 </project>
 EOF
-set +x
 }
 generateIntellijLibraryFilesFromDependencies() {
     local g a v e flags
     mkdir -p ".idea/libraries"
+    for i in ".idea/libraries/gen!"*; do
+        if [[ -f "$i" ]] && grep -Fq '<library name="gen: ' "$i"; then
+            rm "$i"
+        fi
+    done
     getDependencyGavesWithFlags | while read g a v e flags; do
-        if [[ $g != '' ]]; then
-            cat <<EOF | compareAndOverwrite ".idea/libraries/Maven__${g//./_}_${a//-/_}.xml"
+        if [[ $g != "" ]]; then
+            local fileName="gen__$(sed 's/[^a-zA-Z0-9]/_/g' <<<"$a")"
+            cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
 <!--          change  project.sh  instead                         -->
 <!--==============================================================-->
 <component name="libraryTable">
-  <library name="Maven: $g:$a">
+  <library name="gen: $a">
 $(
 if [[ "$flags" =~ .*j.* ]]; then
     echo "    <CLASSES>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "")!/\" />"
+    echo "      <root url=\"jar://\$PROJECT_DIR\$/lib/$a.jar!/\" />"
     echo "    </CLASSES>"
 else
     echo "    <CLASSES />"
@@ -98,7 +107,7 @@ fi
 $(
 if [[ "$flags" =~ .*d.* ]]; then
     echo "    <JAVADOC>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")!/\" />"
+    echo "      <root url=\"jar://\$PROJECT_DIR\$/lib/$a-javadoc.jar!/\" />"
     echo "    </JAVADOC>"
 else
     echo "    <JAVADOC />"
@@ -107,7 +116,7 @@ fi
 $(
 if [[ "$flags" =~ .*s.* ]]; then
     echo "    <SOURCES>"
-    echo "      <root url=\"jar://\$MAVEN_REPOSITORY\$/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")!/\" />"
+    echo "      <root url=\"jar://\$PROJECT_DIR\$/lib/$a-sources.jar!/\" />"
     echo "    </SOURCES>"
 else
     echo "    <SOURCES />"

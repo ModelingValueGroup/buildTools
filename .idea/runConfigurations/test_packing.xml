@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="test_packing" type="ShConfigurationType">
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/shellTools/tst/test.sh" />
+    <option name="SCRIPT_OPTIONS" value="test_packing" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="INTERPRETER_PATH" value="/usr/bin/env" />
+    <option name="INTERPRETER_OPTIONS" value="bash" />
+    <method v="2">
+      <option name="BuildArtifacts" enabled="true">
+        <artifact name="buildTools:jar" />
+      </option>
+    </method>
+  </configuration>
+</component>

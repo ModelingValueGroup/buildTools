@@ -17,30 +17,8 @@
 set -euo pipefail
 
 #######################################################################################################################
-prepareForTesting() {
-    if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
-        export GITHUB_WORKSPACE="$PWD"
-        export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
-
-        ##### mimic github actions env for local execution:
-        . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
-        if [[ "${INPUT_TOKEN:-}" == "" ]]; then
-            echo ":error:: local test runs require a file ~/sercrets.sh that defines at least INPUT_TOKEN"
-            exit 67
-        fi
-
-        if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
-            md5sum() { md5; }
-        fi
-        xmlstarlet() {
-            :
-        }
-    fi
-}
-
-#######################################################################################################################
 ##### tests ###########################################################################################################
-test_00() {
+test_packing() {
     textFromJar() {
         java -jar buildTools.jar
     }
@@ -57,10 +35,10 @@ test_00() {
         diff <(printf "%s" "$(textFromJar)") <(printf "%s" "$(textFromDir)")
         exit 46
     fi
-    echo "test OK: jar does correctly deliver scripts"
+    echo "test OK: packing jar does correctly deliver scripts"
 }
 #######################################################################################################################
-test_01() {
+test_downloadArtifactQuick() {
     echo "...expect 2 warnings"
     downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
     mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
@@ -69,7 +47,7 @@ test_01() {
     echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
-test_02() {
+test_downloadArtifact() {
     downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
     mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
     mustBeSameChecksum "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir
@@ -77,7 +55,7 @@ test_02() {
     echo "test OK: downloadArtifact is working correctly"
 }
 #######################################################################################################################
-test_03() {
+test_correctEols() {
     printf "aap\r\nnoot\r\n" > testfile_crlf.txt
     printf "aap\nnoot\n"     > testfile_lf.txt
     if cmp -s testfile_crlf.txt testfile_lf.txt; then
@@ -93,7 +71,7 @@ test_03() {
     echo "test OK: correctEols is working correctly"
 }
 #######################################################################################################################
-test_04() {
+test_correctHeaders() {
     printf "xxx" > hdr
     printf "aap\nnoot\n" > testfile.java
     printf "//~~~~~~\n// xxx ~\n//~~~~~~\n\naap\nnoot\n" > testfileref.java
@@ -103,30 +81,54 @@ test_04() {
         exit 67
     fi
     rm hdr testfile.java testfileref.java
-    echo "test OK: correctEols is working correctly"
+    echo "test OK: correctHeaders is working correctly"
 }
 #######################################################################################################################
-test_05() {
+test_generateAll() {
     mkdir -p .idea
     cat <<EOF >project.sh
 artifacts=(
     "test.modelingvalue  qqq                     9.9.9       jar j--"
 )
 dependencies=(
-    "junit               junit                   4.12        jar jds"
-    "org.hamcrest        hamcrest-core           1.3         jar jds"
+    "junit               junit                   4.12        jar jdst"
+    "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
     cp ../../.idea/modules.xml .idea/modules.xml
     cp ../../build.xml         build.xml
     generateAll
-    mustBeSameChecksum "f9b0eed046613097151f3a749bc133bb" "pom.xml"
-    mustBeSameChecksum "50f4e5517c5891fb37d7fd93f18e1e72" ".idea/libraries/Maven__junit_junit.xml"
-    mustBeSameChecksum "ba2140517389305e2276df33aad7db7c" ".idea/libraries/Maven__org_hamcrest_hamcrest_core.xml"
+    mustBeSameChecksum "(755a33c448a6943952933fe4f22cd151|755a33c448a6943952933fe4f22cd151)"    "pom.xml"
+    mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e"                                       ".idea/libraries/gen__hamcrest_core.xml"
+    mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8"                                       ".idea/libraries/gen__junit.xml"
+    echo "test OK: generateAll is working correctly"
 }
-test_06() {
+test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
     echo "test OK: uploadArtifactQuick is working correctly"
+}
+#######################################################################################################################
+prepareForTesting() {
+    if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
+        export GITHUB_WORKSPACE="$PWD"
+        export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
+
+        ##### mimic github actions env for local execution:
+        . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
+        if [[ "${INPUT_TOKEN:-}" == "" ]]; then
+            echo ":error:: local test runs require a file ~/sercrets.sh that defines at least INPUT_TOKEN"
+            exit 67
+        fi
+
+        if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
+            md5sum() { md5; }
+        fi
+        xmlstarlet() {
+            if [[ "$1" == fo ]]; then
+                xmllint --format -
+            fi
+        }
+    fi
 }
 #######################################################################################################################
 ##### test execution:
@@ -136,13 +138,17 @@ else
     tests=("$@")
 fi
 prepareForTesting
-for i in "${tests[@]}"; do
-    printf "\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$i"
+rm -rf tmp
+for f in "${tests[@]}"; do
+    echo
+    echo
+    echo "::group::$f"
+    printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f"
 
     rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
 
     ##### make tmp dir:
-    tmp="tmp/$i"
+    tmp="tmp/$f"
     rm -rf "$tmp"
     mkdir -p "$tmp"
     (
@@ -156,7 +162,8 @@ for i in "${tests[@]}"; do
         fi
         . <(java -jar buildTools.jar)
 
-        "$i"
+        "$f"
     )
+    echo "::endgroup::"
 done
 printf "\n\nall tests OK\n\n"
