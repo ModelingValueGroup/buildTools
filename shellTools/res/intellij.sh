@@ -141,7 +141,7 @@ generateAntTestTargets() {
             local tmp="$modDir/module_$modName.xml.tmp"
 
             if [[ ! -f "$xml" ]]; then
-                echo "::error::there is no ant file in module $modName, please generate it first"
+                echo "::error::there is no ant file $xml, please generate it first"
                 exit 77
             fi
             cp "$xml" "$tmp"
