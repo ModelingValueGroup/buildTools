@@ -107,7 +107,7 @@ test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
     echo "test OK: uploadArtifactQuick is working correctly"
 }
-test_generateAntTestTargets() {
+test_generateAntTargets() {
     mkdir -p .idea aaa/tst sss
     cat <<'EOF' >.idea/modules.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -120,17 +120,29 @@ test_generateAntTestTargets() {
   </component>
 </project>
 EOF
-    cat <<EOF >aaa/module_qqq.xml
+    cat <<EOF >build.xml
 <project>
     <target>
         <echo/>
     </target>
 </project>
 EOF
+    cp build.xml aaa/module_qqq.xml
+    cp build.xml sss/module_www.xml
+
+    generateAntTestTargets
+    generateAntJavadocTargets
+
     generateAntTestTargets
     generateAntTestTargets
-    generateAntTestTargets
-    mustBeSameChecksum "af0666e7cb6f6a04238e192bc1a3bb8c" "aaa/module_qqq.xml"
+
+    generateAntJavadocTargets
+    generateAntJavadocTargets
+
+    mustBeSameChecksum "99b6c40df7edb3dc1ca7f0053393431e" "build.xml"
+    mustBeSameChecksum "8eb54954de9d39b1c83395440667aaf1" "aaa/module_qqq.xml"
+    mustBeSameChecksum "ceef20e7fd9d69e5b41445ae25a3662b" "sss/module_www.xml"
+
     echo "test OK: generateAntTestTargets is working correctly"
 }
 #######################################################################################################################

@@ -21,7 +21,7 @@ generateAll() {
     generatePomFromDependencies
     generateIntellijLibraryFilesFromDependencies
     generateAntTestTargets
-    generateAntJavadocFilesFromIntellij
+    generateAntJavadocTargets
 }
 # shellcheck disable=SC2120
 cleanupIntellijGeneratedAntFiles() {
@@ -135,11 +135,10 @@ generateAntTestTargets() {
     for modDirAndName in $all; do
         local modDir modName
         IFS=/ read -r modDir modName <<<"$modDirAndName"
-
         if [[ -d "$modDir/tst" ]]; then
             local modNameLow="${modName,,}"
-            local xml="$modDir/module_$modNameLow.xml"
-            local tmp="$modDir/module_$modNameLow.xml.tmp"
+            local        xml="$modDir/module_$modNameLow.xml"
+            local        tmp="$xml.tmp"
 
             if [[ ! -f "$xml" ]]; then
                 echo "::error::there is no ant file $xml, please generate it first"
@@ -147,36 +146,41 @@ generateAntTestTargets() {
             fi
             cp "$xml" "$tmp"
             rmTargetFromAntFile "$tmp" "test.$modNameLow"
-            addTargetToAntFile  "$tmp" <<EOF
-  <target name="test.$modNameLow">
-    <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
-      <!-- fork="on" forkmode="perTest" threads="8" -->
-      <classpath refid="$modNameLow.runtime.module.classpath"/>
-      <batchtest todir=".">
-        <fileset dir="\${$modNameLow.testoutput.dir}">
-          <include name="**/*Test.*"/>
-          <include name="**/*Tests.*"/>
-        </fileset>
-        <formatter type="xml"/>
-      </batchtest>
-    </junit>
-  </target>
+            addSnippetToAntFile  "$tmp" <<EOF
+    <target name="test.$modNameLow">
+        <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
+            <!-- fork="on" forkmode="perTest" threads="8" -->
+            <classpath refid="$modNameLow.runtime.module.classpath"/>
+            <batchtest todir=".">
+                <fileset dir="\${$modNameLow.testoutput.dir}">
+                    <include name="**/*Test.*"/>
+                    <include name="**/*Tests.*"/>
+                </fileset>
+                <formatter type="xml"/>
+            </batchtest>
+        </junit>
+    </target>
 EOF
             rmTargetFromAntFile "$tmp" "test.results.jar.$modNameLow"
-            addTargetToAntFile  "$tmp" <<EOF
-  <target name="test.results.jar.$modNameLow" depends="test.$modNameLow">
-    <mkdir dir="\${basedir}/out/artifacts"/>
-    <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
-      <zipfileset file="\${basedir}/TEST-*.xml"/>
-    </jar>
-  </target>
+            addSnippetToAntFile  "$tmp" <<EOF
+    <target name="test.results.jar.$modNameLow" depends="test.$modNameLow">
+        <mkdir dir="\${basedir}/out/artifacts"/>
+        <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
+            <zipfileset file="\${basedir}/TEST-*.xml"/>
+        </jar>
+    </target>
 EOF
             cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
             rm "$tmp"
         fi
     done
 }
-generateAntJavadocFilesFromIntellij() {
+generateAntJavadocTargets() {
+    if [[ ! -f "build.xml" ]]; then
+        echo "::error::there is no ant file build.xml, please generate it first"
+        exit 77
+    fi
+    local subs=""
     local modDirAndName
     local all
     all="$(getIntellijModules)"
@@ -184,32 +188,47 @@ generateAntJavadocFilesFromIntellij() {
         local modDir modName
         IFS=/ read -r modDir modName <<<"$modDirAndName"
         local modNameLow="${modName,,}"
-        local xml="$modDir/javadoc.xml"
+        local        xml="$modDir/module_$modNameLow.xml"
+        local        tmp="$xml.tmp"
 
-        cat <<EOF | compareAndOverwrite "$xml"
-<?xml version="1.0" encoding="UTF-8"?>
-<!--==============================================================-->
-<!-- WARNING: this file will be overwritten by the build scripts! -->
-<!--          change  project.sh  instead                         -->
-<!--==============================================================-->
-<project name="javadoc.$modName" default="javadoc.module.$modName">
-    <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
-    <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
-    <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
-
-    <target name="javadoc.module.$modName">
+        if [[ ! -f "$xml" ]]; then
+            echo "::error::there is no ant file $xml, please generate it first"
+            exit 77
+        fi
+        cp "$xml" "$tmp"
+        rmTargetFromAntFile "$tmp" "javadoc.module.$modNameLow"
+        addSnippetToAntFile  "$tmp" <<EOF
+    <target name="javadoc.module.$modNameLow">
+        <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
+        <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
+        <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
         <javadoc sourcepathref="$modNameLow.module.test.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
         <jar destfile="\${$modNameLow.javadoc.jar}" filesetmanifest="skip">
             <zipfileset dir="\${$modNameLow.javadoc.tmp}"/>
         </jar>
         <delete dir="\${$modNameLow.javadoc.tmp}"/>
     </target>
-</project>
 EOF
-        importIntoAntFile "build.xml" "$xml"
+        cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
+        rm "$tmp"
+
+        if [[ "$subs" != "" ]]; then
+            subs+=","
+        fi
+        subs+="javadoc.module.$modNameLow"
     done
+    local tmp="build.xml.tmp"
+    cp "build.xml" "$tmp"
+    rmTargetFromAntFile "$tmp" "javadoc"
+    addSnippetToAntFile  "$tmp" <<EOF
+    <target name="javadoc" depends="$subs">
+        <echo>all javadoc generated</echo>
+    </target>
+EOF
+    cat "$tmp" | xmlstarlet fo | compareAndOverwrite "build.xml"
+    rm "$tmp"
 }
-addTargetToAntFile() {
+addSnippetToAntFile() {
     local xml="$1"; shift
 
     ed "$xml" <<EOF >/dev/null
@@ -232,23 +251,6 @@ rmTargetFromAntFile() {
 w
 q
 EOF
-    fi
-}
-importIntoAntFile() {
-    local   into="$1"; shift
-    local import="$1"; shift
-
-    if [[ ! -f "$into" ]]; then
-        echo "::error::importIntoAntFile can not find $into" 1>&2
-        exit 72
-    fi
-    if [[ ! -f "$import" ]]; then
-        echo "::error::importIntoAntFile can not find $import" 1>&2
-        exit 72
-    fi
-    local statement="<import file=\"\${basedir}/$import\"/>"
-    if ! grep -Fq "$statement" "$into"; then
-        sed "s|</project>|$statement\\n&|" "$into" | compareAndOverwrite "$into"
     fi
 }
 getAllDependencies() {
