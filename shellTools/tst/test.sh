@@ -85,7 +85,7 @@ test_correctHeaders() {
 }
 #######################################################################################################################
 test_generateAll() {
-    mkdir -p .idea
+    mkdir -p .idea aaa sss aaa/tst
     cat <<EOF >project.sh
 artifacts=(
     "test.modelingvalue  qqq                     9.9.9       jar j--"
@@ -95,20 +95,6 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
-    cp ../../.idea/modules.xml .idea/modules.xml
-    cp ../../build.xml         build.xml
-    generateAll
-    mustBeSameChecksum "755a33c448a6943952933fe4f22cd151" "pom.xml"
-    mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml"
-    mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml"
-    echo "test OK: generateAll is working correctly"
-}
-test_uploadArtifactQuick() {
-    runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
-    echo "test OK: uploadArtifactQuick is working correctly"
-}
-test_generateAntTargets() {
-    mkdir -p .idea aaa/tst sss
     cat <<'EOF' >.idea/modules.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
@@ -130,20 +116,22 @@ EOF
     cp build.xml aaa/module_qqq.xml
     cp build.xml sss/module_www.xml
 
-    generateAntTestTargets
-    generateAntJavadocTargets
+    generateAll
+    generateAll
+    generateAll
 
-    generateAntTestTargets
-    generateAntTestTargets
-
-    generateAntJavadocTargets
-    generateAntJavadocTargets
-
+    mustBeSameChecksum "755a33c448a6943952933fe4f22cd151" "pom.xml"
+    mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml"
+    mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml"
     mustBeSameChecksum "99b6c40df7edb3dc1ca7f0053393431e" "build.xml"
     mustBeSameChecksum "8eb54954de9d39b1c83395440667aaf1" "aaa/module_qqq.xml"
     mustBeSameChecksum "ceef20e7fd9d69e5b41445ae25a3662b" "sss/module_www.xml"
 
-    echo "test OK: generateAntTestTargets is working correctly"
+    echo "test OK: generateAll is working correctly"
+}
+test_uploadArtifactQuick() {
+    runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
+    echo "test OK: uploadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 prepareForTesting() {
