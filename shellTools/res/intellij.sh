@@ -150,7 +150,7 @@ generateAntTestTargets() {
                 exit 77
             fi
             cp "$xml" "$tmp"
-            rmTargetFromAntFile "$tmp" "test.$modNameLow"
+            rmTargetFromAntFile "$tmp" "test.module.$modNameLow"
             addSnippetToAntFile  "$tmp" <<EOF
     <target name="test.module.$modNameLow">
         <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
@@ -166,7 +166,7 @@ generateAntTestTargets() {
         </junit>
     </target>
 EOF
-            rmTargetFromAntFile "$tmp" "test.results.jar.$modNameLow"
+            rmTargetFromAntFile "$tmp" "testresults.module.$modNameLow"
             addSnippetToAntFile  "$tmp" <<EOF
     <target name="testresults.module.$modNameLow" depends="test.module.$modNameLow">
         <mkdir dir="\${basedir}/out/artifacts"/>
