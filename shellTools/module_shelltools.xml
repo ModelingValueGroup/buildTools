@@ -1,73 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="module_shelltools" default="compile.module.shelltools">
   <dirname property="module.shelltools.basedir" file="${ant.file.module_shelltools}"/>
-  
   <property name="module.jdk.home.shelltools" value="${project.jdk.home}"/>
   <property name="module.jdk.bin.shelltools" value="${project.jdk.bin}"/>
   <property name="module.jdk.classpath.shelltools" value="${project.jdk.classpath}"/>
-  
   <property name="compiler.args.shelltools" value="-encoding UTF-8 -source 11 -target 11 ${compiler.args}"/>
-  
   <property name="shelltools.output.dir" value="${module.shelltools.basedir}/../out/production/shellTools"/>
   <property name="shelltools.testoutput.dir" value="${module.shelltools.basedir}/../out/test/shellTools"/>
-  
   <path id="shelltools.module.bootclasspath">
     <!-- Paths to be included in compilation bootclasspath -->
   </path>
-  
   <path id="shelltools.module.production.classpath">
     <path refid="${module.jdk.classpath.shelltools}"/>
   </path>
-  
   <path id="shelltools.runtime.production.module.classpath">
     <pathelement location="${shelltools.output.dir}"/>
   </path>
-  
   <path id="shelltools.module.classpath">
     <path refid="${module.jdk.classpath.shelltools}"/>
     <pathelement location="${shelltools.output.dir}"/>
   </path>
-  
   <path id="shelltools.runtime.module.classpath">
     <pathelement location="${shelltools.testoutput.dir}"/>
     <pathelement location="${shelltools.output.dir}"/>
   </path>
-  
-  
   <patternset id="excluded.from.module.shelltools">
     <patternset refid="ignored.files"/>
   </patternset>
-  
   <patternset id="excluded.from.compilation.shelltools">
     <patternset refid="excluded.from.module.shelltools"/>
   </patternset>
-  
   <path id="shelltools.module.sourcepath">
     <dirset dir="${module.shelltools.basedir}">
       <include name="src"/>
       <include name="res"/>
     </dirset>
   </path>
-  
   <path id="shelltools.module.test.sourcepath">
     <dirset dir="${module.shelltools.basedir}">
       <include name="tst"/>
     </dirset>
   </path>
-  
-  
   <target name="compile.module.shelltools" depends="compile.module.shelltools.production,compile.module.shelltools.tests" description="Compile module shellTools"/>
-  
   <target name="compile.module.shelltools.production" description="Compile module shellTools; production classes">
     <mkdir dir="${shelltools.output.dir}"/>
-    <javac destdir="${shelltools.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
+    <javac includeantruntime="false" destdir="${shelltools.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
       <compilerarg line="${compiler.args.shelltools}"/>
       <bootclasspath refid="shelltools.module.bootclasspath"/>
       <classpath refid="shelltools.module.production.classpath"/>
       <src refid="shelltools.module.sourcepath"/>
       <patternset refid="excluded.from.compilation.shelltools"/>
     </javac>
-    
     <copy todir="${shelltools.output.dir}">
       <fileset dir="${module.shelltools.basedir}/src">
         <patternset refid="compiler.resources"/>
@@ -79,17 +62,15 @@
       </fileset>
     </copy>
   </target>
-  
   <target name="compile.module.shelltools.tests" depends="compile.module.shelltools.production" description="compile module shellTools; test classes" unless="skip.tests">
     <mkdir dir="${shelltools.testoutput.dir}"/>
-    <javac destdir="${shelltools.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
+    <javac includeantruntime="false" destdir="${shelltools.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.shelltools}/javac">
       <compilerarg line="${compiler.args.shelltools}"/>
       <bootclasspath refid="shelltools.module.bootclasspath"/>
       <classpath refid="shelltools.module.classpath"/>
       <src refid="shelltools.module.test.sourcepath"/>
       <patternset refid="excluded.from.compilation.shelltools"/>
     </javac>
-    
     <copy todir="${shelltools.testoutput.dir}">
       <fileset dir="${module.shelltools.basedir}/tst">
         <patternset refid="compiler.resources"/>
@@ -97,9 +78,37 @@
       </fileset>
     </copy>
   </target>
-  
   <target name="clean.module.shelltools" description="cleanup module">
     <delete dir="${shelltools.output.dir}"/>
     <delete dir="${shelltools.testoutput.dir}"/>
+  </target>
+  <target name="test.module.shelltools">
+    <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
+      <!-- fork="on" forkmode="perTest" threads="8" -->
+      <classpath refid="shelltools.runtime.module.classpath"/>
+      <batchtest todir=".">
+        <fileset dir="${shelltools.testoutput.dir}">
+          <include name="**/*Test.*"/>
+          <include name="**/*Tests.*"/>
+        </fileset>
+        <formatter type="xml"/>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="testresults.module.shelltools" depends="test.module.shelltools">
+    <mkdir dir="${basedir}/out/artifacts"/>
+    <jar destfile="${basedir}/out/artifacts/shelltools-testresults.jar" filesetmanifest="skip">
+      <zipfileset file="${basedir}/TEST-*.xml"/>
+    </jar>
+  </target>
+  <target name="javadoc.module.shelltools">
+    <property name="shelltools.javadoc.dir" value="${basedir}/out/artifacts"/>
+    <property name="shelltools.javadoc.tmp" value="${shelltools.javadoc.dir}/tmp"/>
+    <property name="shelltools.javadoc.jar" value="${shelltools.javadoc.dir}/shellTools-javadoc.jar"/>
+    <javadoc sourcepathref="shelltools.module.test.sourcepath" destdir="${shelltools.javadoc.tmp}" classpathref="shelltools.module.classpath"/>
+    <jar destfile="${shelltools.javadoc.jar}" filesetmanifest="skip">
+      <zipfileset dir="${shelltools.javadoc.tmp}"/>
+    </jar>
+    <delete dir="${shelltools.javadoc.tmp}"/>
   </target>
 </project>
