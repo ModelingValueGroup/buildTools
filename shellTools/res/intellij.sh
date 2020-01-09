@@ -129,6 +129,11 @@ EOF
     done
 }
 generateAntTestTargets() {
+    if [[ ! -f "build.xml" ]]; then
+        echo "::error::there is no ant file build.xml, please generate it first"
+        exit 77
+    fi
+    local subs=""
     local modDirAndName
     local all
     all="$(getIntellijModules)"
@@ -147,7 +152,7 @@ generateAntTestTargets() {
             cp "$xml" "$tmp"
             rmTargetFromAntFile "$tmp" "test.$modNameLow"
             addSnippetToAntFile  "$tmp" <<EOF
-    <target name="test.$modNameLow">
+    <target name="test.module.$modNameLow">
         <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
             <!-- fork="on" forkmode="perTest" threads="8" -->
             <classpath refid="$modNameLow.runtime.module.classpath"/>
@@ -163,7 +168,7 @@ generateAntTestTargets() {
 EOF
             rmTargetFromAntFile "$tmp" "test.results.jar.$modNameLow"
             addSnippetToAntFile  "$tmp" <<EOF
-    <target name="test.results.jar.$modNameLow" depends="test.$modNameLow">
+    <target name="testresults.module.$modNameLow" depends="test.module.$modNameLow">
         <mkdir dir="\${basedir}/out/artifacts"/>
         <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
             <zipfileset file="\${basedir}/TEST-*.xml"/>
@@ -172,8 +177,23 @@ EOF
 EOF
             cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
             rm "$tmp"
+
+            if [[ "$subs" != "" ]]; then
+                subs+=","
+            fi
+            subs+="testresults.module.$modNameLow"
         fi
     done
+    local tmp="build.xml.tmp"
+    cp "build.xml" "$tmp"
+    rmTargetFromAntFile "$tmp" "test"
+    addSnippetToAntFile  "$tmp" <<EOF
+    <target name="test" depends="$subs">
+        <echo>all tests done</echo>
+    </target>
+EOF
+    cat "$tmp" | xmlstarlet fo | compareAndOverwrite "build.xml"
+    rm "$tmp"
 }
 generateAntJavadocTargets() {
     if [[ ! -f "build.xml" ]]; then
