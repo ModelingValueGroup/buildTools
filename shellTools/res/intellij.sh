@@ -140,15 +140,15 @@ generateAntTestTargets() {
     for modDirAndName in $all; do
         local modDir modName
         IFS=/ read -r modDir modName <<<"$modDirAndName"
-        if [[ -d "$modDir/tst" ]]; then
-            local modNameLow="${modName,,}"
-            local        xml="$modDir/module_$modNameLow.xml"
-            local        tmp="$xml.tmp"
+        local modNameLow="${modName,,}"
+        local        xml="$modDir/module_$modNameLow.xml"
+        local        tmp="$xml.tmp"
 
-            if [[ ! -f "$xml" ]]; then
-                echo "::error::there is no ant file $xml, please generate it first"
-                exit 77
-            fi
+        if [[ ! -f "$xml" ]]; then
+            echo "::error::there is no ant file $xml, please generate it first"
+            exit 77
+        fi
+        if [[ -d "$modDir/tst" ]] && grep -Fq ".module.test.sourcepath" "$xml"; then
             cp "$xml" "$tmp"
             rmTargetFromAntFile "$tmp" "test.module.$modNameLow"
             addSnippetToAntFile  "$tmp" <<EOF
