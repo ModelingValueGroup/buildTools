@@ -155,6 +155,9 @@
   <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
   <import file="${basedir}/correctors/javadoc.xml"/>
   <import file="${basedir}/shellTools/javadoc.xml"/>
+  <target name="test" depends="testresults.module.shelltools">
+    <echo>all tests done</echo>
+  </target>
   <target name="javadoc" depends="javadoc.module.correctors,javadoc.module.shelltools">
     <echo>all javadoc generated</echo>
   </target>

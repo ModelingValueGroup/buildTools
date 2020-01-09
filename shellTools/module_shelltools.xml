@@ -101,6 +101,25 @@
       <zipfileset file="${basedir}/TEST-*.xml"/>
     </jar>
   </target>
+  <target name="test.module.shelltools">
+    <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
+      <!-- fork="on" forkmode="perTest" threads="8" -->
+      <classpath refid="shelltools.runtime.module.classpath"/>
+      <batchtest todir=".">
+        <fileset dir="${shelltools.testoutput.dir}">
+          <include name="**/*Test.*"/>
+          <include name="**/*Tests.*"/>
+        </fileset>
+        <formatter type="xml"/>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="testresults.module.shelltools" depends="test.module.shelltools">
+    <mkdir dir="${basedir}/out/artifacts"/>
+    <jar destfile="${basedir}/out/artifacts/shelltools-testresults.jar" filesetmanifest="skip">
+      <zipfileset file="${basedir}/TEST-*.xml"/>
+    </jar>
+  </target>
   <target name="javadoc.module.shelltools">
     <property name="shelltools.javadoc.dir" value="${basedir}/out/artifacts"/>
     <property name="shelltools.javadoc.tmp" value="${shelltools.javadoc.dir}/tmp"/>
