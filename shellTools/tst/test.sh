@@ -123,9 +123,9 @@ EOF
     mustBeSameChecksum "755a33c448a6943952933fe4f22cd151" "pom.xml"
     mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml"
     mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml"
-    mustBeSameChecksum "4efb967f3e76a39d89ac8a3c99a48a77" "build.xml"
-    mustBeSameChecksum "5b3b2e63c181ff3a1f50cfd705dfe14f" "aaa/module_qqq.xml"
-    mustBeSameChecksum "ceef20e7fd9d69e5b41445ae25a3662b" "sss/module_www.xml"
+    mustBeSameChecksum "3a98811136cae1ecf64247deee15808b" "build.xml"
+    mustBeSameChecksum "8a64ac5b15fcaf680e93797ec51583bc" "aaa/module_qqq.xml"
+    mustBeSameChecksum "4301e3199a1a12c3547aefbe98e634d3" "sss/module_www.xml"
 
     echo "test OK: generateAll is working correctly"
 }

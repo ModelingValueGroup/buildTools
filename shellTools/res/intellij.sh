@@ -222,7 +222,7 @@ generateAntJavadocTargets() {
         <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
         <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
         <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
-        <javadoc sourcepathref="$modNameLow.module.test.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
+        <javadoc sourcepathref="$modNameLow.module.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
         <jar destfile="\${$modNameLow.javadoc.jar}" filesetmanifest="skip">
             <zipfileset dir="\${$modNameLow.javadoc.tmp}"/>
         </jar>
