@@ -126,9 +126,9 @@ EOF
                     "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
                     "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml" \
                     "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
-                    "67e61acc023c26ebac90ba8e699fb9bb" "TST/module_modtst.xml" \
+                    "208a3ecf8fc0ade893227f0387958b49" "TST/module_modtst.xml" \
                     "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
-                    "39c3d17d49b6d64c66b2e26b411254bb" "BTH/module_modbth.xml"
+                    "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml"
 
     echo "test OK: generateAll is working correctly"
 }
