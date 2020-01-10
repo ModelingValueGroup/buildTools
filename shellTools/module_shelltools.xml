@@ -105,7 +105,7 @@
     <property name="shelltools.javadoc.dir" value="${basedir}/out/artifacts"/>
     <property name="shelltools.javadoc.tmp" value="${shelltools.javadoc.dir}/tmp"/>
     <property name="shelltools.javadoc.jar" value="${shelltools.javadoc.dir}/shellTools-javadoc.jar"/>
-    <javadoc sourcepathref="shelltools.module.test.sourcepath" destdir="${shelltools.javadoc.tmp}" classpathref="shelltools.module.classpath"/>
+    <javadoc sourcepathref="shelltools.module.sourcepath" destdir="${shelltools.javadoc.tmp}" classpathref="shelltools.module.classpath"/>
     <jar destfile="${shelltools.javadoc.jar}" filesetmanifest="skip">
       <zipfileset dir="${shelltools.javadoc.tmp}"/>
     </jar>

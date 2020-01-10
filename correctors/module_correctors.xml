@@ -61,7 +61,7 @@
     <property name="correctors.javadoc.dir" value="${basedir}/out/artifacts"/>
     <property name="correctors.javadoc.tmp" value="${correctors.javadoc.dir}/tmp"/>
     <property name="correctors.javadoc.jar" value="${correctors.javadoc.dir}/correctors-javadoc.jar"/>
-    <javadoc sourcepathref="correctors.module.test.sourcepath" destdir="${correctors.javadoc.tmp}" classpathref="correctors.module.classpath"/>
+    <javadoc sourcepathref="correctors.module.sourcepath" destdir="${correctors.javadoc.tmp}" classpathref="correctors.module.classpath"/>
     <jar destfile="${correctors.javadoc.jar}" filesetmanifest="skip">
       <zipfileset dir="${correctors.javadoc.tmp}"/>
     </jar>
