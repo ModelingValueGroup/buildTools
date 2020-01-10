@@ -136,6 +136,7 @@ generateAntTestTargets() {
         [[ -d "$modDir/tst" ]] && grep -Fq ".module.test.sourcepath" "$xml"
     }
     target__() {
+        local    modName="$1"; shift
         local modNameLow="$1"; shift
         local targetName="$1"; shift
 
@@ -161,7 +162,7 @@ EOF
             cat <<EOF
     <target name="testresults.module.$modNameLow" depends="test.module.$modNameLow">
         <mkdir dir="\${basedir}/out/artifacts"/>
-        <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
+        <jar destfile="\${basedir}/out/artifacts/$modName-testresults.jar" filesetmanifest="skip">
             <zipfileset file="\${basedir}/TEST-*.xml"/>
         </jar>
     </target>
@@ -179,6 +180,7 @@ generateAntJavadocTargets() {
         [[ -d "$modDir/src" ]] && grep -Fq ".module.sourcepath" "$xml"
     }
     target__() {
+        local    modName="$1"; shift
         local modNameLow="$1"; shift
         local targetName="$1"; shift
 
@@ -230,7 +232,7 @@ enrichAntFiles() {
             for subTarget in "${subTargets[@]}"; do
                 local sub="$subTarget.$modNameLow"
                 rmTargetFromAntFile "$tmp" "$sub"
-                "$targetFunc" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmp"
+                "$targetFunc" "$modName" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmp"
             done
             cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
             rm "$tmp"
