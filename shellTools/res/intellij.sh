@@ -129,29 +129,19 @@ EOF
     done
 }
 generateAntTestTargets() {
-    if [[ ! -f "build.xml" ]]; then
-        echo "::error::there is no ant file build.xml, please generate it first"
-        exit 77
-    fi
-    local subs=""
-    local modDirAndName
-    local all
-    all="$(getIntellijModules)"
-    for modDirAndName in $all; do
-        local modDir modName
-        IFS=/ read -r modDir modName <<<"$modDirAndName"
-        local modNameLow="${modName,,}"
-        local        xml="$modDir/module_$modNameLow.xml"
-        local        tmp="$xml.tmp"
+    cond__() {
+        local modDir="$1"; shift
+        local    xml="$1"; shift
 
-        if [[ ! -f "$xml" ]]; then
-            echo "::error::there is no ant file $xml, please generate it first"
-            exit 77
-        fi
-        if [[ -d "$modDir/tst" ]] && grep -Fq ".module.test.sourcepath" "$xml"; then
-            cp "$xml" "$tmp"
-            rmTargetFromAntFile "$tmp" "test.module.$modNameLow"
-            addSnippetToAntFile  "$tmp" <<EOF
+        [[ -d "$modDir/tst" ]] && grep -Fq ".module.test.sourcepath" "$xml"
+    }
+    target__() {
+        local modNameLow="$1"; shift
+        local targetName="$1"; shift
+
+        case "$targetName" in
+        test.module.$modNameLow)
+            cat <<EOF
     <target name="test.module.$modNameLow">
         <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
             <!-- fork="on" forkmode="perTest" threads="8" -->
@@ -166,8 +156,9 @@ generateAntTestTargets() {
         </junit>
     </target>
 EOF
-            rmTargetFromAntFile "$tmp" "testresults.module.$modNameLow"
-            addSnippetToAntFile  "$tmp" <<EOF
+            ;;
+        testresults.module.$modNameLow)
+            cat <<EOF
     <target name="testresults.module.$modNameLow" depends="test.module.$modNameLow">
         <mkdir dir="\${basedir}/out/artifacts"/>
         <jar destfile="\${basedir}/out/artifacts/$modNameLow-testresults.jar" filesetmanifest="skip">
@@ -175,49 +166,23 @@ EOF
         </jar>
     </target>
 EOF
-            cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
-            rm "$tmp"
-
-            if [[ "$subs" != "" ]]; then
-                subs+=","
-            fi
-            subs+="testresults.module.$modNameLow"
-        fi
-    done
-    local tmp="build.xml.tmp"
-    cp "build.xml" "$tmp"
-    rmTargetFromAntFile "$tmp" "test"
-    addSnippetToAntFile  "$tmp" <<EOF
-    <target name="test" depends="$subs">
-        <echo>all tests done</echo>
-    </target>
-EOF
-    cat "$tmp" | xmlstarlet fo | compareAndOverwrite "build.xml"
-    rm "$tmp"
+            ;;
+        esac
+    }
+    enrichAntFiles cond__ target__ "test" "test.module" "testresults.module"
 }
 generateAntJavadocTargets() {
-    if [[ ! -f "build.xml" ]]; then
-        echo "::error::there is no ant file build.xml, please generate it first"
-        exit 77
-    fi
-    local subs=""
-    local modDirAndName
-    local all
-    all="$(getIntellijModules)"
-    for modDirAndName in $all; do
-        local modDir modName
-        IFS=/ read -r modDir modName <<<"$modDirAndName"
-        local modNameLow="${modName,,}"
-        local        xml="$modDir/module_$modNameLow.xml"
-        local        tmp="$xml.tmp"
+    cond__() {
+        local modDir="$1"; shift
+        local    xml="$1"; shift
 
-        if [[ ! -f "$xml" ]]; then
-            echo "::error::there is no ant file $xml, please generate it first"
-            exit 77
-        fi
-        cp "$xml" "$tmp"
-        rmTargetFromAntFile "$tmp" "javadoc.module.$modNameLow"
-        addSnippetToAntFile  "$tmp" <<EOF
+        [[ -d "$modDir/src" ]] && grep -Fq ".module.sourcepath" "$xml"
+    }
+    target__() {
+        local modNameLow="$1"; shift
+        local targetName="$1"; shift
+
+        cat <<EOF
     <target name="javadoc.module.$modNameLow">
         <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
         <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
@@ -229,24 +194,62 @@ generateAntJavadocTargets() {
         <delete dir="\${$modNameLow.javadoc.tmp}"/>
     </target>
 EOF
-        cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
-        rm "$tmp"
+    }
+    enrichAntFiles cond__ target__ "javadoc" "javadoc.module"
+}
+enrichAntFiles() {
+    local   condFunc="$1"; shift
+    local targetFunc="$1"; shift
+    local mainTarget="$1"; shift
+    local subTargets=("$@")
 
-        if [[ "$subs" != "" ]]; then
-            subs+=","
+    local    mainAntFile="build.xml"
+    local mainAntFileTmp="$mainAntFile.tmp"
+
+    if [[ ! -f "$mainAntFile" ]]; then
+        echo "::error::there is no ant file $mainAntFile, please generate it first"
+        exit 77
+    fi
+    local subs=""
+    local all
+    all="$(getIntellijModules)"
+    local modDirAndName
+    for modDirAndName in $all; do
+        local modDir modName
+        IFS=/ read -r modDir modName <<<"$modDirAndName"
+        local modNameLow="${modName,,}"
+        local        xml="$modDir/module_$modNameLow.xml"
+        local        tmp="$xml.tmp"
+
+        if [[ ! -f "$xml" ]]; then
+            echo "::error::there is no ant file $xml, please generate it first"
+            exit 77
         fi
-        subs+="javadoc.module.$modNameLow"
+        if "$condFunc" "$modDir" "$xml"; then
+            cp "$xml" "$tmp"
+            for subTarget in "${subTargets[@]}"; do
+                local sub="$subTarget.$modNameLow"
+                rmTargetFromAntFile "$tmp" "$sub"
+                "$targetFunc" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmp"
+            done
+            cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
+            rm "$tmp"
+
+            if [[ "$subs" != "" ]]; then
+                subs+=","
+            fi
+            subs+="$sub"
+        fi
     done
-    local tmp="build.xml.tmp"
-    cp "build.xml" "$tmp"
-    rmTargetFromAntFile "$tmp" "javadoc"
-    addSnippetToAntFile  "$tmp" <<EOF
-    <target name="javadoc" depends="$subs">
-        <echo>all javadoc generated</echo>
+    cp "$mainAntFile" "$mainAntFileTmp"
+    rmTargetFromAntFile "$mainAntFileTmp" "$mainTarget"
+    addSnippetToAntFile  "$mainAntFileTmp" <<EOF
+    <target name="$mainTarget" depends="$subs">
+        <echo>all done for $mainTarget</echo>
     </target>
 EOF
-    cat "$tmp" | xmlstarlet fo | compareAndOverwrite "build.xml"
-    rm "$tmp"
+    cat "$mainAntFileTmp" | xmlstarlet fo | compareAndOverwrite "$mainAntFile"
+    rm "$mainAntFileTmp"
 }
 addSnippetToAntFile() {
     local xml="$1"; shift

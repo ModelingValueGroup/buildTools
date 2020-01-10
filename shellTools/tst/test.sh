@@ -41,16 +41,16 @@ test_packing() {
 test_downloadArtifactQuick() {
     echo "...expect 2 warnings"
     downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
-    mustBeSameChecksum "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
+    checksumCompare  "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
+                     "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
     rm -rf downloaded
     echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_downloadArtifact() {
     downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    mustBeSameChecksum "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar"
-    mustBeSameChecksum "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir
+    checksumCompare "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
+                     "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
     echo "test OK: downloadArtifact is working correctly"
 }
@@ -85,10 +85,10 @@ test_correctHeaders() {
 }
 #######################################################################################################################
 test_generateAll() {
-    mkdir -p .idea aaa sss aaa/tst
+    mkdir -p .idea TST/tst SRC/src BTH/src BTH/tst
     cat <<EOF >project.sh
 artifacts=(
-    "test.modelingvalue  qqq                     9.9.9       jar j--"
+    "test.modelingvalue  zomaar                  9.9.9       jar j--"
 )
 dependencies=(
     "junit               junit                   4.12        jar jdst"
@@ -100,8 +100,9 @@ EOF
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/correctors/correctors.iml" filepath="$PROJECT_DIR$/aaa/qqq.iml" />
-      <module fileurl="file://$PROJECT_DIR$/shellTools/shellTools.iml" filepath="$PROJECT_DIR$/sss/www.iml" />
+      <module fileurl="file://$PROJECT_DIR$/correctors/correctors.iml" filepath="$PROJECT_DIR$/TST/modTst.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shellTools/shellTools.iml" filepath="$PROJECT_DIR$/SRC/modSrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shellTools/shellTools.iml" filepath="$PROJECT_DIR$/BTH/modBth.iml" />
     </modules>
   </component>
 </project>
@@ -109,23 +110,25 @@ EOF
     cat <<EOF >build.xml
 <project>
     <target>
-        <echo/>
+        <echo>%s</echo>
     </target>
 </project>
 EOF
-    cp build.xml aaa/module_qqq.xml
-    cp build.xml sss/module_www.xml
+    sed 's/%s/.module.test.sourcepath/'                    build.xml > TST/module_modtst.xml
+    sed 's/%s/.module.sourcepath/'                         build.xml > SRC/module_modsrc.xml
+    sed 's/%s/.module.sourcepath .module.test.sourcepath/' build.xml > BTH/module_modbth.xml
 
     generateAll
     generateAll
     generateAll
 
-    mustBeSameChecksum "755a33c448a6943952933fe4f22cd151" "pom.xml"
-    mustBeSameChecksum "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml"
-    mustBeSameChecksum "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml"
-    mustBeSameChecksum "3a98811136cae1ecf64247deee15808b" "build.xml"
-    mustBeSameChecksum "8a64ac5b15fcaf680e93797ec51583bc" "aaa/module_qqq.xml"
-    mustBeSameChecksum "4301e3199a1a12c3547aefbe98e634d3" "sss/module_www.xml"
+    checksumCompare "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \
+                    "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
+                    "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml" \
+                    "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
+                    "67e61acc023c26ebac90ba8e699fb9bb" "TST/module_modtst.xml" \
+                    "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
+                    "39c3d17d49b6d64c66b2e26b411254bb" "BTH/module_modbth.xml"
 
     echo "test OK: generateAll is working correctly"
 }

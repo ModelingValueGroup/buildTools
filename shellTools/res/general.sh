@@ -73,14 +73,28 @@ compareAndOverwrite() {
     fi
     rm "$tmp"
 }
-mustBeSameChecksum() {
-    local c="$1"; shift
-    local f="$1"; shift
+checksumCompare() {
+    local errorsFound=0
+    local  a=""
+    local aa=""
+    for a in "$@"; do
+        if [[ "$aa" == "" ]]; then
+            aa="$a"
+        else
+            local f="$a"
+            local c="$aa"
+            aa=""
 
-    local sum="$(md5sum < "$f" | sed 's/ .*//')"
-    if [[ ! ( "$sum" =~ ^$c$ ) ]]; then
-        echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
-        exit 46
+            local sum="$(md5sum < "$f" | sed 's/ .*//')"
+            if [[ ! ( "$sum" =~ ^$c$ ) ]]; then
+                echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
+                errorsFound=1
+            fi
+        fi
+    done
+
+    if [[ "$errorsFound" == 1 ]]; then
+        exit 56
     fi
 }
 mustBeSameContents() {
