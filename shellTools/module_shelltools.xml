@@ -97,7 +97,7 @@
   </target>
   <target name="testresults.module.shelltools" depends="test.module.shelltools">
     <mkdir dir="${basedir}/out/artifacts"/>
-    <jar destfile="${basedir}/out/artifacts/shelltools-testresults.jar" filesetmanifest="skip">
+    <jar destfile="${basedir}/out/artifacts/shellTools-testresults.jar" filesetmanifest="skip">
       <zipfileset file="${basedir}/TEST-*.xml"/>
     </jar>
   </target>
