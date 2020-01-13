@@ -28,11 +28,23 @@ mvn_() {
     rm $settings
 }
 generateMavenSettings() {
-  local   username="$1"; shift
-  local   password="$1"; shift
-  local repository="$1"; shift
+    local   username="$1"; shift
+    local   password="$1"; shift
+    local repository="$1"; shift
 
-  cat  <<EOF
+    local repositories=()
+    [[ -f project.sh ]] && . project.sh
+    reposSnippet_() {
+        local url="$1"; shift
+        cat <<EOF
+          <repository>
+            <id>$(sed 's/[^a-zA-Z0-9]/_/g' <<<"$url")</id>
+            <url>$url</url>
+          </repository>
+EOF
+    }
+    
+    cat  <<EOF
   <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
     <activeProfiles>
       <activeProfile>github</activeProfile>
@@ -53,6 +65,11 @@ generateMavenSettings() {
             <name>GitHub Apache Maven Packages</name>
             <url>$repository</url>
           </repository>
+$(for url in "${repositories[@]}" ; do
+    if [[ "$url" != "" ]]; then
+        reposSnippet_ "$url"
+    fi
+done)
         </repositories>
       </profile>
     </profiles>

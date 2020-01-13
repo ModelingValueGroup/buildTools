@@ -94,6 +94,9 @@ dependencies=(
     "junit               junit                   4.12        jar jdst"
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
+repositories=(
+    "https://projects.itemis.de/nexus/content/repositories/mbeddr"
+)
 EOF
     cat <<'EOF' >.idea/modules.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -121,6 +124,7 @@ EOF
     generateAll
     generateAll
     generateAll
+    generateMavenSettings "uuu" "ppp" "someurl" > settings.xml
 
     checksumCompare "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \
                     "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
@@ -128,7 +132,8 @@ EOF
                     "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
                     "208a3ecf8fc0ade893227f0387958b49" "TST/module_modtst.xml" \
                     "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
-                    "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml"
+                    "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml" \
+                    "851e45a3b74f2265bcfc65a36889277d" settings.xml
 
     echo "test OK: generateAll is working correctly"
 }
