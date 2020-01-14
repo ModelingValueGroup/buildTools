@@ -39,7 +39,7 @@ jobs:
 
       - name: "generate/adjust some files if needed"
         run: |
-          . <(set -x;java -jar buildTools.jar)
+          . <(java -jar buildTools.jar)
           generateAll
           correctEols
           correctHeaders header
