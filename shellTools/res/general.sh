@@ -91,7 +91,7 @@ assertChecksumsMatch() {
 
             local actSum="$(md5sum < "$file" | sed 's/ .*//')"
             if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
-                echo "::error::test failed: $file is not genereted correctly (md5sum is $actSum not $expSum)" 1>&2
+                echo "::error::test failed: $file is not generated correctly (md5sum is $actSum not $expSum)" 1>&2
                 errorsFound=1
             fi
             expSum=""
@@ -113,7 +113,7 @@ assertEqualFiles() {
     actAsTxt="$(base64 <"$act")"
 
     if [[ "$expAsTxt" != "$actAsTxt" ]]; then
-        echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
+        echo "::error::test failed: $exp is not generated correctly (diff '$exp' '$act')" 1>&2
         exit 46
     fi
 }

@@ -30,7 +30,7 @@ public class EolCorrector extends CorrectorBase {
             ".DS_Store"
     ));
     private static final Set<String> TEXT_EXTENSIONS    = new HashSet<>(Arrays.asList(
-            "MF"
+            "MF",
             "java",
             "java",
             "js",
@@ -41,16 +41,16 @@ public class EolCorrector extends CorrectorBase {
             "txt",
             "xml",
             "yaml",
-            "yml",
+            "yml"
     ));
     private static final Set<String> NO_TEXT_EXTENSIONS = new HashSet<>(Arrays.asList(
-            "class"
+            "class",
             "iml",
             "jar",
             "jar",
             "jpeg",
             "jpg",
-            "png",
+            "png"
     ));
 
     public static void main(String[] args) throws IOException {
