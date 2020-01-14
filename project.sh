@@ -17,9 +17,8 @@ artifacts=(
     "org.modelingvalue   buildTools           1.3.2         jar j--"
 )
 dependencies=(
-    "jars@multi"
+    # none here
 )
-multi=(
-    "MPS/lib/mps-editor.jar"
-    "MPS/lib/annotations.jar"
+repositories=(
+    # none here
 )
