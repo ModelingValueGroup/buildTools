@@ -22,34 +22,35 @@ import java.util.*;
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class EolCorrector extends CorrectorBase {
     private static final Set<String> TEXT_FILES         = new HashSet<>(Arrays.asList(
-            "LICENSE",
             ".gitignore",
+            "LICENSE",
             "header"
     ));
     private static final Set<String> NO_TEXT_FILES      = new HashSet<>(Arrays.asList(
             ".DS_Store"
     ));
     private static final Set<String> TEXT_EXTENSIONS    = new HashSet<>(Arrays.asList(
+            "MF"
             "java",
-            "txt",
-            "properties",
-            "md",
-            "yaml",
-            "yml",
-            "sh",
-            "pom",
             "java",
             "js",
-            "xml"
+            "md",
+            "pom",
+            "properties",
+            "sh",
+            "txt",
+            "xml",
+            "yaml",
+            "yml",
     ));
     private static final Set<String> NO_TEXT_EXTENSIONS = new HashSet<>(Arrays.asList(
+            "class"
             "iml",
             "jar",
-            "png",
             "jar",
             "jpeg",
             "jpg",
-            "class"
+            "png",
     ));
 
     public static void main(String[] args) throws IOException {
