@@ -27,7 +27,7 @@ generateAll() {
 cleanupIntellijGeneratedAntFiles() {
     local extraAntFiles=("$@")
 
-    for xml in build.xml */module_*.xml "${extraAntFiles[@]}"; do
+    for xml in build.xml module_*.xml */module_*.xml "${extraAntFiles[@]}"; do
         if [[ -f "$xml" ]]; then
 
             # - add includeantruntime="false" for all <javac> calls:
@@ -248,14 +248,17 @@ enrichAntFiles() {
         local modDir modName
         IFS=/ read -r modDir modName <<<"$modDirAndName"
         local modNameLow="${modName,,}"
-        local        xml="$modDir/module_$modNameLow.xml"
-        local        tmp="$xml.tmp"
+        local        xml="module_$modNameLow.xml"
 
         if [[ ! -f "$xml" ]]; then
-            echo "::error::there is no ant file $xml, please generate it first"
-            exit 77
+            xml="$modDir/$xml"
+            if [[ ! -f "$xml" ]]; then
+                echo "::error::there is no ant file $xml, please generate it first"
+                exit 77
+            fi
         fi
         if "$condFunc" "$modDir" "$xml"; then
+            local tmp="$xml.tmp"
             cp "$xml" "$tmp"
             for subTarget in "${subTargets[@]}"; do
                 local sub="$subTarget.$modNameLow"
