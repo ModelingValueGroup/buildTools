@@ -40,7 +40,7 @@ downloadLatestRelease() {
         echo
         echo "== $i => ${urls[$i]}  /  ${names[$i]}"
         echo
-        curl -L -o "$dir/${names[$i]}" "${urls[$i]}"
+        curl_ '' -o "$dir/${names[$i]}" "${urls[$i]}"
     done
 }
 removeReleaseWithTag() {

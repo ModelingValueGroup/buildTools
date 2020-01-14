@@ -40,13 +40,18 @@ contains() {
 curl_() {
     local token="$1"; shift
 
+    local headerArg=()
+    if [[ "$token" != "" ]]; then
+        headerArg+=("--header" "Authorization: token $token")
+    fi
+
     curl \
         --location \
         --remote-header-name \
         --fail \
         --silent \
         --show-error \
-        --header "Authorization: token $token" \
+        "${headerArg[@]}" \
         "$@"
 }
 validateToken() {
@@ -73,23 +78,23 @@ compareAndOverwrite() {
     fi
     rm "$tmp"
 }
-checksumCompare() {
+assertChecksumsMatch() {
     local errorsFound=0
-    local  a=""
-    local aa=""
+    local expSum=""
+    local   file=""
+    local a
     for a in "$@"; do
-        if [[ "$aa" == "" ]]; then
-            aa="$a"
+        if [[ "$expSum" == "" ]]; then
+            expSum="$a"
         else
-            local f="$a"
-            local c="$aa"
-            aa=""
+            file="$a"
 
-            local sum="$(md5sum < "$f" | sed 's/ .*//')"
-            if [[ ! ( "$sum" =~ ^$c$ ) ]]; then
-                echo "::error::test failed: $f is not genereted correctly (md5sum is $sum not $c)" 1>&2
+            local actSum="$(md5sum < "$file" | sed 's/ .*//')"
+            if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
+                echo "::error::test failed: $file is not genereted correctly (md5sum is $actSum not $expSum)" 1>&2
                 errorsFound=1
             fi
+            expSum=""
         fi
     done
 
@@ -97,7 +102,7 @@ checksumCompare() {
         exit 56
     fi
 }
-mustBeSameContents() {
+assertEqualFiles() {
     local exp="$1"; shift
     local act="$1"; shift
 
@@ -111,4 +116,26 @@ mustBeSameContents() {
         echo "::error::test failed: $exp is not genereted correctly (diff '$exp' '$act')" 1>&2
         exit 46
     fi
+}
+assertEqual() {
+    local  v1="$1"; shift
+    local  v2="$1"; shift
+    local msg="$1"; shift
+
+    if [[ "$v1" != "$v2" ]]; then
+        echo "::error::$msg: $v1 != $v2"
+        exit 65
+    fi
+}
+getMajor2Version() {
+    local fullVersion="$1"; shift
+
+    sed -En 's/([0-9][0-9]*[.][0-9][0-9]*).*/\1/p' <<<"$fullVersion"
+}
+test_getMajorVersion() {
+    assertEqual "$(getMajor2Version "2019.1"    )"  "2019.1"  "getMajorVersion() does not work correctly"
+    assertEqual "$(getMajor2Version "2019.1.3"  )"  "2019.1"  "getMajorVersion() does not work correctly"
+    assertEqual "$(getMajor2Version "2019.13"   )"  "2019.13" "getMajorVersion() does not work correctly"
+    assertEqual "$(getMajor2Version "2019.13.1" )"  "2019.13" "getMajorVersion() does not work correctly"
+    assertEqual "$(getMajor2Version "2019.13.12")"  "2019.13" "getMajorVersion() does not work correctly"
 }

@@ -80,15 +80,16 @@ EOF
 generateIntellijLibraryFilesFromDependencies() {
     local g a v e flags
     mkdir -p ".idea/libraries"
-    for i in ".idea/libraries/gen!"*; do
+    for i in ".idea/libraries/gen__"*; do
         if [[ -f "$i" ]] && grep -Fq '<library name="gen: ' "$i"; then
             rm "$i"
         fi
     done
-    getDependencyGavesWithFlags | while read g a v e flags; do
-        if [[ $g != "" ]]; then
-            local fileName="gen__$(sed 's/[^a-zA-Z0-9]/_/g' <<<"$a")"
-            cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
+    getDependencyGavesWithFlags \
+        | while read g a v e flags; do
+            if [[ $g != "" ]]; then
+                local fileName="gen__$(sed 's/[^a-zA-Z0-9]/_/g' <<<"$a")"
+                cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
 <!--          change  project.sh  instead                         -->
@@ -125,8 +126,35 @@ fi
   </library>
 </component>
 EOF
-        fi
-    done
+            fi
+        done
+    . project.sh
+    getDependencyJarVars \
+        | while read var; do
+            if [[ "$var" != "" ]]; then
+                local fileName="gen__$var"
+                eval "local jars=(\"\${$var[@]}\")"
+                cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
+<!--==============================================================-->
+<!-- WARNING: this file will be overwritten by the build scripts! -->
+<!--          change  project.sh  instead                         -->
+<!--==============================================================-->
+<component name="libraryTable">
+  <library name="gen: $var">
+    <CLASSES>
+$(
+for jar in "${jars[@]}"; do
+    echo "      <root url=\"jar://\$PROJECT_DIR\$/$jar!/\" />"
+done
+)
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
+EOF
+            fi
+        done
 }
 generateAntTestTargets() {
     cond__() {
@@ -303,7 +331,16 @@ getDependencyGavesWithFlags() {
     fi
     local dependencies=()
     . project.sh
-    printf "%s\n" "${dependencies[@]}" | sort -u
+    printf "%s\n" "${dependencies[@]}" | fgrep -v "@" | sort -u
+}
+getDependencyJarVars() {
+    if [[ ! -f "project.sh" ]]; then
+        echo "::error::project.sh file not found" 1>&2
+        exit 45
+    fi
+    local dependencies=()
+    . project.sh
+    printf "%s\n" "${dependencies[@]}" | sed -n "s/jars@//p" | sort -u
 }
 getIntellijModules() {
     local modules=".idea/modules.xml"

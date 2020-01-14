@@ -175,6 +175,8 @@ EOF
 )"
     graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version' 2>/dev/null
 }
+###################
+# util for testing (defined here because it is used in multiple projects)
 runUploadArtifactTest() {
     local     g="$1"; shift
     local     a="$1"; shift
@@ -208,9 +210,9 @@ EOF
     uploadArtifactQuick   "$token" "$g" "$a" "$v" "$tmp/tst.pom" "$tmp/tst.jar"
 
     downloadArtifactQuick "$token" "$g" "$a" "$v" "jar" "$dwn"
-    mustBeSameContents "$tmp/tst.pom"         "$dwn/$a.pom"
-    mustBeSameContents "$tmp/tst.jar"         "$dwn/$a.jar"
-    mustBeSameContents "$tmp/tst-sources.jar" "$dwn/$a-sources.jar"
-    mustBeSameContents "$tmp/tst-javadoc.jar" "$dwn/$a-javadoc.jar"
+    assertEqualFiles "$tmp/tst.pom"         "$dwn/$a.pom"
+    assertEqualFiles "$tmp/tst.jar"         "$dwn/$a.jar"
+    assertEqualFiles "$tmp/tst-sources.jar" "$dwn/$a-sources.jar"
+    assertEqualFiles "$tmp/tst-javadoc.jar" "$dwn/$a-javadoc.jar"
     rm -rf "$tmp" "$dwn"
 }

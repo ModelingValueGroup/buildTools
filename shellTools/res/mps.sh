@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -13,13 +14,31 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-artifacts=(
-    "org.modelingvalue   buildTools           1.3.2         jar j--"
-)
-dependencies=(
-    "jars@multi"
-)
-multi=(
-    "MPS/lib/mps-editor.jar"
-    "MPS/lib/annotations.jar"
-)
+set -euo pipefail
+
+getMpsDownloadUrl() {
+    local fullVersion="$1"; shift
+
+    printf "https://download.jetbrains.com/mps/%s/MPS-%s.zip" "$(getMajor2Version "$fullVersion")" "$fullVersion"
+}
+installMps() {
+    local         dir="$1"; shift
+    local fullVersion="$1"; shift
+
+    mkdir -p "$dir"
+    (
+        cd "$dir"
+        local tmpZip="MPS$$.zip"
+        curl_ '' -o "$tmpZip" "$(getMpsDownloadUrl "$fullVersion")"
+        if [[ ! -f "$tmpZip" ]]; then
+            echo "::error::could not download MPS $fullVersion"
+            exit 32
+        fi
+        unzip -q "$tmpZip"
+        mv "MPS "*/* .
+        rm -rf "$tmpZip" "MPS "*
+    )
+}
+test_installMPS() {
+    installMps "MPS" "2019.2.4"
+}

@@ -41,16 +41,16 @@ test_packing() {
 test_downloadArtifactQuick() {
     echo "...expect 2 warnings"
     downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    checksumCompare  "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
-                     "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
     rm -rf downloaded
     echo "test OK: downloadArtifactQuick is working correctly"
 }
 #######################################################################################################################
 test_downloadArtifact() {
     downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    checksumCompare "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
-                     "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir so checking in m2-repos
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
     echo "test OK: downloadArtifact is working correctly"
 }
@@ -92,10 +92,15 @@ artifacts=(
 )
 dependencies=(
     "junit               junit                   4.12        jar jdst"
+    "jars@multi"
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 repositories=(
     "https://projects.itemis.de/nexus/content/repositories/mbeddr"
+)
+multi=(
+    "MPS/lib/mps-editor.jar"
+    "MPS/lib/annotations.jar"
 )
 EOF
     cat <<'EOF' >.idea/modules.xml
@@ -126,14 +131,15 @@ EOF
     generateAll
     generateMavenSettings "uuu" "ppp" "someurl" > settings.xml
 
-    checksumCompare "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \
-                    "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
-                    "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml" \
-                    "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
-                    "208a3ecf8fc0ade893227f0387958b49" "TST/module_modtst.xml" \
-                    "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
-                    "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml" \
-                    "851e45a3b74f2265bcfc65a36889277d" settings.xml
+    assertChecksumsMatch    "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \
+                            "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
+                            "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml" \
+                            "c2f5edf722b02968392812dcfe1a10bc" ".idea/libraries/gen__multi.xml" \
+                            "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
+                            "208a3ecf8fc0ade893227f0387958b49" "TST/module_modtst.xml" \
+                            "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
+                            "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml" \
+                            "851e45a3b74f2265bcfc65a36889277d" "settings.xml"
 
     echo "test OK: generateAll is working correctly"
 }
@@ -162,6 +168,7 @@ prepareForTesting() {
 #######################################################################################################################
 ##### test execution:
 if [[ "$#" == 0 ]]; then
+    . <(cp out/artifacts/buildTools.jar .; java -jar buildTools.jar)
     tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
 else
     tests=("$@")
@@ -183,13 +190,8 @@ for f in "${tests[@]}"; do
     (
         cd "$tmp"
 
-        ##### copy the produced jar over to here:
-        if [[ -f ../../buildTools.jar               ]]; then
-            cp ../../buildTools.jar               buildTools.jar
-        elif [[ -f ../../out/artifacts/buildTools.jar ]]; then
-            cp ../../out/artifacts/buildTools.jar buildTools.jar
-        fi
-        . <(java -jar buildTools.jar)
+        ##### copy and include the produced jar:
+        . <(cp ../../out/artifacts/buildTools.jar .; java -jar buildTools.jar)
 
         "$f"
     )
