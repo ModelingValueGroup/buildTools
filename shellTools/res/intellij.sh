@@ -245,17 +245,18 @@ enrichAntFiles() {
     all="$(getIntellijModules)"
     local modDirAndName
     for modDirAndName in $all; do
-        local modDir modName
+        local modDir modName modNameLow
         IFS=/ read -r modDir modName <<<"$modDirAndName"
-        local modNameLow="${modName,,}"
-        local        xml="module_$modNameLow.xml"
+        if [[ "$modName" == "" ]]; then
+            modName="$modDir"
+            modDir="."
+        fi
+        modNameLow="${modName,,}"
+        xml="$modDir/module_$modNameLow.xml"
 
         if [[ ! -f "$xml" ]]; then
-            xml="$modDir/$xml"
-            if [[ ! -f "$xml" ]]; then
-                echo "::error::there is no ant file $xml, please generate it first"
-                exit 77
-            fi
+            echo "::error::there is no ant file $xml, please generate it first"
+            exit 77
         fi
         if "$condFunc" "$modDir" "$xml"; then
             local tmp="$xml.tmp"
