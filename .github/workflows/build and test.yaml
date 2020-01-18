@@ -50,7 +50,7 @@ jobs:
           ant
           cp out/artifacts/buildTools.jar .
 
-      - name: "upload buildTools.jar"
+      - name: "publish action-artifact buildTools.jar"
         uses: actions/upload-artifact@v1
         with:
           name: buildTools.jar

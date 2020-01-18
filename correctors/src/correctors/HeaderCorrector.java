@@ -28,6 +28,9 @@ public class HeaderCorrector extends CorrectorBase {
     static {
         EXT_TO_PRE.put("java", "//");
         EXT_TO_PRE.put("sh", "##");
+        EXT_TO_PRE.put("yaml", "##");
+        EXT_TO_PRE.put("yml", "##");
+        EXT_TO_PRE.put("js", "//");
     }
 
     private Path                      headerFile = Paths.get("build", "header").toAbsolutePath();
