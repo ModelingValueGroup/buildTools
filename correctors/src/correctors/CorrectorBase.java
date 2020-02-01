@@ -40,12 +40,14 @@ public abstract class CorrectorBase {
     }
 
     void overwrite(Path file, List<String> lines, boolean forced) {
+        removeTrailingEmptyLines(lines);
         try {
             if (forced || !Files.isRegularFile(file)) {
                 System.err.println("+ generated  : " + file);
                 Files.write(file, lines);
             } else {
                 List<String> old = Files.readAllLines(file);
+                removeTrailingEmptyLines(old);
                 if (!lines.equals(old)) {
                     System.err.println("+ regenerated: " + file);
                     Files.write(file, lines);
@@ -56,6 +58,14 @@ public abstract class CorrectorBase {
         } catch (IOException e) {
             throw new Error("could not overwrite: " + file, e);
         }
+    }
+
+    private void removeTrailingEmptyLines(List<String> lines) {
+        Collections.reverse(lines);
+        while (!lines.isEmpty() && lines.get(0).trim().length()==0) {
+            lines.remove(0);
+        }
+        Collections.reverse(lines);
     }
 
     static Optional<String> getExtension(String filename) {

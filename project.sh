@@ -14,11 +14,6 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 artifacts=(
-    "org.modelingvalue   buildTools           1.3.6         jar j--"
+    "org.modelingvalue   buildTools           1.4.0         jar j--"
 )
-dependencies=(
-    # none here
-)
-repositories=(
-    # none here
-)
+
