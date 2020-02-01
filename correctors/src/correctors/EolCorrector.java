@@ -64,7 +64,6 @@ public class EolCorrector extends CorrectorBase {
     private void generate() throws IOException {
         allFiles()
                 .filter(this::isTextType)
-                .filter(p -> !p.toString().startsWith("./.github/workflows/")) // github refuses bot pushes of workflows
                 .forEach(this::correctCRLF);
     }
 

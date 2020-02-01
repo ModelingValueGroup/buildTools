@@ -26,7 +26,8 @@ public abstract class CorrectorBase {
             Paths.get("./.git"),
             Paths.get("./.idea"),
             Paths.get("./out"),
-            Paths.get("./lib")
+            Paths.get("./lib"),
+            Paths.get("./.github/workflows/") // github refuses bot pushes of workflows
     ));
 
     Stream<Path> allFiles() throws IOException {
