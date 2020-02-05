@@ -326,7 +326,9 @@ getAllDependencies() {
         getDependencyGavesWithFlags | while read g a v e flags; do
             if [[ $g != '' ]]; then
                 installS3cmd "https://s3.nl-ams.scw.cloud" "$acc" "$sec"
-                s3cmd_ get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" "$lib" || :
+                s3cmd_ --force get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" "$lib" \
+                    || echo "## could not get $g:$a for branch $branch from S3" \
+                    && echo "## got latest $g:$a for branch $branch from S3"
             fi
         done
     fi
