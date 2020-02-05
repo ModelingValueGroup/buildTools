@@ -25,6 +25,7 @@ installMps() {
     local         dir="$1"; shift
     local fullVersion="$1"; shift
 
+    echo "## installing MPS $fullVersion..."
     mkdir -p "$dir"
     (
         cd "$dir"
