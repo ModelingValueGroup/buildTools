@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -13,7 +14,44 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-artifacts=(
-    "org.modelingvalue   buildTools           1.5.0         jar j--"
-)
+set -euo pipefail
 
+installS3cmd() {
+    export   S3CMD_HOST_URL="$1"; shift
+    export S3CMD_ACCESS_KEY="$1"; shift
+    export S3CMD_SECRET_KEY="$1"; shift
+
+    if ! command -v s3cmd >/dev/null; then
+        sudo apt-get update
+        sudo apt-get install -y s3cmd
+    fi
+}
+s3cmd_() {
+    s3cmd                                   \
+               --host="$S3CMD_HOST_URL"     \
+         --access_key="$S3CMD_ACCESS_KEY"   \
+         --secret_key="$S3CMD_SECRET_KEY"   \
+        --host-bucket=                      \
+        "$@"
+}
+get() {
+    local  buc="$1"; shift
+    local from="$1"; shift
+    local   to="$1"; shift
+
+    echo "# going to get from '$S3CMD_HOST_URL' from '$from' to '$to'"
+    mkdir -p "$to"
+    s3cmd_ --recursive get "$from" "$to"
+}
+put() {
+    local  buc="$1"; shift
+    local from="$1"; shift
+    local   to="$1"; shift
+
+    echo "# going to put on '$S3CMD_HOST_URL' from '$from' to '$to'"
+    if ! s3cmd_ ls "$buc" 2>/dev/null 1>&2; then
+        echo "# bucket not found, creating bucket: $buc"
+        s3cmd_ mb "$buc"
+    fi
+    s3cmd_ --recursive put "$from" "$to"
+}
