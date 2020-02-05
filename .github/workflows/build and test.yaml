@@ -18,7 +18,7 @@ jobs:
           java-version: 11
 
       - name: "install xmlstarlet/jq/maven"
-        run: sudo apt-get install xmlstarlet jq maven
+        run: sudo apt-get install xmlstarlet jq maven s3cmd
 
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master

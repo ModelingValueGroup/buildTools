@@ -312,12 +312,24 @@ EOF
 }
 getAllDependencies() {
     local token="$1"; shift
+    local   acc="${1:-}"
+    local   sec="${2:-}"
 
     local lib="lib"
     mkdir -p "$lib"
     mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib"
     mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=javadoc
     mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=sources
+
+    local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
+    if [[ "$branch" != "master" && "$acc" != "" && "$sec" != "" ]]; then
+        getDependencyGavesWithFlags | while read g a v e flags; do
+            if [[ $g != '' ]]; then
+                installS3cmd "https://s3.nl-ams.scw.cloud" "$acc" "$sec"
+                s3cmd_ get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" "$lib" || :
+            fi
+        done
+    fi
 }
 getFirstArtifactWithFlags() {
     if [[ ! -f "project.sh" ]]; then
