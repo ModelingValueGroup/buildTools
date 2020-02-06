@@ -324,20 +324,21 @@ getAllDependencies() {
     local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
     if [[ "$branch" != "master" && "$acc" != "" && "$sec" != "" ]]; then
 ls -l "$lib"
-         while read g a v e flags; do
+        local tmp="tmp-lib"
+        while read g a v e flags; do
             if [[ $g != '' ]]; then
                 installS3cmd "https://s3.nl-ams.scw.cloud" "$acc" "$sec"
-                if s3cmd_ --force get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" "tmp-lib"; then
+                if s3cmd_ --force get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" $tmp 2>/dev/null 1>&2; then
                     echo "## got latest $g:$a for branch $branch from S3"
                 else
                     echo "## could not get $g:$a for branch $branch from S3"
                 fi
             fi
         done < <(getDependencyGavesWithFlags)
-ls -l tmp-lib
-        find tmp-lib -file -empty -delete
-        mv tmp-lib/* "$lib" 2>/dev/null || :
-        rmdir tmp-lib
+ls -l $tmp
+        find $tmp -file -empty -delete
+        mv $tmp/* "$lib" 2>/dev/null || :
+        rmdir $tmp
 ls -l "$lib"
     fi
 }
