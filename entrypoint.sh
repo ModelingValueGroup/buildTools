@@ -17,7 +17,7 @@
 set -euo pipefail
 
 ##########################################################################################################################
-extraPackages=(xmlstarlet jq maven)
+extraPackages=(xmlstarlet jq maven:mvn s3cmd)
       ourUser="ModelingValueGroup"
       product="buildTools"
       groupId="org.modelingvalue"
@@ -25,7 +25,19 @@ extraPackages=(xmlstarlet jq maven)
 
 ##########################################################################################################################
 echo "::group::install extra packages"
-sudo apt-get install -y "${extraPackages[@]}"
+toInstall=()
+for i in "${extraPackages[@]}"; do
+    IFS=: read n c <<<"$i"
+    c="${c:-$n}"
+    if ! which $c 1>/dev/null; then
+        toInstall+=("$n")
+    fi
+done
+if [[ "${#toInstall[@]}" != 0 ]]; then
+    echo "## installing: ${toInstall[*]}"
+    sudo apt-get update
+    sudo apt-get install -y "${toInstall[@]}"
+fi
 echo "::endgroup::"
 
 includeBuildTools() {
