@@ -323,8 +323,9 @@ getAllDependencies() {
 
     local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
     if [[ "$branch" != "master" && "$acc" != "" && "$sec" != "" ]]; then
-ls -l "$lib"
         local tmp="tmp-lib"
+        mkdir -p $tmp
+ls -la "$lib" $tmp
         while read g a v e flags; do
             if [[ $g != '' ]]; then
                 installS3cmd "https://s3.nl-ams.scw.cloud" "$acc" "$sec"
@@ -335,11 +336,11 @@ ls -l "$lib"
                 fi
             fi
         done < <(getDependencyGavesWithFlags)
-ls -l $tmp
+ls -la "$lib" $tmp
         find $tmp -file -empty -delete
         mv $tmp/* "$lib" 2>/dev/null || :
         rmdir $tmp
-ls -l "$lib"
+ls -la "$lib"
     fi
 }
 getFirstArtifactWithFlags() {
