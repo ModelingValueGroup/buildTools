@@ -323,6 +323,7 @@ getAllDependencies() {
     local    lib="lib"
     mkdir -p "$lib"
 
+ls -la "$lib" || :
     if [[ "$token" != "" ]]; then
         echo "## trying to get dependencies from maven..."
         mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib"                          || echo "## could not get some dependencies from maven"
@@ -330,6 +331,7 @@ getAllDependencies() {
         mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib" "-Dclassifier=sources"   || echo "## could not get some sources dependencies from maven"
     fi
 
+ls -la "$lib" || :
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
         installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
         echo "## trying to get dependencies from S3 (becasue this is NOT the master branch)..."
@@ -347,12 +349,13 @@ getAllDependencies() {
                 s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
             fi
         done < <(getDependencyGavesWithFlags)
+        rm "$tmpLib/trigger"
         mv $tmpLib/* "$lib" 2>/dev/null || :
         rm -rf $tmpLib
     fi
 
-    echo "## checking if we have the required dependencies..."
 ls -la "$lib" || :
+    echo "## checking if we have the required dependencies..."
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
