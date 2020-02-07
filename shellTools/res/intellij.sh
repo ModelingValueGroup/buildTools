@@ -218,13 +218,13 @@ generateAntJavadocTargets() {
         cat <<EOF
     <target name="javadoc.module.$modNameLow">
         <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
-        <property name="$modNameLow.javadoc.tmpLib" value="\${$modNameLow.javadoc.dir}/tmpLib"/>
+        <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
         <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
-        <javadoc sourcepathref="$modNameLow.module.sourcepath" destdir="\${$modNameLow.javadoc.tmpLib}" classpathref="$modNameLow.module.classpath"/>
+        <javadoc sourcepathref="$modNameLow.module.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
         <jar destfile="\${$modNameLow.javadoc.jar}" filesetmanifest="skip">
-            <zipfileset dir="\${$modNameLow.javadoc.tmpLib}"/>
+            <zipfileset dir="\${$modNameLow.javadoc.tmp}"/>
         </jar>
-        <delete dir="\${$modNameLow.javadoc.tmpLib}"/>
+        <delete dir="\${$modNameLow.javadoc.tmp}"/>
     </target>
 EOF
     }
@@ -237,7 +237,7 @@ enrichAntFiles() {
     local subTargets=("$@")
 
     local    mainAntFile="build.xml"
-    local mainAntFileTmp="$mainAntFile.tmpLib"
+    local mainAntFileTmp="$mainAntFile.tmp"
 
     if [[ ! -f "$mainAntFile" ]]; then
         echo "::error::there is no ant file $mainAntFile, please generate it first"
@@ -262,15 +262,15 @@ enrichAntFiles() {
             exit 77
         fi
         if "$condFunc" "$modDir" "$xml"; then
-            local tmpLib="$xml.tmpLib"
-            cp "$xml" "$tmpLib"
+            local tmp="$xml.tmp"
+            cp "$xml" "$tmp"
             for subTarget in "${subTargets[@]}"; do
                 local sub="$subTarget.$modNameLow"
-                rmTargetFromAntFile "$tmpLib" "$sub"
-                "$targetFunc" "$modName" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmpLib"
+                rmTargetFromAntFile "$tmp" "$sub"
+                "$targetFunc" "$modName" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmp"
             done
-            cat "$tmpLib" | xmlstarlet fo | compareAndOverwrite "$xml"
-            rm "$tmpLib"
+            cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
+            rm "$tmp"
 
             if [[ "$subs" != "" ]]; then
                 subs+=","
