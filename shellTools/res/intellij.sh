@@ -16,6 +16,9 @@
 
 set -euo pipefail
 
+export   artifactS3Host="s3.nl-ams.scw.cloud"
+export artifactS3Bucket="mvg-artifacts"
+
 generateAll() {
     cleanupIntellijGeneratedAntFiles
     generatePomFromDependencies
@@ -215,13 +218,13 @@ generateAntJavadocTargets() {
         cat <<EOF
     <target name="javadoc.module.$modNameLow">
         <property name="$modNameLow.javadoc.dir" value="\${basedir}/out/artifacts"/>
-        <property name="$modNameLow.javadoc.tmp" value="\${$modNameLow.javadoc.dir}/tmp"/>
+        <property name="$modNameLow.javadoc.tmpLib" value="\${$modNameLow.javadoc.dir}/tmpLib"/>
         <property name="$modNameLow.javadoc.jar" value="\${$modNameLow.javadoc.dir}/$modName-javadoc.jar"/>
-        <javadoc sourcepathref="$modNameLow.module.sourcepath" destdir="\${$modNameLow.javadoc.tmp}" classpathref="$modNameLow.module.classpath"/>
+        <javadoc sourcepathref="$modNameLow.module.sourcepath" destdir="\${$modNameLow.javadoc.tmpLib}" classpathref="$modNameLow.module.classpath"/>
         <jar destfile="\${$modNameLow.javadoc.jar}" filesetmanifest="skip">
-            <zipfileset dir="\${$modNameLow.javadoc.tmp}"/>
+            <zipfileset dir="\${$modNameLow.javadoc.tmpLib}"/>
         </jar>
-        <delete dir="\${$modNameLow.javadoc.tmp}"/>
+        <delete dir="\${$modNameLow.javadoc.tmpLib}"/>
     </target>
 EOF
     }
@@ -234,7 +237,7 @@ enrichAntFiles() {
     local subTargets=("$@")
 
     local    mainAntFile="build.xml"
-    local mainAntFileTmp="$mainAntFile.tmp"
+    local mainAntFileTmp="$mainAntFile.tmpLib"
 
     if [[ ! -f "$mainAntFile" ]]; then
         echo "::error::there is no ant file $mainAntFile, please generate it first"
@@ -259,15 +262,15 @@ enrichAntFiles() {
             exit 77
         fi
         if "$condFunc" "$modDir" "$xml"; then
-            local tmp="$xml.tmp"
-            cp "$xml" "$tmp"
+            local tmpLib="$xml.tmpLib"
+            cp "$xml" "$tmpLib"
             for subTarget in "${subTargets[@]}"; do
                 local sub="$subTarget.$modNameLow"
-                rmTargetFromAntFile "$tmp" "$sub"
-                "$targetFunc" "$modName" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmp"
+                rmTargetFromAntFile "$tmpLib" "$sub"
+                "$targetFunc" "$modName" "$modNameLow" "$sub" | addSnippetToAntFile  "$tmpLib"
             done
-            cat "$tmp" | xmlstarlet fo | compareAndOverwrite "$xml"
-            rm "$tmp"
+            cat "$tmpLib" | xmlstarlet fo | compareAndOverwrite "$xml"
+            rm "$tmpLib"
 
             if [[ "$subs" != "" ]]; then
                 subs+=","
@@ -312,32 +315,54 @@ EOF
 }
 getAllDependencies() {
     local token="$1"; shift
-    local   acc="${1:-}"
-    local   sec="${2:-}"
+    local s3ACC="${1:-}"
+    local s3SEC="${2:-}"
 
-    local lib="lib"
-    mkdir -p "$lib"
-    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib"
-    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=javadoc
-    mvn_ "$token" dependency:copy-dependencies -Dmdep.stripVersion=true -DoutputDirectory="$lib" -Dclassifier=sources
-
+    local g a v e flags
     local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
-    if [[ "$branch" != "master" && "$acc" != "" && "$sec" != "" ]]; then
-        local tmp="tmp-lib"
-        mkdir -p $tmp
+    local    lib="lib"
+    mkdir -p "$lib"
+
+    if [[ "$token" != "" ]]; then
+        echo "## trying to get dependencies from maven..."
+        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib"                          || echo "## could not get some dependencies from maven"
+        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib" "-Dclassifier=javadoc"   || echo "## could not get some javadoc dependencies from maven"
+        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib" "-Dclassifier=sources"   || echo "## could not get some sources dependencies from maven"
+    fi
+
+    if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
+        installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
+        echo "## trying to get dependencies from S3 (becasue this is NOT the master branch)..."
+        local tmpLib="tmpLib"
+        mkdir -p $tmpLib
+        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/trigger"
         while read g a v e flags; do
             if [[ $g != '' ]]; then
-                installS3cmd "https://s3.nl-ams.scw.cloud" "$acc" "$sec"
-                if s3cmd_ --force get "s3://mvg-artifacts/$g/$a/$branch/$a.$e" $tmp 2>/dev/null 1>&2; then
+                local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
+                if s3cmd_ --force get "$s3dir/$a.$e" $tmpLib 2>/dev/null 1>&2; then
                     echo "## got latest $g:$a for branch $branch from S3"
                 else
                     echo "## could not get $g:$a for branch $branch from S3"
                 fi
+                s3cmd_ --force put "$tmpLib/trigger" "$s3dir/$GITHUB_REPOSITORY#$branch.trigger"
             fi
         done < <(getDependencyGavesWithFlags)
-        mv $tmp/* "$lib" 2>/dev/null || :
-        rmdir $tmp
+        mv $tmpLib/* "$lib" 2>/dev/null || :
+        rmdir -rf $tmpLib
     fi
+
+    echo "## checking if we have the required dependencies..."
+    local missingSome=false
+    while read g a v e flags; do
+        if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
+            echo "## missing $g:$a.$e"
+            missingSome=true
+        fi
+    done < <(getDependencyGavesWithFlags)
+    if [[ "$missingSome" == true ]]; then
+        exit 74
+    fi
+    echo "## all ok"
 }
 getFirstArtifactWithFlags() {
     if [[ ! -f "project.sh" ]]; then
