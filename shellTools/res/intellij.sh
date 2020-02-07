@@ -344,7 +344,7 @@ getAllDependencies() {
                 else
                     echo "## could not get $g:$a for branch $branch from S3"
                 fi
-                s3cmd_ --force put "$tmpLib/trigger" "$s3dir/$GITHUB_REPOSITORY#$branch.trigger"
+                s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
             fi
         done < <(getDependencyGavesWithFlags)
         mv $tmpLib/* "$lib" 2>/dev/null || :
