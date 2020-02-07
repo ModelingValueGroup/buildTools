@@ -352,6 +352,7 @@ getAllDependencies() {
     fi
 
     echo "## checking if we have the required dependencies..."
+ls -la "$lib" || :
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
