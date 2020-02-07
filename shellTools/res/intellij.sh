@@ -348,7 +348,7 @@ getAllDependencies() {
             fi
         done < <(getDependencyGavesWithFlags)
         mv $tmpLib/* "$lib" 2>/dev/null || :
-        rmdir -rf $tmpLib
+        rm -rf $tmpLib
     fi
 
     echo "## checking if we have the required dependencies..."
