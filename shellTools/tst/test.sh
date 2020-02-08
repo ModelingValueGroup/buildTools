@@ -138,6 +138,7 @@ EOF
     generateAll
     generateAll
     generateAll
+
     generateMavenSettings "uuu" "ppp" "someurl" > settings.xml
 
     assertChecksumsMatch    "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \

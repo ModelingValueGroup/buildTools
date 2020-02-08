@@ -32,7 +32,7 @@ generateMavenSettings() {
     local   password="$1"; shift
     local repository="$1"; shift
 
-    . <(catProjectSh)
+    . <(catProjectSh -maybeAbsent)
     reposSnippet_() {
         local url="$1"; shift
         cat <<EOF

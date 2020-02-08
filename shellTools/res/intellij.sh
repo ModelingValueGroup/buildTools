@@ -388,15 +388,21 @@ getIntellijModules() {
     fi
     xmlstarlet sel -t -v project/component/modules/module/@filepath -n "$modules" |sed 's/\$[^$]*\$//g;s|^/||;s|\.iml$||'
 }
+# shellcheck disable=SC2120
 catProjectSh() {
+    local maybeAbsent="${1:-}"
+
     if [[ ! -f "project.sh" ]]; then
-        echo "::error::project.sh file not found" 1>&2
-        exit 45
-    fi
-    cat <<EOF
+        if [[ "$maybeAbsent" != "-maybeAbsent" ]]; then
+            echo "::error::project.sh file not found" 1>&2
+            exit 45
+        fi
+    else
+        cat <<EOF
 local artifacts=()
 local dependencies=()
 local repositories=()
 $(cat project.sh)
 EOF
+    fi
 }
