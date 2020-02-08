@@ -335,18 +335,20 @@ getAllDependencies() {
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
         installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
         if command -v s3cmd; then
-            echo "## trying to get dependencies from S3 (becasue this is NOT the master branch)..."
+            echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
             local tmpLib="tmpLib"
             mkdir -p $tmpLib
             printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/trigger"
             while read g a v e flags; do
                 if [[ $g != '' ]]; then
                     local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
-                    if s3cmd_ --force get "$s3dir/$a.$e" $tmpLib 2>/dev/null 1>&2; then
-                        echo "## got latest $g:$a for branch $branch from S3"
-                    else
-                        echo "## could not get $g:$a for branch $branch from S3"
-                    fi
+                    for aa in "$a" "$a-sources" "$a-javadoc"; do
+                        if s3cmd_ --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
+                            echo "## got latest $g:$aa for branch $branch from S3"
+                        else
+                            echo "## could not get $g:$aa for branch $branch from S3"
+                        fi
+                    done
                     s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
                 fi
             done < <(getDependencyGavesWithFlags)
