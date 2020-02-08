@@ -37,16 +37,28 @@ test_packing() {
     fi
     echo "test OK: packing jar does correctly deliver scripts"
 }
-#######################################################################################################################
 test_downloadArtifactQuick() {
     echo "...expect 2 warnings"
-    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" "downloaded/buildTools.pom"
-    rm -rf downloaded
+
+    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools"    "1.1.1" "jar" "from-github"
+    downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
+    downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
+
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "from-github/buildTools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github/buildTools.pom" \
+                            \
+                            "5b38c40c97fbd0adee29f91e60405584" "from-maven/junit.jar" \
+                            "af7ca61fba26556cfe5b40cf15aadc14" "from-maven/junit.pom" \
+                            "cf72f68b360b44c15fadd47a0bbc1b43" "from-maven/junit-javadoc.jar" \
+                            "97f2fb8b3005d11d5a754adb4d99c926" "from-maven/junit-sources.jar" \
+                            \
+                            "68380001b88006ebe49be50cef5bb23a" "from-sonatype/junit.jar" \
+                            "7cb390d6759b75fc0c2bedfdeb45877d" "from-sonatype/junit.pom" \
+                            "ecac656aaa7ef5e9d885c4fad5168133" "from-sonatype/junit-javadoc.jar" \
+                            "8f17d4271b86478a2731deebdab8c846" "from-sonatype/junit-sources.jar"
+
     echo "test OK: downloadArtifactQuick is working correctly"
 }
-#######################################################################################################################
 test_downloadArtifact() {
     downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
     assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
@@ -54,7 +66,6 @@ test_downloadArtifact() {
     rm -rf downloaded
     echo "test OK: downloadArtifact is working correctly"
 }
-#######################################################################################################################
 test_correctEols() {
     printf "aap\r\nnoot\r\n" > testfile_crlf.txt
     printf "aap\nnoot\n"     > testfile_lf.txt
@@ -70,7 +81,6 @@ test_correctEols() {
     rm testfile_crlf.txt testfile_lf.txt
     echo "test OK: correctEols is working correctly"
 }
-#######################################################################################################################
 test_correctHeaders() {
     printf "xxx" > hdr
     printf "aap\nnoot\n" > testfile.java
@@ -83,7 +93,6 @@ test_correctHeaders() {
     rm hdr testfile.java testfileref.java
     echo "test OK: correctHeaders is working correctly"
 }
-#######################################################################################################################
 test_generateAll() {
     mkdir -p .idea TST/tst SRC/src BTH/src BTH/tst
     cat <<EOF >project.sh
@@ -147,17 +156,31 @@ test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
     echo "test OK: uploadArtifactQuick is working correctly"
 }
+test_getAllDependencies() {
+    echo "...expect 5 warnings"
+    cat <<EOF >project.sh
+dependencies=(
+    "org.modelingvalue   immutable-collections   0.0.0       jar jds-"  # will never exist
+    "org.modelingvalue   dclare                  0.0.13      jar jds-"  # does exist
+    "junit               junit                   4.12        jar jdst"
+    "org.hamcrest        hamcrest-core           1.3         jar jds-"
+)
+EOF
+    getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}"
+}
+#######################################################################################################################
 #######################################################################################################################
 prepareForTesting() {
     if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
-        export GITHUB_WORKSPACE="$PWD"
+        export  GITHUB_WORKSPACE="$PWD"
         export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
+        export        GITHUB_REF="refs/heads/local-build-fake-branch"
 
         ##### mimic github actions env for local execution:
         . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
-        if [[ "${INPUT_TOKEN:-}" == "" ]]; then
-            echo ":error:: local test runs require a file ~/sercrets.sh that defines at least INPUT_TOKEN"
-            exit 67
+        if [[ "${INPUT_TOKEN:-}" == "" || "${INPUT_SCALEWAY_ACCESS_KEY:-}" == ""  || "${INPUT_SCALEWAY_SECRET_KEY:-}" == "" ]]; then
+            echo ":error:: local test runs require a file ~/sercrets.sh that defines INPUT_TOKEN INPUT_SCALEWAY_ACCESS_KEY and INPUT_SCALEWAY_SECRET_KEY"
+            exit 23
         fi
 
         if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then

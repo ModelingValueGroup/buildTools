@@ -30,7 +30,7 @@ pushBackToGithub() {
             git config user.name "$GITHUB_ACTOR"
             git add .
             git commit -m "$msg"
-            git push "https://$GITHUB_ACTOR:$token@github.com/$GITHUB_REPOSITORY.git"
+            git push "$(getGithubSecureUrl "$token")"
         echo "::endgroup::"
 
     else

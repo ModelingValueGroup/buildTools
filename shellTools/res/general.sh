@@ -25,7 +25,7 @@ graphqlQuery() {
   local token="$1"; shift
   local query="$1"; shift
 
-  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' 'https://api.github.com/graphql' -o -
+  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' "$GITHUB_API_BASEURL/graphql" -o -
 }
 contains() {
     local find="$1"; shift

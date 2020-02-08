@@ -17,16 +17,21 @@
 set -euo pipefail
 
 makeArtifactPath() {
+    local   url="$1"; shift
     local     g="$1"; shift
     local     a="$1"; shift
     local     v="$1"; shift
     local     e="$1"; shift
     local extra="${1:-}"       # <empty> | javadoc | sources
 
-    if [[ "$extra" != "" ]]; then
+    if [[ "$extra" != "" && "${extra:0:1}" != "-" ]]; then
         extra="-$extra"
     fi
-    printf "%s/%s/%s/%s-%s%s.%s" "${g//.//}" "$a" "$v" "$a" "$v" "$extra" "$e"
+    if [[ "$url" =~ .*\?.* ]]; then
+        printf "%sg=%s&a=%s&v=%s&e=%s" "$url" "$g" "$a" "$v" "$e"
+    else
+        printf "%s/%s/%s/%s/%s-%s%s.%s" "$url" "${g//.//}" "$a" "$v" "$a" "$v" "$extra" "$e"
+    fi
 }
 downloadArtifactQuick() {
     local token="$1"; shift
@@ -36,22 +41,40 @@ downloadArtifactQuick() {
     local     e="$1"; shift
     local   dir="$1"; shift
 
+    local name combi ext extra
+
     mkdir -p "$dir"
-
-    local f="$dir/$a.$e"
-    local fs="$dir/$a-sources.$e"
-    local fd="$dir/$a-javadoc.$e"
-    local fp="$dir/$a.pom"
-    rm -f "$f" "$fs" "$fd" "$fp"
-
-    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "")" -o "$f"
-    if [[ ! -f "$f" || -z "$f"  ]]; then
-        echo "::error::could not download artifact to $f"
-        return 88
-    fi
-    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "sources")" -o "$fs" 2>/dev/null || echo "::warning::no sources available for $g:$a:$v"
-    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "javadoc")" -o "$fd" 2>/dev/null || echo "::warning::no javadoc available for $g:$a:$v"
-    curl_ "$token" "$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "pom" ""      )" -o "$fp" 2>/dev/null || echo "::warning::no pom available for $g:$a:$v"
+    for combi in "$e:" "$e:-sources" "$e:-javadoc" "pom:"; do
+        IFS=: read ext extra <<<"$combi"
+        for name in "${!MAVEN_REPOS_LIST[@]}"; do
+            local repoUrl="${MAVEN_REPOS_LIST[$name]}"
+            mkdir -p "$dir-$name"
+            local  url="$(makeArtifactPath "$repoUrl" "$g" "$a" "$v" "$ext" "$extra")"
+            local tmpfile="$dir-$name/$a$extra.$ext"
+            curl_ "$token" "$url" -o "$tmpfile" 2>/dev/null || : &
+        done
+    done
+    wait
+    for combi in ":$e" "-sources:$e" "-javadoc:$e" ":pom"; do
+        IFS=: read extra ext <<<"$combi"
+        local file="$dir/$a$extra.$ext"
+        for name in "${!MAVEN_REPOS_LIST[@]}"; do
+            local tmpfile="$dir-$name/$a$extra.$ext"
+            if [[ -f "$tmpfile" ]]; then
+                if [[ ! -f "$file" ]]; then
+                    mv "$tmpfile" "$file"
+                elif ! cmp -s "$file" "$tmpfile"; then
+                    echo "::warning:: artifacts from diferent sources differ ($g:$a:$v)"
+                fi
+            fi
+        done
+        if [[ ! -f "$file" ]]; then
+            echo "::warning::could not download artifact: $g:$a:$v ($file)"
+        fi
+    done
+    for name in "${!MAVEN_REPOS_LIST[@]}"; do
+        rm -rf "$dir-$name"
+    done
 }
 downloadArtifact() {
     local token="$1"; shift
@@ -86,8 +109,7 @@ uploadArtifactQuick() {
         local extra="$1"; shift
 
         if [[ -f "$file" ]]; then
-            local url="$GITHUB_PACKAGE_URL/$(makeArtifactPath "$g" "$a" "$v" "$e" "$extra")"
-            curl_ "$token" -X PUT --upload-file "$file" "$url"
+            curl_ "$token" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL" "$g" "$a" "$v" "$e" "$extra")"
         fi
     }
 

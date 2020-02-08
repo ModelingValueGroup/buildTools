@@ -131,12 +131,12 @@ fi
 EOF
             fi
         done
-    . project.sh
+    . <(catProjectSh)
     getDependencyJarVars \
         | while read var; do
             if [[ "$var" != "" ]]; then
                 local fileName="gen__$var"
-                eval "local jars=(\"\${$var[@]}\")"
+                eval "local jars=(\"\${${var}[@]}\")"
                 cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
@@ -323,76 +323,61 @@ getAllDependencies() {
     local    lib="lib"
     mkdir -p "$lib"
 
-ls -la "$lib" || :
     if [[ "$token" != "" ]]; then
         echo "## trying to get dependencies from maven..."
-        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib"                          || echo "## could not get some dependencies from maven"
-        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib" "-Dclassifier=javadoc"   || echo "## could not get some javadoc dependencies from maven"
-        mvn_ "$token" "dependency:copy-dependencies" "-Dmdep.stripVersion=true" "-DoutputDirectory=$lib" "-Dclassifier=sources"   || echo "## could not get some sources dependencies from maven"
-    fi
-
-ls -la "$lib" || :
-    if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
-        echo "## trying to get dependencies from S3 (becasue this is NOT the master branch)..."
-        local tmpLib="tmpLib"
-        mkdir -p $tmpLib
-        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/trigger"
         while read g a v e flags; do
             if [[ $g != '' ]]; then
-                local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
-                if s3cmd_ --force get "$s3dir/$a.$e" $tmpLib 2>/dev/null 1>&2; then
-                    echo "## got latest $g:$a for branch $branch from S3"
-                else
-                    echo "## could not get $g:$a for branch $branch from S3"
-                fi
-                s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
+                downloadArtifactQuick "$token" "$g" "$a" "$v" "$e" "$lib"
             fi
         done < <(getDependencyGavesWithFlags)
-        rm "$tmpLib/trigger"
-        mv $tmpLib/* "$lib" 2>/dev/null || :
-        rm -rf $tmpLib
     fi
 
-ls -la "$lib" || :
+    if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
+        installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
+        if command -v s3cmd; then
+            echo "## trying to get dependencies from S3 (becasue this is NOT the master branch)..."
+            local tmpLib="tmpLib"
+            mkdir -p $tmpLib
+            printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/trigger"
+            while read g a v e flags; do
+                if [[ $g != '' ]]; then
+                    local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
+                    if s3cmd_ --force get "$s3dir/$a.$e" $tmpLib 2>/dev/null 1>&2; then
+                        echo "## got latest $g:$a for branch $branch from S3"
+                    else
+                        echo "## could not get $g:$a for branch $branch from S3"
+                    fi
+                    s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
+                fi
+            done < <(getDependencyGavesWithFlags)
+            rm "$tmpLib/trigger"
+            mv $tmpLib/* "$lib" 2>/dev/null || :
+            rm -rf $tmpLib
+        fi
+    fi
+
     echo "## checking if we have the required dependencies..."
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
-            echo "## missing $g:$a.$e"
+            echo "::warning::missing dependency $g:$a.$e"
             missingSome=true
         fi
     done < <(getDependencyGavesWithFlags)
-    if [[ "$missingSome" == true ]]; then
-        exit 74
+    if [[ "$missingSome" == false ]]; then
+        echo "## all dependencies downloaded ok"
     fi
-    echo "## all ok"
 }
 getFirstArtifactWithFlags() {
-    if [[ ! -f "project.sh" ]]; then
-        echo "::error::project.sh file not found" 1>&2
-        exit 45
-    fi
-    local artifacts=()
-    . project.sh
+    . <(catProjectSh)
     printf "%s\n" "${artifacts[0]}"
 }
 getDependencyGavesWithFlags() {
-    if [[ ! -f "project.sh" ]]; then
-        echo "::error::project.sh file not found" 1>&2
-        exit 45
-    fi
-    local dependencies=()
-    . project.sh
+    . <(catProjectSh)
     printf "%s\n" "${dependencies[@]}" | fgrep -v "@" | sort -u
 }
 getDependencyJarVars() {
-    if [[ ! -f "project.sh" ]]; then
-        echo "::error::project.sh file not found" 1>&2
-        exit 45
-    fi
-    local dependencies=()
-    . project.sh
+    . <(catProjectSh)
     printf "%s\n" "${dependencies[@]}" | sed -n "s/jars@//p" | sort -u
 }
 getIntellijModules() {
@@ -402,4 +387,16 @@ getIntellijModules() {
         exit 45
     fi
     xmlstarlet sel -t -v project/component/modules/module/@filepath -n "$modules" |sed 's/\$[^$]*\$//g;s|^/||;s|\.iml$||'
+}
+catProjectSh() {
+    if [[ ! -f "project.sh" ]]; then
+        echo "::error::project.sh file not found" 1>&2
+        exit 45
+    fi
+    cat <<EOF
+local artifacts=()
+local dependencies=()
+local repositories=()
+$(cat project.sh)
+EOF
 }

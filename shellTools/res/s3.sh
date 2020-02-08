@@ -22,8 +22,12 @@ installS3cmd() {
     export S3CMD_SECRET_KEY="$1"; shift
 
     if ! command -v s3cmd >/dev/null; then
-        sudo apt-get update
-        sudo apt-get install -y s3cmd
+        if ! command -v apt-get; then
+            echo "::warning::no s3cmd available and no apt-get to install (will continue without s3cmd)"
+        else
+            sudo apt-get update
+            sudo apt-get install -y s3cmd
+        fi
     fi
 }
 s3cmd_() {
