@@ -44,11 +44,10 @@ export             OUR_DOMAIN="youNeedToSet_OUR_DOMAIN"
 export            OUR_PRODUCT="youNeedToSet_OUR_PRODUCT"
 ###############################################################################
 declare -A MAVEN_REPOS_LIST
-export MAVEN_REPOS_LIST=(
-       [maven]="$MAVEN_PACKAGE_URL"
-    [sonatype]="$SONATYPE_PACKAGE_URL"
-      [github]="$GITHUB_PACKAGE_URL"
-)
+   MAVEN_REPOS_LIST[maven]="$MAVEN_PACKAGE_URL"
+MAVEN_REPOS_LIST[sonatype]="$SONATYPE_PACKAGE_URL"
+  MAVEN_REPOS_LIST[github]="$GITHUB_PACKAGE_URL"
+export MAVEN_REPOS_LIST
 ###############################################################################
 getGithubSecureUrl() {
     local token="$1"; shift
