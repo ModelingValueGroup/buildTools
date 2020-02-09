@@ -336,9 +336,10 @@ getAllDependencies() {
         installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
         if command -v s3cmd; then
             echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
-            local tmpLib="tmpLib"
+            local     tmpLib="tmpLib"
+            local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
             mkdir -p $tmpLib
-            printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/trigger"
+            printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
             while read g a v e flags; do
                 if [[ $g != '' ]]; then
                     local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
@@ -349,10 +350,10 @@ getAllDependencies() {
                             echo "## could not get $g:$aa for branch $branch from S3"
                         fi
                     done
-                    s3cmd_ --force put "$tmpLib/trigger" "$s3dir/${GITHUB_REPOSITORY////#}#$branch.trigger"
+                    s3cmd_ --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
                 fi
             done < <(getDependencyGavesWithFlags)
-            rm "$tmpLib/trigger"
+            rm "$tmpLib/$tmpTrigger"
             mv $tmpLib/* "$lib" 2>/dev/null || :
             rm -rf $tmpLib
         fi
