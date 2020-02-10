@@ -342,8 +342,12 @@ getAllDependencies() {
             printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
             while read g a v e flags; do
                 if [[ $g != '' ]]; then
+                    local parts=()
+                    if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
+                    if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
+                    if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
                     local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
-                    for aa in "$a" "$a-sources" "$a-javadoc"; do
+                    for aa in "${parts[@]}"; do
                         if s3cmd_ --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
                             echo "## got latest $g:$aa for branch $branch from S3"
                         else
@@ -363,11 +367,13 @@ getAllDependencies() {
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
-            echo "::warning::missing dependency $g:$a.$e"
+            echo "::error::missing dependency $g:$a.$e"
             missingSome=true
         fi
     done < <(getDependencyGavesWithFlags)
-    if [[ "$missingSome" == false ]]; then
+    if [[ "$missingSome" == true ]]; then
+        exit 82
+    else
         echo "## all dependencies downloaded ok"
     fi
 }
