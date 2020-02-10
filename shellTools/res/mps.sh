@@ -32,7 +32,7 @@ installMps() {
         local tmpZip="MPS$$.zip"
         curl_ '' -o "$tmpZip" "$(getMpsDownloadUrl "$fullVersion")"
         if [[ ! -f "$tmpZip" ]]; then
-            echo "::error::could not download MPS $fullVersion"
+            echo "::error::could not download MPS $fullVersion" 1>&2
             exit 32
         fi
         unzip -q "$tmpZip"

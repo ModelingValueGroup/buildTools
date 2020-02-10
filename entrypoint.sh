@@ -24,7 +24,7 @@ extraPackages=(xmlstarlet jq maven:mvn s3cmd)
    artifactId="$product"
 
 ##########################################################################################################################
-echo "::group::install extra packages"
+echo "::group::install extra packages" 1>&2
 toInstall=()
 for i in "${extraPackages[@]}"; do
     IFS=: read n c <<<"$i"
@@ -38,7 +38,7 @@ if [[ "${#toInstall[@]}" != 0 ]]; then
     sudo apt-get update
     sudo apt-get install -y "${toInstall[@]}"
 fi
-echo "::endgroup::"
+echo "::endgroup::" 1>&2
 
 includeBuildTools() {
   local   token="$1"; shift

@@ -240,7 +240,7 @@ enrichAntFiles() {
     local mainAntFileTmp="$mainAntFile.tmp"
 
     if [[ ! -f "$mainAntFile" ]]; then
-        echo "::error::there is no ant file $mainAntFile, please generate it first"
+        echo "::error::there is no ant file $mainAntFile, please generate it first" 1>&2
         exit 77
     fi
     local subs=""
@@ -258,7 +258,7 @@ enrichAntFiles() {
         xml="$modDir/module_$modNameLow.xml"
 
         if [[ ! -f "$xml" ]]; then
-            echo "::error::there is no ant file $xml, please generate it first"
+            echo "::error::there is no ant file $xml, please generate it first" 1>&2
             exit 77
         fi
         if "$condFunc" "$modDir" "$xml"; then
@@ -363,11 +363,11 @@ getAllDependencies() {
         fi
     fi
 
-    echo "## checking if we have the required dependencies..."
+    echo "## checking if we have the required dependencies..." 1>&2
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
-            echo "::error::missing dependency $g:$a.$e"
+            echo "::error::missing dependency $g:$a.$e" 1>&2
             missingSome=true
         fi
     done < <(getDependencyGavesWithFlags)

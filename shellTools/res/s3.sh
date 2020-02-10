@@ -23,7 +23,7 @@ installS3cmd() {
 
     if ! command -v s3cmd >/dev/null; then
         if ! command -v apt-get; then
-            echo "::warning::no s3cmd available and no apt-get to install (will continue without s3cmd)"
+            echo "::warning::no s3cmd available and no apt-get to install (will continue without s3cmd)" 1>&2
         else
             sudo apt-get update
             sudo apt-get install -y s3cmd

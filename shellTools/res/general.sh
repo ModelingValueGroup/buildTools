@@ -123,8 +123,25 @@ assertEqual() {
     local msg="$1"; shift
 
     if [[ "$v1" != "$v2" ]]; then
-        echo "::error::$msg: $v1 != $v2"
+        echo "::error::$msg: $v1 != $v2" 1>&2
         exit 65
+    fi
+}
+assertFileContains() {
+    local file="$1"; shift
+    local  cnt="$1"; shift
+    local patt="$1"; shift
+
+    if [[ ! -f "$file" ]]; then
+        echo "::error::did not find expected file $file" 1>&2
+        exit 34
+    else
+        local n="$(egrep "$patt" "$file" | wc -l | sed 's/ //g')"
+        if [[ "$cnt" != "$n" ]]; then
+            echo "::error::expected $cnt lines but found $n lines containing '$patt' in '$file':" 1>&2
+            sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" log
+            exit 35
+        fi
     fi
 }
 getMajor2Version() {

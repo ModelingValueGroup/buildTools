@@ -38,9 +38,7 @@ test_packing() {
     echo "test OK: packing jar does correctly deliver scripts"
 }
 test_downloadArtifactQuick() {
-    echo "...expect 2 warnings"
-
-    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools"    "1.1.1" "jar" "from-github"
+    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools"    "1.1.1" "jar" "from-github" 2>log
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
@@ -56,6 +54,8 @@ test_downloadArtifactQuick() {
                             "7cb390d6759b75fc0c2bedfdeb45877d" "from-sonatype/junit.pom" \
                             "ecac656aaa7ef5e9d885c4fad5168133" "from-sonatype/junit-javadoc.jar" \
                             "8f17d4271b86478a2731deebdab8c846" "from-sonatype/junit-sources.jar"
+
+    assertFileContains log 2 "::warning::could not download artifact"
 
     echo "test OK: downloadArtifactQuick is working correctly"
 }
@@ -158,7 +158,6 @@ test_uploadArtifactQuick() {
     echo "test OK: uploadArtifactQuick is working correctly"
 }
 test_getAllDependencies() {
-    echo "...expect 5 warnings"
     cat <<EOF >project.sh
 dependencies=(
     "org.modelingvalue   immutable-collections   0.0.0       jar jds-"  # will never exist
@@ -167,7 +166,12 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
-    getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}"
+    if (getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log 2>&1; then
+        echo "::error::expected a fail but encountered success" 1>&2
+    else
+        assertFileContains log 4 "::warning::could not download artifact: " 1>&2
+        assertFileContains log 1 "::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+    fi
 }
 #######################################################################################################################
 #######################################################################################################################
@@ -201,8 +205,7 @@ prepareForTesting
 rm -rf tmp
 for f in "${tests[@]}"; do
     echo
-    echo
-    echo "::group::$f"
+    echo "::group::$f" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f"
 
     rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
@@ -219,6 +222,6 @@ for f in "${tests[@]}"; do
 
         "$f"
     )
-    echo "::endgroup::"
+    echo "::endgroup::" 1>&2
 done
-printf "\n\nall tests OK\n\n"
+printf "\nall tests OK\n\n"

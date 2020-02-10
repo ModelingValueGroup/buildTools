@@ -64,12 +64,12 @@ downloadArtifactQuick() {
                 if [[ ! -f "$file" ]]; then
                     mv "$tmpfile" "$file"
                 elif ! cmp -s "$file" "$tmpfile"; then
-                    echo "::warning:: artifacts from diferent sources differ ($g:$a:$v)"
+                    echo "::warning:: artifacts from diferent sources differ ($g:$a:$v)" 1>&2
                 fi
             fi
         done
         if [[ ! -f "$file" ]]; then
-            echo "::warning::could not download artifact: $g:$a:$v ($file)"
+            echo "::warning::could not download artifact: $g:$a:$v ($file)" 1>&2
         fi
     done
     for name in "${!MAVEN_REPOS_LIST[@]}"; do

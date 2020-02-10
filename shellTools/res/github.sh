@@ -25,13 +25,13 @@ pushBackToGithub() {
     if [[ "$(git ls-files --deleted --modified --others --exclude-standard)" ]]; then
         echo "changes need to be pushed back to github"
 
-        echo "::group::git commit and push"
+        echo "::group::git commit and push" 1>&2
             git config user.email "$email"
             git config user.name "$GITHUB_ACTOR"
             git add .
             git commit -m "$msg"
             git push "$(getGithubSecureUrl "$token")"
-        echo "::endgroup::"
+        echo "::endgroup::" 1>&2
 
     else
         echo "no changes need to be pushed back to github"
