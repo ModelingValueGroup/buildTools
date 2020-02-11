@@ -16,4 +16,8 @@
 
 set -euo pipefail
 
-. "$(dirname "${BASH_SOURCE[0]}")/meme.sh"
+[[ "${INPUT_TRACE:-}" == "true" ]] && set -x
+
+. "$(dirname "${BASH_SOURCE[0]}")/buildToolsMeme.sh"
+
+includeBuildTools "$INPUT_TOKEN" "$INPUT_VERSION"
