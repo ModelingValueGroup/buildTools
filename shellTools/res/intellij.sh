@@ -19,6 +19,8 @@ set -euo pipefail
 export   artifactS3Host="s3.nl-ams.scw.cloud"
 export artifactS3Bucket="mvg-artifacts"
 
+extraLinuxPackages+=(xmlstarlet)
+
 generateAll() {
     cleanupIntellijGeneratedAntFiles
     generatePomFromDependencies

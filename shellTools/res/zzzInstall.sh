@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,7 +16,4 @@
 
 set -euo pipefail
 
-if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
-  echo "::error:: variable GITHUB_REPOSITORY undefined" 1>&2
-  exit 67
-fi
+installLinuxPackages

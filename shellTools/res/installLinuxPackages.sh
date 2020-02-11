@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,7 +16,40 @@
 
 set -euo pipefail
 
-if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
-  echo "::error:: variable GITHUB_REPOSITORY undefined" 1>&2
-  exit 67
-fi
+##########################################################################################################################
+installLinuxPackages() {
+    local toInstall c n problems
+
+    toInstall=()
+    # shellcheck disable=SC2154
+    for i in "${extraLinuxPackages[@]}"; do
+        IFS=: read n c <<<"$i"
+        c="${c:-$n}"
+        if ! which $c 1>/dev/null; then
+            toInstall+=("$n")
+        fi
+    done
+    if [[ "${#toInstall[@]}" != 0 ]]; then
+        echo "::group::install extra packages" 1>&2
+        echo "## installing: ${toInstall[*]}"
+        if ! command -v apt-get; then
+            echo "::warning::no apt-get command so I have no way to install the required linux tools: ${toInstall[*]}" 1>&2
+            exit 92
+        fi
+        sudo apt-get update
+        sudo apt-get install -y "${toInstall[@]}"
+        problems=false
+        for i in "${extraLinuxPackages[@]}"; do
+            IFS=: read n c <<<"$i"
+            c="${c:-$n}"
+            if ! which $c 1>/dev/null; then
+                echo "::error::linux tool $c could not be installed (package $n)" 1>&2
+                problems=true
+            fi
+        done
+        if [[ "$problems" == true ]]; then
+            exit 95
+        fi
+        echo "::endgroup::" 1>&2
+    fi
+}

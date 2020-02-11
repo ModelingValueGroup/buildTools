@@ -55,3 +55,4 @@ getGithubSecureUrl() {
     printf "https://%s:%s@%s/%s.git" "$GITHUB_ACTOR" "$token" "$GITHUB_HOST" "$GITHUB_REPOSITORY"
 }
 ###############################################################################
+export extraLinuxPackages=()

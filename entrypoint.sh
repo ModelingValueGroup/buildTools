@@ -16,43 +16,24 @@
 
 set -euo pipefail
 
-##########################################################################################################################
-extraPackages=(xmlstarlet jq maven:mvn s3cmd)
-      ourUser="ModelingValueGroup"
-      product="buildTools"
-      groupId="org.modelingvalue"
-   artifactId="$product"
+includeBuildToolsVersion() {
+    local   token="$1"; shift
+    local version="$1"; shift
 
-##########################################################################################################################
-echo "::group::install extra packages" 1>&2
-toInstall=()
-for i in "${extraPackages[@]}"; do
-    IFS=: read n c <<<"$i"
-    c="${c:-$n}"
-    if ! which $c 1>/dev/null; then
-        toInstall+=("$n")
-    fi
-done
-if [[ "${#toInstall[@]}" != 0 ]]; then
-    echo "## installing: ${toInstall[*]}"
-    sudo apt-get update
-    sudo apt-get install -y "${toInstall[@]}"
-fi
-echo "::endgroup::" 1>&2
+    local url="https://maven.pkg.github.com/ModelingValueGroup/buildTools/org.modelingvalue.buildTools/$version/buildTools-$version.jar"
 
+    curl -s -H "Authorization: bearer $token" -L "$url" -o "buildTools.jar"
+    . <(java -jar "buildTools.jar")
+    echo "INFO: installed buildTools version $version"
+}
 includeBuildTools() {
-  local   token="$1"; shift
-  local version="$1"; shift
+    local   token="$1"; shift
 
-  local url="https://maven.pkg.github.com/$ourUser/$product/$groupId.$artifactId/$version/$artifactId-$version.jar"
-
-  curl -s -H "Authorization: bearer $token" -L "$url" -o "$artifactId.jar"
-  . <(java -jar "$artifactId.jar")
-  echo "INFO: installed $artifactId version $version"
+    ##########################################################################################################################
+    # we do not have the 'lastPackageVersion' function yet, so we first load a known version here....
+    includeBuildToolsVersion "$token" "2.0.0"
+    # ...and then overwrite it with the latest:
+    includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildTools" "org.modelingvalue" "buildTools")"
 }
 
-##########################################################################################################################
-# we do not have the 'lastPackageVersion' function defined here yet, so we first load a known version here....
-includeBuildTools "$INPUT_TOKEN" "2.0.0"
-# ...and then overwrite it with the latest:
-includeBuildTools "$INPUT_TOKEN" "$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId" "$artifactId")"
+includeBuildTools "$INPUT_TOKEN"

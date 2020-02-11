@@ -16,6 +16,9 @@
 
 set -euo pipefail
 
+extraLinuxPackages+=(xmlstarlet)
+extraLinuxPackages+=(maven:mvn)
+
 mvn_() {
     local token="$1"; shift
 

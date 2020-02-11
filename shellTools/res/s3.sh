@@ -16,19 +16,12 @@
 
 set -euo pipefail
 
+extraLinuxPackages+=(s3cmd)
+
 installS3cmd() {
     export   S3CMD_HOST_URL="$1"; shift
     export S3CMD_ACCESS_KEY="$1"; shift
     export S3CMD_SECRET_KEY="$1"; shift
-
-    if ! command -v s3cmd >/dev/null; then
-        if ! command -v apt-get; then
-            echo "::warning::no s3cmd available and no apt-get to install (will continue without s3cmd)" 1>&2
-        else
-            sudo apt-get update
-            sudo apt-get install -y s3cmd
-        fi
-    fi
 }
 s3cmd_() {
     s3cmd                                   \

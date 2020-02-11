@@ -35,7 +35,6 @@ test_packing() {
         diff <(printf "%s" "$(textFromJar)") <(printf "%s" "$(textFromDir)")
         exit 46
     fi
-    echo "test OK: packing jar does correctly deliver scripts"
 }
 test_downloadArtifactQuick() {
     downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools"    "1.1.1" "jar" "from-github" 2>log
@@ -56,15 +55,12 @@ test_downloadArtifactQuick() {
                             "8f17d4271b86478a2731deebdab8c846" "from-sonatype/junit-sources.jar"
 
     assertFileContains log 2 "::warning::could not download artifact"
-
-    echo "test OK: downloadArtifactQuick is working correctly"
 }
 test_downloadArtifact() {
-    downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded"
+    (downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded") >log 2>&1
     assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # not copied to indicated dir so checking in m2-repos
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
-    echo "test OK: downloadArtifact is working correctly"
 }
 test_correctEols() {
     printf "aap\r\nnoot\r\n" > testfile_crlf.txt
@@ -79,7 +75,6 @@ test_correctEols() {
         exit 67
     fi
     rm testfile_crlf.txt testfile_lf.txt
-    echo "test OK: correctEols is working correctly"
 }
 test_correctHeaders() {
     printf "xxx" > hdr
@@ -91,7 +86,6 @@ test_correctHeaders() {
         exit 67
     fi
     rm hdr testfile.java testfileref.java
-    echo "test OK: correctHeaders is working correctly"
 }
 test_generateAll() {
     mkdir -p .idea TST/tst SRC/src BTH/src BTH/tst
@@ -150,12 +144,9 @@ EOF
                             "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
                             "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml" \
                             "851e45a3b74f2265bcfc65a36889277d" "settings.xml"
-
-    echo "test OK: generateAll is working correctly"
 }
 test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue" "buildTools" "$INPUT_TOKEN"
-    echo "test OK: uploadArtifactQuick is working correctly"
 }
 test_getAllDependencies() {
     cat <<EOF >project.sh

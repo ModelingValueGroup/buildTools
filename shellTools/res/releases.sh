@@ -16,6 +16,8 @@
 
 set -euo pipefail
 
+extraLinuxPackages+=(jq)
+
 getRelease() {
     local token="$1"; shift
     local   tag="$1"; shift
