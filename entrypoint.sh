@@ -52,12 +52,7 @@ includeBuildTools() {
 }
 
 ##########################################################################################################################
-# we do not have the 'lastPackageVersion' function defined here yet
-# so we first load a known version here....
-v="1.2.9"
-includeBuildTools "$INPUT_TOKEN" "$v"
-
-##########################################################################################################################
+# we do not have the 'lastPackageVersion' function defined here yet, so we first load a known version here....
+includeBuildTools "$INPUT_TOKEN" "2.0.0"
 # ...and then overwrite it with the latest:
-v="$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId:$artifactId" "")"
-includeBuildTools "$INPUT_TOKEN" "$v"
+includeBuildTools "$INPUT_TOKEN" "$(lastPackageVersion "$INPUT_TOKEN" "$ourUser/$product" "$groupId" "$artifactId")"
