@@ -45,13 +45,12 @@ jobs:
         run: |
           rm -rf out
           ant
-          cp out/artifacts/buildTools.jar .
 
       - name: "publish action-artifact buildTools.jar"
         uses: actions/upload-artifact@v1
         with:
           name: buildTools.jar
-          path: buildTools.jar
+          path: out/artifacts/buildTools.jar
 
       - name: "test"
         run: shellTools/tst/test.sh
@@ -60,12 +59,12 @@ jobs:
 
       - name: "push changes back to github"
         run:  |
-          . <(java -jar buildTools.jar)
+          . <(java -jar out/artifacts/buildTools.jar)
           pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
         with:
-          file: "buildTools.jar"
+          file: "out/artifacts/buildTools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
