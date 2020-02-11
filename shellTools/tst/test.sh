@@ -197,7 +197,7 @@ rm -rf tmp
 for f in "${tests[@]}"; do
     echo
     echo "::group::$f" 1>&2
-    printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f"
+    printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f" 1>&2
 
     rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
 
