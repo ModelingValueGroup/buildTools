@@ -163,10 +163,10 @@ uploadArtifact() {
                              -Durl="$GITHUB_PACKAGE_URL" \
         "${args[@]}"
 }
-lastPackageVersion_() {# TODO remove this backwards compatable version
+lastPackageVersion_() { # TODO remove this backwards compatable version
     listPackageVersions "$@" | head -1
 }
-listPackageVersions_() {# TODO remove this backwards compatable version
+listPackageVersions_() { # TODO remove this backwards compatable version
     local      token="$1"; shift
     local repository="$1"; shift
     local       gave="$1"; shift
