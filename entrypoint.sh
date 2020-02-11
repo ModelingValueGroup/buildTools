@@ -16,4 +16,4 @@
 
 set -euo pipefail
 
-. meme.sh
+. "$(dirname "${BASH_SOURCE[0]}")/meme.sh"
