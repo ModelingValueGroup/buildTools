@@ -18,37 +18,109 @@ set -euo pipefail
 
 extraLinuxPackages+=(s3cmd)
 
-installS3cmd() {
-    export   S3CMD_HOST_URL="$1"; shift
-    export S3CMD_ACCESS_KEY="$1"; shift
-    export S3CMD_SECRET_KEY="$1"; shift
+export PROJECT_SH="project.sh"
+export TRIGGERS_DIR="triggers"
+
+prepS3cmd() {
+    local   host="$1"; shift
+    local access="$1"; shift
+    local secret="$1"; shift
+
+    cat <<EOF > ~/.s3cfg
+[default]
+access_key       = $access
+secret_key       = $secret
+host_base        = $host
+host_bucket      =
+enable_multipart = True
+use_https        = True
+EOF
 }
-s3cmd_() {
-    s3cmd                                   \
-               --host="$S3CMD_HOST_URL"     \
-         --access_key="$S3CMD_ACCESS_KEY"   \
-         --secret_key="$S3CMD_SECRET_KEY"   \
-        --host-bucket=                      \
-        "$@"
-}
-get() {
+s3get() {
     local  buc="$1"; shift
     local from="$1"; shift
     local   to="$1"; shift
 
-    echo "# going to get from '$S3CMD_HOST_URL' from '$from' to '$to'"
     mkdir -p "$to"
-    s3cmd_ --recursive get "$from" "$to"
+    s3cmd --recursive get "$from" "$to"
 }
-put() {
+s3put() {
     local  buc="$1"; shift
     local from="$1"; shift
     local   to="$1"; shift
 
-    echo "# going to put on '$S3CMD_HOST_URL' from '$from' to '$to'"
-    if ! s3cmd_ ls "$buc" 2>/dev/null 1>&2; then
+    if ! s3cmd ls "$buc" 2>/dev/null 1>&2; then
         echo "# bucket not found, creating bucket: $buc"
-        s3cmd_ mb "$buc"
+        s3cmd mb "$buc"
     fi
-    s3cmd_ --recursive put "$from" "$to"
+    s3cmd --recursive put "$from" "$to"
+}
+trigger() {
+    local trigger="$1"; shift
+    local      to="$1"; shift
+
+    if [[ "$(s3cmd ls "$to$TRIGGERS_DIR/" | wc -l)" != 0 ]]; then
+        local triggersTmpDir="$TRIGGERS_DIR-$$/"
+        mkdir -p "$triggersTmpDir"
+        s3cmd --recursive get "$to$TRIGGERS_DIR/" "$triggersTmpDir"
+        local f
+        for f in "$triggersTmpDir"/*.trigger; do
+            if [[ -f "$f" ]]; then
+                local TRIGGER_REPOSITORY TRIGGER_BRANCH
+                . "$f"
+                triggerOther "$trigger" "$TRIGGER_REPOSITORY" "$TRIGGER_BRANCH"
+            fi
+        done
+        rm -rf "$triggersTmpDir"
+    fi
+}
+triggerOther() {
+    local trigger="$1"; shift
+    local    repo="$1"; shift
+    local  branch="$1"; shift
+
+    local i total_count conclusion rerunUrl
+    local tmpJson="runs.json"
+
+    firstFieldFromJson() {
+        local field="$1"; shift
+
+        grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g'
+    }
+
+    echo "====== triggering: $repo  [$branch]"
+    for i in $(seq 0 600); do
+        curl -s \
+            -u "automation:$trigger"  \
+            "https://api.github.com/repos/$repo/actions/runs?branch=$branch" \
+            -o "$tmpJson"
+        total_count="$(firstFieldFromJson "total_count")"
+        if [[ "$total_count" == 0 ]]; then
+            break
+        fi
+        conclusion="$(firstFieldFromJson "conclusion")"
+        if [[ "$conclusion" != "null" ]]; then
+            break
+        fi
+        echo "::info:: waiting for build on $repo branch $branch to finish ($i)"
+        sleep 2
+    done
+    if [[ "$total_count" == 0 ]]; then
+        echo "::warning:: no build on $repo branch $branch, retrigger impossible..."
+    elif [[ "$conclusion" == "null" ]]; then
+        echo "::warning::the build on $repo branch $branch did not finish in time"
+    else
+        conclusion="$(firstFieldFromJson "conclusion")"
+        echo "::info:: conclusion: $conclusion"
+        if [[ "$conclusion" != failure ]]; then
+            echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible..."
+        else
+            rerunUrl="$(firstFieldFromJson "rerun_url")"
+            echo "::info::triggering: $rerunUrl"
+            curl -s \
+                -XPOST \
+                -u "automation:$trigger"  \
+                "$rerunUrl"
+        fi
+    fi
 }
