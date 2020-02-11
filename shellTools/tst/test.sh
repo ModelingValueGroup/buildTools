@@ -195,7 +195,7 @@ fi
 prepareForTesting
 rm -rf tmp
 for f in "${tests[@]}"; do
-    echo
+    echo 1>&2
     echo "::group::$f" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f" 1>&2
 
