@@ -22,8 +22,9 @@ includeBuildToolsVersion() {
 
     local url="https://maven.pkg.github.com/ModelingValueGroup/buildTools/org.modelingvalue.buildTools/$version/buildTools-$version.jar"
 
+    rm -f ~/buildTools.jar
     curl -s -H "Authorization: bearer $token" -L "$url" -o ~/buildTools.jar
-    if [[ "$(file ~/buildTools.jar)" =~ .*text.* ]]; then
+    if [[ "$(file "buildTools.jar")" =~ .*text.* ]]; then
         echo "::error::could not download buildTools jar from: $url"
         sed 's/^/    /' ~/buildTools.jar
         exit 91
@@ -35,7 +36,7 @@ includeBuildTools() {
     local   token="$1"; shift
     local version="${1:-}"
 
-    includeBuildToolsVersion "$token" "${version:-2.0.0}"
+    includeBuildToolsVersion "$token" "${version:-2.0.6}"
     if [[ "${version}" == "" ]]; then
         includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildTools" "org.modelingvalue" "buildTools")"
     fi
