@@ -19,7 +19,7 @@ set -euo pipefail
 export   artifactS3Host="s3.nl-ams.scw.cloud"
 export artifactS3Bucket="mvg-artifacts"
 
-extraLinuxPackages+=(xmlstarlet)
+extraLinuxPackages+=(xmlstarlet s3cmd)
 
 generateAll() {
     cleanupIntellijGeneratedAntFiles
@@ -335,34 +335,32 @@ getAllDependencies() {
     fi
 
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        installS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC"
-        if command -v s3cmd; then
-            echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
-            local     tmpLib="tmpLib"
-            local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
-            mkdir -p $tmpLib
-            printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
-            while read g a v e flags; do
-                if [[ $g != '' ]]; then
-                    local parts=()
-                    if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
-                    if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
-                    if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
-                    local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
-                    for aa in "${parts[@]}"; do
-                        if s3cmd_ --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
-                            echo "## got latest $g:$aa for branch $branch from S3"
-                        else
-                            echo "## could not get $g:$aa for branch $branch from S3"
-                        fi
-                    done
-                    s3cmd_ --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
-                fi
-            done < <(getDependencyGavesWithFlags)
-            rm "$tmpLib/$tmpTrigger"
-            mv $tmpLib/* "$lib" 2>/dev/null || :
-            rm -rf $tmpLib
-        fi
+        local conf="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
+        echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
+        local     tmpLib="tmpLib"
+        local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
+        mkdir -p $tmpLib
+        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
+        while read g a v e flags; do
+            if [[ $g != '' ]]; then
+                local parts=()
+                if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
+                if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
+                if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
+                local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
+                for aa in "${parts[@]}"; do
+                    if s3cmd -config="$conf" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
+                        echo "## got latest $g:$aa for branch $branch from S3"
+                    else
+                        echo "## could not get $g:$aa for branch $branch from S3"
+                    fi
+                done
+                s3cmd -config="$conf" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
+            fi
+        done < <(getDependencyGavesWithFlags)
+        rm "$tmpLib/$tmpTrigger"
+        mv $tmpLib/* "$lib" 2>/dev/null || :
+        rm -rf $tmpLib
     fi
 
     echo "## checking if we have the required dependencies..." 1>&2

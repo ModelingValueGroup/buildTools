@@ -157,11 +157,11 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
-    if (getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log 2>&1; then
+    if (set -x; getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log.out 2>log.err; then
         echo "::error::expected a fail but encountered success" 1>&2
     else
-        assertFileContains log 4 "::warning::could not download artifact: " 1>&2
-        assertFileContains log 1 "::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains log.err 4 "^::warning::could not download artifact: " 1>&2
+        assertFileContains log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 #######################################################################################################################
@@ -194,15 +194,15 @@ else
 fi
 prepareForTesting
 rm -rf tmp
-for f in "${tests[@]}"; do
+for t in "${tests[@]}"; do
     echo 1>&2
-    echo "::group::$f" 1>&2
-    printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$f" 1>&2
+    echo "::group::$t" 1>&2
+    printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$t" 1>&2
 
     rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
 
     ##### make tmp dir:
-    tmp="tmp/$f"
+    tmp="tmp/$t"
     rm -rf "$tmp"
     mkdir -p "$tmp"
     (
@@ -210,8 +210,7 @@ for f in "${tests[@]}"; do
 
         ##### copy and include the produced jar:
         . <(cp ../../out/artifacts/buildTools.jar .; java -jar buildTools.jar)
-
-        "$f"
+        "$t"
     )
     echo "::endgroup::" 1>&2
 done

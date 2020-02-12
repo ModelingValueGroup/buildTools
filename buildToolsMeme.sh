@@ -24,7 +24,7 @@ includeBuildToolsVersion() {
 
     rm -f ~/buildTools.jar
     curl -s -H "Authorization: bearer $token" -L "$url" -o ~/buildTools.jar
-    if [[ "$(file "buildTools.jar")" =~ .*text.* ]]; then
+    if [[ "$(file ~/buildTools.jar)" =~ .*text.* ]]; then
         echo "::error::could not download buildTools jar from: $url"
         sed 's/^/    /' ~/buildTools.jar
         exit 91
