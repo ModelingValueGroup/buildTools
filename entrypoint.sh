@@ -25,6 +25,4 @@ if [[ "${INPUT_TRACE:-false}" == "true" ]]; then
     set -x
 fi
 
-. "$(dirname "${BASH_SOURCE[0]}")/buildToolsMeme.sh"
-
-includeBuildTools "$INPUT_TOKEN" "$INPUT_VERSION"
+. "$(dirname "${BASH_SOURCE[0]}")/buildToolsMeme.sh" "$INPUT_TOKEN" "$INPUT_VERSION"

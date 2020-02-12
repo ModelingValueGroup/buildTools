@@ -41,3 +41,7 @@ includeBuildTools() {
         includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildTools" "org.modelingvalue" "buildTools")"
     fi
 }
+
+if [[ "${1:-}" != "" ]]; then
+    includeBuildTools "$1" "${2:-}"
+fi
