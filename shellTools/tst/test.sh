@@ -20,7 +20,7 @@ set -euo pipefail
 ##### tests ###########################################################################################################
 test_packing() {
     textFromJar() {
-        java -jar buildTools.jar
+        java -jar ~/buildTools.jar
     }
     textFromDir() {
         echo "#!/usr/bin/env bash"
@@ -186,8 +186,9 @@ prepareForTesting() {
 }
 #######################################################################################################################
 ##### test execution:
+cp out/artifacts/buildTools.jar ~
+. <(java -jar ~/buildTools.jar)
 if [[ "$#" == 0 ]]; then
-    . <(cp out/artifacts/buildTools.jar .; java -jar buildTools.jar)
     tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
 else
     tests=("$@")
@@ -208,8 +209,8 @@ for t in "${tests[@]}"; do
     (
         cd "$tmp"
 
-        ##### copy and include the produced jar:
-        . <(cp ../../out/artifacts/buildTools.jar .; java -jar buildTools.jar)
+        ##### include the produced jar again:
+        . <(java -jar ~/buildTools.jar)
         "$t"
     )
     echo "::endgroup::" 1>&2

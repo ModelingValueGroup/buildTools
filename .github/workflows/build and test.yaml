@@ -32,11 +32,11 @@ jobs:
         run: |
           rm -rf out
           ant
-          cp out/artifacts/buildTools.jar .
+          cp out/artifacts/buildTools.jar ~
 
       - name: "generate/adjust some files if needed"
         run: |
-          . <(java -jar buildTools.jar)
+          . <(java -jar ~/buildTools.jar)
           generateAll
           correctEols
           correctHeaders header
@@ -59,7 +59,7 @@ jobs:
 
       - name: "push changes back to github"
         run:  |
-          . <(java -jar out/artifacts/buildTools.jar)
+          . <(java -jar ~/buildTools.jar)
           pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "if master: upload as package"
