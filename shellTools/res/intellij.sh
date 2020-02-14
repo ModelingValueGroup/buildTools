@@ -349,13 +349,13 @@ getAllDependencies() {
                 if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
                 local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
                 for aa in "${parts[@]}"; do
-                    if s3cmd -config="$conf" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
+                    if s3cmd --config="$conf" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
                         echo "## got latest $g:$aa for branch $branch from S3"
                     else
                         echo "## could not get $g:$aa for branch $branch from S3"
                     fi
                 done
-                s3cmd -config="$conf" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
+                s3cmd --config="$conf" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
             fi
         done < <(getDependencyGavesWithFlags)
         rm "$tmpLib/$tmpTrigger"
