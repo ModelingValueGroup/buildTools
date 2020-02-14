@@ -15,9 +15,14 @@
 
 package correctors;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class EolCorrector extends CorrectorBase {
@@ -69,15 +74,16 @@ public class EolCorrector extends CorrectorBase {
 
     private void correctCRLF(Path f) {
         try {
-            String       all   = Files.readString(f);
-            int          numcr = all.replaceAll("[^\r]", "").length();
-            int          numlf = all.replaceAll("[^\n]", "").length();
-            List<String> lines = Files.readAllLines(f);
-            if (numcr > 0 || lines.size() != numlf) {
-                System.err.printf("rewriting file: %4d lines (%4d cr and %4d lf) - %s\n", lines.size(), numcr, numlf, f);
+            List<String> lines   = Files.readAllLines(f);
+            String       all     = Files.readString(f);
+            int          numcr   = all.replaceAll("[^\r]", "").length();
+            int          numlf   = all.replaceAll("[^\n]", "").length();
+            boolean      lfAtEnd = all.charAt(all.length() - 1) == '\n';
+            if (numcr > 0 || lines.size() != (lfAtEnd ? numlf : numlf - 1)) {
+                System.err.printf("rewriting file: %4d lines (%4d cr and %4d lf, %s at end) - %s\n", lines.size(), numcr, numlf, lfAtEnd ? "lf" : "no lf", f);
                 overwrite(f, lines, true);
                 //} else{
-                //System.err.printf("NOT rewriting file: %4d lines (%4d cr and %4d lf) - %s\n", lines.size(), numcr, numlf, f);
+                //System.err.printf("NOT rewriting file: %4d lines (%4d cr and %4d lf, %s at end) - %s\n", lines.size(), numcr, numlf, lfAtEnd ? "lf" : "no lf", f);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -156,3 +156,25 @@ test_getMajorVersion() {
     assertEqual "$(getMajor2Version "2019.13.1" )"  "2019.13" "getMajorVersion() does not work correctly"
     assertEqual "$(getMajor2Version "2019.13.12")"  "2019.13" "getMajorVersion() does not work correctly"
 }
+doubleBuild() {
+    local func="$1"; shift
+    local file="$1"; shift
+
+    local tmp="/tmp/doubleBuild-$$"
+    cp "$file" "$tmp-pre"
+    "$func"
+    cp "$file" "$tmp-pst"
+
+    if ! diff -q <(sed -e '$a\' "$tmp-pre" 2>/dev/null) <(sed -e '$a\' "$tmp-pst" 2>/dev/null) >/dev/null; then
+        diff "$tmp-pre" "$tmp-pst" | sed 's/^/   DIFF|/' || :
+        echo "::info::building changed the key file '$file': trying again..."
+        "$func"
+        cp "$file" "$tmp-pst2"
+
+        if ! diff -q <(sed -e '$a\' "$tmp-pst" 2>/dev/null) <(sed -e '$a\' "$tmp-pst2" 2>/dev/null) >/dev/null; then
+            diff "$tmp-pst" "$tmp-pst2" | sed 's/^/   DIFF|/' || :
+            echo "::error::rebuilding changed the key file '$file' again: giving up..."
+            exit 25
+        fi
+    fi
+}
