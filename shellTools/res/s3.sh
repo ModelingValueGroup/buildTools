@@ -26,8 +26,8 @@ prepS3cmd() {
     local access="$1"; shift
     local secret="$1"; shift
 
-    local config=~/".s3cfg-$$"
-    cat <<EOF > "$config"
+    local configFile=~/".s3cfg-$$"
+    cat <<EOF > "$configFile"
 [default]
 access_key       = $access
 secret_key       = $secret
@@ -36,39 +36,39 @@ host_bucket      =
 enable_multipart = True
 use_https        = True
 EOF
-    find ~ -maxdepth 1 -type f -name '.s3cfg-*' -mtime +1 -delete
-    echo "$config"
+    find ~ -maxdepth 1 -type f -name '.s3cfg-*' -mtime +1 -delete # delete configs older then 1 hour
+    echo "--config=$configFile"
 }
 s3get() {
-    local conf="$1"; shift
-    local  buc="$1"; shift
-    local from="$1"; shift
-    local   to="$1"; shift
+    local confArg="$1"; shift
+    local     buc="$1"; shift
+    local    from="$1"; shift
+    local      to="$1"; shift
 
     mkdir -p "$to"
-    s3cmd --config="$conf" --recursive get "$from" "$to"
+    s3cmd "$confArg" --recursive get "$from" "$to"
 }
 s3put() {
-    local conf="$1"; shift
-    local  buc="$1"; shift
-    local from="$1"; shift
-    local   to="$1"; shift
+    local confArg="$1"; shift
+    local     buc="$1"; shift
+    local    from="$1"; shift
+    local      to="$1"; shift
 
-    if ! s3cmd --config="$conf" ls "$buc" 2>/dev/null 1>&2; then
+    if ! s3cmd "$confArg" ls "$buc" 2>/dev/null 1>&2; then
         echo "# bucket not found, creating bucket: $buc"
-        s3cmd --config="$conf" mb "$buc"
+        s3cmd "$confArg" mb "$buc"
     fi
-    s3cmd --config="$conf" --recursive put "$from" "$to"
+    s3cmd "$confArg" --recursive put "$from" "$to"
 }
 s3trigger() {
-    local    conf="$1"; shift
+    local confArg="$1"; shift
     local trigger="$1"; shift
     local      to="$1"; shift
 
-    if [[ "$(s3cmd --config="$conf" ls "$to$TRIGGERS_DIR/" | wc -l)" != 0 ]]; then
+    if [[ "$(s3cmd "$confArg" ls "$to$TRIGGERS_DIR/" | wc -l)" != 0 ]]; then
         local triggersTmpDir="$TRIGGERS_DIR-$$/"
         mkdir -p "$triggersTmpDir"
-        s3cmd --config="$conf" --recursive get "$to$TRIGGERS_DIR/" "$triggersTmpDir"
+        s3cmd "$confArg" --recursive get "$to$TRIGGERS_DIR/" "$triggersTmpDir"
         local f
         for f in "$triggersTmpDir"/*.trigger; do
             if [[ -f "$f" ]]; then

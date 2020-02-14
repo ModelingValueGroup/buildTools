@@ -335,7 +335,7 @@ getAllDependencies() {
     fi
 
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        local conf="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
+        local confArg="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
         echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
         local     tmpLib="tmpLib"
         local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
@@ -349,13 +349,13 @@ getAllDependencies() {
                 if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
                 local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
                 for aa in "${parts[@]}"; do
-                    if s3cmd --config="$conf" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
+                    if s3cmd "$confArg" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
                         echo "## got latest $g:$aa for branch $branch from S3"
                     else
                         echo "## could not get $g:$aa for branch $branch from S3"
                     fi
                 done
-                s3cmd --config="$conf" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
+                s3cmd "$confArg" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
             fi
         done < <(getDependencyGavesWithFlags)
         rm "$tmpLib/$tmpTrigger"
