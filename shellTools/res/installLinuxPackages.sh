@@ -36,6 +36,15 @@ installLinuxPackages() {
             echo "::warning::no apt-get command so I have no way to install the required linux tools: ${toInstall[*]}" 1>&2
             exit 92
         fi
+
+        #### WORAROUND_START
+        # the following line is a workaround for a broken mirror...
+        # see: https://github.community/t5/GitHub-Actions/File-has-unexpected-size-89974-89668-Mirror-sync-in-progress/m-p/44270
+        for apt_file in $(grep -lr microsoft /etc/apt/sources.list.d/); do
+            sudo rm "$apt_file"
+        done
+        #### WORAROUND_END
+
         sudo apt-get update
         sudo apt-get install -y "${toInstall[@]}"
         problems=false
