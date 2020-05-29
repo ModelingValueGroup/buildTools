@@ -67,6 +67,11 @@ jobs:
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: "if master: tag with version"
+        run:  |
+          . <(java -jar ~/buildTools.jar)
+          setVersionTagIfMaster "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
+
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
