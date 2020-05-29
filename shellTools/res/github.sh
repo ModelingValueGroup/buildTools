@@ -37,3 +37,33 @@ pushBackToGithub() {
         echo "no changes need to be pushed back to github"
     fi
 }
+setVersionTagIfMaster() {
+    if [[ "${GITHUB_REF##*/}" == master ]]; then
+        . <(catProjectSh)
+        # shellcheck disable=SC2154
+        local tagName="v$version"
+        if [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; then
+            echo "::error::tag for this version ($tagName) already exists"
+        else
+            echo "setting tag $tagName"
+            git tag "$tagName"
+            git push origin "$tagName"
+        fi
+    else
+        echo "ok: not on master"
+    fi
+}
+errorIfMasterAndVersionTagExists() {
+    if [[ "${GITHUB_REF##*/}" == master ]]; then
+        . <(catProjectSh)
+        local tagName="v$version"
+        if [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; then
+            git tag | sed 's/^/||/'
+            echo "::error::tag for this version ($tagName) already set, can not build on master"
+        else
+            echo "ok: not such tag"
+        fi
+    else
+        echo "ok: not on master"
+    fi
+}
