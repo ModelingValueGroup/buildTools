@@ -34,12 +34,22 @@ jobs:
           ant
           cp out/artifacts/buildTools.jar ~
 
+      - name: "if master: fail if there is already a tag for this version"
+        run:  |
+          . <(java -jar ~/buildTools.jar)
+          errorIfMasterAndVersionTagExists
+
       - name: "generate/adjust some files if needed"
         run: |
           . <(java -jar ~/buildTools.jar)
           generateAll
           correctEols
           correctHeaders header
+
+      - name: "push changes back to github"
+        run:  |
+          . <(java -jar ~/buildTools.jar)
+          pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "ant build again (in case something was adjusted in previous step)"
         run: |
@@ -56,11 +66,6 @@ jobs:
         run: shellTools/tst/test.sh
         env:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: "push changes back to github"
-        run:  |
-          . <(java -jar ~/buildTools.jar)
-          pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
