@@ -36,7 +36,7 @@ includeBuildTools() {
     local   token="$1"; shift
     local version="${1:-}"
 
-    includeBuildToolsVersion "$token" "${version:-2.0.6}"
+    includeBuildToolsVersion "$token" "${version:-2.2.3}"
     if [[ "${version}" == "" ]]; then
         includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildTools" "org.modelingvalue" "buildTools")"
     fi

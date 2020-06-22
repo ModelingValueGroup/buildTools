@@ -38,37 +38,40 @@ pushBackToGithub() {
     fi
 }
 errorIfMasterAndVersionTagExists() {
-    if [[ "${GITHUB_REF##*/}" == master ]]; then
+    if [[ "${GITHUB_REF##*/}" != master ]]; then
+        echo "ok: not on master"
+    else
         . <(catProjectSh)
         local tagName="v$version"
-        if [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; then
-            git tag | sed 's/^/||/'
-            echo "::error::tag for this version ($tagName) already set, can not build on master"
+        if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
+            echo "ok: no such tag ($tagName)"
         else
-            echo "ok: not such tag"
+            echo "existing tags:"
+            git tag | sed 's/^/=== /'
+            echo "::error::tag for this version ($tagName) already set, can not build on master"
+            exit 89
         fi
-    else
-        echo "ok: not on master"
     fi
 }
 setVersionTagIfMaster() {
     local token="$1"; shift
     local email="$1"; shift
 
-    if [[ "${GITHUB_REF##*/}" == master ]]; then
+    if [[ "${GITHUB_REF##*/}" != master ]]; then
+        echo "ok: not on master"
+    else
         . <(catProjectSh)
         # shellcheck disable=SC2154
         local tagName="v$version"
-        if [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; then
-            echo "::error::tag for this version ($tagName) already exists"
-        else
+        if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
             echo "setting tag $tagName"
             git config user.email "$email"
             git config user.name "$GITHUB_ACTOR"
             git tag "$tagName"
             git push "$(getGithubSecureUrl "$token")" "$tagName"
+        else
+            echo "::error::tag for this version ($tagName) already exists"
+            exit 88
         fi
-    else
-        echo "ok: not on master"
     fi
 }
