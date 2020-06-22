@@ -163,9 +163,6 @@ uploadArtifact() {
                              -Durl="$GITHUB_PACKAGE_URL" \
         "${args[@]}"
 }
-lastPackageVersion_() { # TODO remove this backwards compatable version
-    listPackageVersions "$@" | head -1
-}
 listPackageVersions_() { # TODO remove this backwards compatable version
     local      token="$1"; shift
     local repository="$1"; shift
@@ -193,9 +190,9 @@ listPackageVersions() {
     query="$(cat <<EOF | sed 's/"/\\"/g' | tr '\n\r' '  ' | sed 's/  */ /g'
 query {
     repository(owner:"$username", name:"$reposname"){
-        registryPackages(name:"$g.$a",first:1) {
+        packages(names:"$g.$a",first:1) {
             nodes {
-                versions(last:100) {
+                versions(first:100) {
                     nodes {
                         version
                     }
@@ -206,7 +203,7 @@ query {
 }
 EOF
 )"
-    graphqlQuery "$token" "$query" | jq -r '.data.repository.registryPackages.nodes[0].versions.nodes[].version' 2>/dev/null
+    graphqlQuery "$token" "$query" | jq -r '.data.repository.packages.nodes[0].versions.nodes[].version' 2>/dev/null
 }
 ###################
 # util for testing (defined here because it is used in multiple projects)
