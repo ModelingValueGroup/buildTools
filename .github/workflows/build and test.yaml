@@ -79,7 +79,7 @@ jobs:
           echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
               set | sed 's/^/|| /'
               set -x
-              publishReleaseOnGitHub "master" "$version" "${{ secrets.GITHUB_TOKEN }}" "true" "out/artifacts/buildTools.jar"
+              publishReleaseOnGitHub "master" "x$version" "${{ secrets.GITHUB_TOKEN }}" "true" "out/artifacts/buildTools.jar"
               echo "DONE"
 
       - name: "if master: upload as package"
