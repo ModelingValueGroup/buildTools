@@ -133,7 +133,7 @@ fi
 EOF
             fi
         done
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     getDependencyJarVars \
         | while read var; do
             if [[ "$var" != "" ]]; then
@@ -378,15 +378,15 @@ getAllDependencies() {
     fi
 }
 getFirstArtifactWithFlags() {
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     printf "%s\n" "${artifacts[0]}"
 }
 getDependencyGavesWithFlags() {
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     printf "%s\n" "${dependencies[@]}" | fgrep -v "@" | sort -u
 }
 getDependencyJarVars() {
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     printf "%s\n" "${dependencies[@]}" | sed -n "s/jars@//p" | sort -u
 }
 getIntellijModules() {
@@ -399,7 +399,8 @@ getIntellijModules() {
 }
 # shellcheck disable=SC2120
 catProjectSh() {
-    local maybeAbsent="${1:-}"
+    local         pre="$1"; shift
+    local maybeAbsent="$([[ ${1:-} == '-maybeAbsent' ]] && echo yes || :)"; [[ "$maybeAbsent" != "" ]] && shift || :
 
     if [[ ! -f "project.sh" ]]; then
         if [[ "$maybeAbsent" != "-maybeAbsent" ]]; then
@@ -408,9 +409,9 @@ catProjectSh() {
         fi
     else
         cat <<EOF
-local artifacts=()
-local dependencies=()
-local repositories=()
+${pre}artifacts=()
+${pre}dependencies=()
+${pre}repositories=()
 $(cat project.sh)
 EOF
     fi

@@ -74,7 +74,7 @@ jobs:
         run:  |
           . <(java -jar ~/buildTools.jar)
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
-          . <(catProjectSh)
+          . <(catProjectSh '')
           echo '::set-env name=version::$version'
 
       - name: "if master: upload as package"

@@ -46,7 +46,7 @@ errorIfMasterAndVersionTagExists() {
     fi
 }
 errorIfVersionTagExists() {
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "ok: no such tag ($tagName)"
@@ -72,7 +72,7 @@ setVersionTag() {
     local token="$1"; shift
     local email="$1"; shift
 
-    . <(catProjectSh)
+    . <(catProjectSh 'local ')
     # shellcheck disable=SC2154
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
