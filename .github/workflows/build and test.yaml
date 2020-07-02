@@ -75,7 +75,8 @@ jobs:
           . <(java -jar ~/buildTools.jar)
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
           . <(catProjectSh '')
-          echo '::set-env name=version::$version'
+          echo "::set-env name=version::$version"
+          set | sed 's/^/|| /'
 
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
@@ -86,6 +87,7 @@ jobs:
 
       - name: "if master: upload release"
         uses: actions/upload-release-asset@v1
+        if: github.ref == 'refs/heads/master'
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
