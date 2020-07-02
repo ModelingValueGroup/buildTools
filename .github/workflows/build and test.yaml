@@ -92,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          upload_url: "https://github.com/${{ env.GITHUB_REPOSITORY }}/releases/tag/v${{ env.version }}"
+          upload_url: "https://uploads.github.com/${{ env.GITHUB_REPOSITORY }}/releases/tag/v${{ env.version }}/assets{?name,label}"
           asset_path: out/artifacts/buildTools.jar
           asset_name: buildTools.jar
           asset_content_type: application/java-archive
