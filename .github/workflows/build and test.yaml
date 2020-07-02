@@ -77,7 +77,7 @@ jobs:
           . <(catProjectSh)
           echo '::set-env name=version::$version'
 
-    - name: "if master: upload as package"
+      - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
         with:
