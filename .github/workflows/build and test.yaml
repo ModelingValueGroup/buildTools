@@ -76,6 +76,7 @@ jobs:
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
           . <(catProjectSh '')
           echo "::set-env name=version::$version"
+          echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
           set | sed 's/^/|| /'
 
       - name: "if master: upload as package"
