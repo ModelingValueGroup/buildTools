@@ -18,43 +18,6 @@ jobs:
         with:
           java-version: 11
 
-
-
-      ##########################################################################
-      ##########################################################################
-      ##########################################################################
-      - name: "EXPERIMENT Create Release"
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: THE-tag
-          release_name: THE-name
-          draft: false
-          prerelease: false
-      - name: "EXPERIMENT log"
-        run:  |
-          echo "upload URL=${{ steps.create_release.outputs.upload_url }}"
-          echo aap>aap.txt
-      - name: "EXPERIMENT Upload Asset"
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: aap.txt
-          asset_name: aap
-          asset_content_type: application/text
-      ##########################################################################
-      ##########################################################################
-      ##########################################################################
-
-
-
-
-
-
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master
 
@@ -132,7 +95,8 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          upload_url: "https://uploads.github.com/${{ env.GITHUB_REPOSITORY }}/releases/tag/v${{ env.version }}/assets{?name,label}"
+          upload_url: "https://uploads.github.com/repos/${{ env.GITHUB_REPOSITORY }}/releases/tag/v${{ env.version }}/assets{?name,label}"
+          #           "https://uploads.github.com/repos/ModelingValueGroup/buildTools/releases/28187019/assets{?name,label}"
           asset_path: out/artifacts/buildTools.jar
           asset_name: buildTools.jar
           asset_content_type: application/java-archive
