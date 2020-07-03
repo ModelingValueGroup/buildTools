@@ -77,10 +77,7 @@ jobs:
           . <(catProjectSh '')
           echo "::set-env name=version::$version"
           echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
-              set | sed 's/^/|| /'
-              set -x
-              publishReleaseOnGitHub "master" "x$version" "${{ secrets.GITHUB_TOKEN }}" "true" "out/artifacts/buildTools.jar"
-              echo "DONE"
+              declare -p | sed 's/^/|| /'
 
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
