@@ -25,7 +25,7 @@ jobs:
       ##########################################################################
       - name: "EXPERIMENT Create Release"
         id: create_release
-        uses: actions/create-release
+        uses: actions/create-release2v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -38,7 +38,7 @@ jobs:
           echo "upload URL=${{ steps.create_release.outputs.upload_url }}"
           echo aap>aap.txt
       - name: "EXPERIMENT Upload Asset"
-        uses: actions/upload-release-asset
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
