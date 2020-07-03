@@ -29,8 +29,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: THE tag
-          release_name: THE name
+          tag_name: THE-tag
+          release_name: THE-name
           draft: false
           prerelease: false
       - name: "EXPERIMENT log"
