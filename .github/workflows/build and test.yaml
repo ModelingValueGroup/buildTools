@@ -18,6 +18,43 @@ jobs:
         with:
           java-version: 11
 
+
+
+      ##########################################################################
+      ##########################################################################
+      ##########################################################################
+      - name: "EXPERIMENT Create Release"
+          id: create_release
+          uses: actions/create-release
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: THE tag
+            release_name: THE name
+            draft: false
+            prerelease: false
+      - name: "EXPERIMENT log"
+          run:  |
+            echo "upload URL=${{ steps.create_release.outputs.upload_url }}"
+            echo aap>aap.txt
+      - name: "EXPERIMENT Upload Asset"
+          uses: actions/upload-release-asset
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: aap.txt
+            asset_name: aap
+            asset_content_type: application/text
+      ##########################################################################
+      ##########################################################################
+      ##########################################################################
+
+
+
+
+
+
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master
 
@@ -89,7 +126,7 @@ jobs:
           file: "out/artifacts/buildTools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: "if master: upload release"
+      - name: "if master: upload as release"
         uses: actions/upload-release-asset@v1
         if: github.ref == 'refs/heads/master'
         env:
