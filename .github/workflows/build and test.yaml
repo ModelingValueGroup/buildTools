@@ -79,14 +79,26 @@ jobs:
           echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
               declare -p | sed 's/^/|| /'
 
+      - name: "if master: create a release"
+        uses: actions/create-release@v1
+        if: github.ref == 'refs/heads/master'
+        id: create_release
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          tag_name: "v${{ env.version }}"
+          release_name: "v${{ env.version }}"
+          body: "release v${{ env.version }}"
+          draft: false
+          prerelease: false
+
       - name: "if master: upload as release"
         uses: actions/upload-release-asset@v1
         if: github.ref == 'refs/heads/master'
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          upload_url: "https://uploads.github.com/repos/${{ env.GITHUB_REPOSITORY }}/releases/tag/v${{ env.version }}/assets{?name,label}"
-          #           "https://uploads.github.com/repos/ModelingValueGroup/buildTools/releases/28187019/assets{?name,label}"
+          upload_url: "${{ steps.create_release.outputs.upload_url }}"
           asset_path: out/artifacts/buildTools.jar
           asset_name: buildTools.jar
           asset_content_type: application/java-archive
