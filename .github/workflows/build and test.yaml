@@ -11,12 +11,6 @@ jobs:
       - name: "checkout"
         uses: actions/checkout@v1
 
-      - name: "if master: fail if there is already a tag for this version"
-        if: github.ref == 'refs/heads/master'
-        run:  |
-          . <(java -jar ~/buildTools.jar)
-          errorIfVersionTagExists
-
       - name: "attach head"
         run: git checkout "${GITHUB_REF#refs/heads/}"
 
@@ -42,6 +36,12 @@ jobs:
           rm -rf out
           ant
           cp out/artifacts/buildTools.jar ~
+
+      - name: "if master: fail if there is already a tag for this version"
+        if: github.ref == 'refs/heads/master'
+        run:  |
+          . <(java -jar ~/buildTools.jar)
+          errorIfVersionTagExists
 
       - name: "generate/adjust some files if needed"
         run: |
