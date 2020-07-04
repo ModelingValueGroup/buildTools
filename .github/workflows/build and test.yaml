@@ -3,12 +3,19 @@ on:
   push:
 
 jobs:
-  #########################################################################################################
   build:
     runs-on: [ubuntu-latest]
     steps:
+
+      #### prepare #####################################################################################################
       - name: "checkout"
         uses: actions/checkout@v1
+
+      - name: "if master: fail if there is already a tag for this version"
+        if: github.ref == 'refs/heads/master'
+        run:  |
+          . <(java -jar ~/buildTools.jar)
+          errorIfVersionTagExists
 
       - name: "attach head"
         run: git checkout "${GITHUB_REF#refs/heads/}"
@@ -21,6 +28,7 @@ jobs:
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master
 
+      #### build #####################################################################################################
       - name: "prepare ant"
         run:  |
           cat <<EOF >build.properties
@@ -34,12 +42,6 @@ jobs:
           rm -rf out
           ant
           cp out/artifacts/buildTools.jar ~
-
-      - name: "if master: fail if there is already a tag for this version"
-        if: github.ref == 'refs/heads/master'
-        run:  |
-          . <(java -jar ~/buildTools.jar)
-          errorIfVersionTagExists
 
       - name: "generate/adjust some files if needed"
         run: |
@@ -58,16 +60,17 @@ jobs:
           rm -rf out
           ant
 
+      - name: "test"
+        run: shellTools/tst/test.sh
+        env:
+          INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
+
+      #### publish #####################################################################################################
       - name: "publish action-artifact buildTools.jar"
         uses: actions/upload-artifact@v1
         with:
           name: buildTools.jar
           path: out/artifacts/buildTools.jar
-
-      - name: "test"
-        run: shellTools/tst/test.sh
-        env:
-          INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
       - name: "if master: tag with version"
         if: github.ref == 'refs/heads/master'
@@ -75,9 +78,8 @@ jobs:
           . <(java -jar ~/buildTools.jar)
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
           . <(catProjectSh '')
-          echo "::set-env name=version::$version"
+          echo "::set-env name=RELEASE_NAME::v$version"
           echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
-              declare -p | sed 's/^/|| /'
 
       - name: "if master: create a release"
         uses: actions/create-release@v1
@@ -86,9 +88,9 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          tag_name: "v${{ env.version }}"
-          release_name: "v${{ env.version }}"
-          body: "release v${{ env.version }}"
+          tag_name: "${{ env.RELEASE_NAME }}"
+          release_name: "${{ env.RELEASE_NAME }}"
+          body: "release ${{ env.RELEASE_NAME }}"
           draft: false
           prerelease: false
 
