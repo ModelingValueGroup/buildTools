@@ -33,6 +33,7 @@ test_packing() {
     if [[ "$(textFromJar)" != "$(textFromDir)" ]]; then
         echo "::error::test failed: jar does not correctly deliver scripts" 1>&2
         diff <(printf "%s" "$(textFromJar)") <(printf "%s" "$(textFromDir)")
+        touch "$errorDetectedMarker"
         exit 46
     fi
 }
@@ -67,11 +68,13 @@ test_correctEols() {
     printf "aap\nnoot\n"     > testfile_lf.txt
     if cmp -s testfile_crlf.txt testfile_lf.txt; then
         echo "::error::correctEols precheck failed" 1>&2
+        touch "$errorDetectedMarker"
         exit 67
     fi
     correctEols
     if ! cmp -s testfile_crlf.txt testfile_lf.txt; then
         echo "::error::correctEols failed" 1>&2
+        touch "$errorDetectedMarker"
         exit 67
     fi
     rm testfile_crlf.txt testfile_lf.txt
@@ -83,6 +86,7 @@ test_correctHeaders() {
     correctHeaders hdr
     if ! cmp -s testfile.java testfileref.java; then
         echo "::error::correctHeaders failed" 1>&2
+        touch "$errorDetectedMarker"
         exit 67
     fi
     rm hdr testfile.java testfileref.java
@@ -159,9 +163,29 @@ dependencies=(
 EOF
     if (set -x; getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log.out 2>log.err; then
         echo "::error::expected a fail but encountered success" 1>&2
+        touch "$errorDetectedMarker"
     else
         assertFileContains log.err 4 "^::warning::could not download artifact: " 1>&2
         assertFileContains log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+    fi
+}
+test_getLatestAsset() {
+    getLatestAsset "ModelingValueGroup" "buildTools" "buildTools.jar"
+    # checksum varies between releases unfortunately so we only check on existence of the file
+    if [[ ! -f "buildTools.jar" ]]; then
+        echo "::error:: test failed: buildTools.jar could not be downloaded"
+        touch "$errorDetectedMarker"
+        exit 88
+    fi
+}
+test_getAllLatestAssets() {
+    . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
+    getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildTools"
+    # checksum varies between releases unfortunately so we only check on existence of the file
+    if [[ ! -f "buildTools.jar" ]]; then
+        echo "::error:: test failed: buildTools.jar could not be downloaded"
+        touch "$errorDetectedMarker"
+        exit 88
     fi
 }
 #######################################################################################################################
@@ -212,7 +236,11 @@ for t in "${tests[@]}"; do
         ##### include the produced jar again:
         . <(java -jar ~/buildTools.jar)
         "$t"
-    )
+    ) || touch "tmp/$errorDetectedMarker"
     echo "::endgroup::" 1>&2
 done
+if [[ -f "tmp/$errorDetectedMarker" ]]; then
+    printf "\nsome tests failed\n\n"
+    exit 56
+fi
 printf "\nall tests OK\n\n"

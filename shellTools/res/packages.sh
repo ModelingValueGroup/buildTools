@@ -51,7 +51,7 @@ downloadArtifactQuick() {
             mkdir -p "$dir-$name"
             local  url="$(makeArtifactPath "$repoUrl" "$g" "$a" "$v" "$ext" "$extra")"
             local tmpfile="$dir-$name/$a$extra.$ext"
-            curl_ "$token" "$url" -o "$tmpfile" 2>/dev/null || : &
+            curlPipe "$token" "$url" -o "$tmpfile" 2>/dev/null || : &
         done
     done
     wait
@@ -109,7 +109,7 @@ uploadArtifactQuick() {
         local extra="$1"; shift
 
         if [[ -f "$file" ]]; then
-            curl_ "$token" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL" "$g" "$a" "$v" "$e" "$extra")"
+            curlPipe "$token" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" "$g" "$a" "$v" "$e" "$extra")"
         fi
     }
 
@@ -160,7 +160,7 @@ uploadArtifact() {
                          -Dversion="$v" \
                        -Dpackaging="$e" \
                     -DrepositoryId="github" \
-                             -Durl="$GITHUB_PACKAGE_URL" \
+                             -Durl="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" \
         "${args[@]}"
 }
 listPackageVersions_() { # TODO remove this backwards compatable version
@@ -186,24 +186,23 @@ listPackageVersions() {
     local   username="${repository/\/*}"
     local  reposname="${repository/*\/}"
 
-    local query
-    query="$(cat <<EOF | sed 's/"/\\"/g' | tr '\n\r' '  ' | sed 's/  */ /g'
-query {
-    repository(owner:"$username", name:"$reposname"){
-        packages(names:"$g.$a",first:1) {
-            nodes {
-                versions(first:100) {
+    local query='
+        query {
+            repository(owner:"'"$username"'", name:"'"$reposname"'"){
+                packages(names:"'"$g.$a"'",first:1) {
                     nodes {
-                        version
+                        versions(first:100) {
+                            nodes {
+                                version
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
-}
-EOF
-)"
-    graphqlQuery "$token" "$query" | jq -r '.data.repository.packages.nodes[0].versions.nodes[].version' 2>/dev/null
+        }'
+    local select=".data.repository.packages.nodes[0].versions.nodes[].version"
+
+    graphqlQuery "$token" "$query" "$select"
 }
 ###################
 # util for testing (defined here because it is used in multiple projects)

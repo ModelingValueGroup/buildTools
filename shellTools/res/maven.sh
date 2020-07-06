@@ -23,7 +23,7 @@ mvn_() {
     local token="$1"; shift
 
     local settings=settings$RANDOM.xml
-    generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL" >$settings
+    generateMavenSettings "$USERNAME" "$token" "$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" >$settings
     group ${DRY:-} mvn \
         -B \
         -s $settings \

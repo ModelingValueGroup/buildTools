@@ -17,15 +17,24 @@
 set -euo pipefail
 
 group() {
-  echo "::group::$1 log" 1>&2
-  "$@"
-  echo "::endgroup::" 1>&2
+    echo "::group::$1 log" 1>&2
+    "$@"
+    echo "::endgroup::" 1>&2
 }
 graphqlQuery() {
-  local token="$1"; shift
-  local query="$1"; shift
+    local  token="$1"; shift
+    local  query="$1"; shift
+    local select="$1"; shift
 
-  curl_ "$token" -X POST -d '{"query":"'"$query"'"}' "$GITHUB_API_BASEURL/graphql" -o -
+    local rawQuery="$(sed 's/"/\\"/g' <<<"$query"| tr '\n\r' '  ' | sed 's/  */ /g')"
+
+    curlPipe \
+            "$token" \
+            -X POST \
+            -d '{"query":"'"$rawQuery"'"}' \
+            "$GITHUB_GRAPHQL_URL" \
+            -o - \
+        | jq -r "$select" 2>/dev/null
 }
 contains() {
     local find="$1"; shift
@@ -37,7 +46,7 @@ contains() {
         echo false
     fi
 }
-curl_() {
+curlSave() {
     local token="$1"; shift
 
     local headerArg=()
@@ -48,6 +57,23 @@ curl_() {
     curl \
         --location \
         --remote-header-name \
+        --remote-name \
+        --fail \
+        --silent \
+        --show-error \
+        "${headerArg[@]}" \
+        "$@"
+}
+curlPipe() {
+    local token="$1"; shift
+
+    local headerArg=()
+    if [[ "$token" != "" ]]; then
+        headerArg+=("--header" "Authorization: token $token")
+    fi
+
+    curl \
+        --location \
         --fail \
         --silent \
         --show-error \
@@ -57,7 +83,7 @@ curl_() {
 validateToken() {
     local token="$1"; shift
 
-    curl_ "$token" "$GIHUB_API_URL"  -o - >/dev/null
+    curlPipe "$token" "$GITHUB_API_REPOS_URL"  -o - >/dev/null
 }
 sedi() {
     if [[ "$OSTYPE" =~ darwin* ]]; then
@@ -88,13 +114,17 @@ assertChecksumsMatch() {
             expSum="$a"
         else
             file="$a"
-
-            local actSum="$(md5sum < "$file" | sed 's/ .*//')"
-            if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
-                echo "::error::test failed: $file is not generated correctly (md5sum is $actSum not $expSum)" 1>&2
-                errorsFound=1
+            if [[ ! -f "$file" ]]; then
+                echo "::error::test failed: $file was not generated at all" 1>&2
+            else
+                local actSum="$(md5sum < "$file" | sed 's/ .*//')"
+                if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
+                    echo "::error::test failed: $file was not generated correctly (md5sum is $actSum not $expSum)" 1>&2
+                    touch "$errorDetectedMarker"
+                   errorsFound=1
+                fi
+                expSum=""
             fi
-            expSum=""
         fi
     done
 
@@ -113,7 +143,8 @@ assertEqualFiles() {
     actAsTxt="$(base64 <"$act")"
 
     if [[ "$expAsTxt" != "$actAsTxt" ]]; then
-        echo "::error::test failed: $exp is not generated correctly (diff '$exp' '$act')" 1>&2
+        echo "::error::test failed: $exp was not generated correctly (diff '$exp' '$act')" 1>&2
+        touch "$errorDetectedMarker"
         exit 46
     fi
 }
@@ -124,6 +155,7 @@ assertEqual() {
 
     if [[ "$v1" != "$v2" ]]; then
         echo "::error::$msg: $v1 != $v2" 1>&2
+        touch "$errorDetectedMarker"
         exit 65
     fi
 }
@@ -140,6 +172,7 @@ assertFileContains() {
         if [[ "$cnt" != "$n" ]]; then
             echo "::error::expected $cnt lines but found $n lines containing '$patt' in '$file':" 1>&2
             sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" log
+            touch "$errorDetectedMarker"
             exit 35
         fi
     fi

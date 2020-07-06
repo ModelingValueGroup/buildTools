@@ -30,19 +30,11 @@ pushBackToGithub() {
             git config user.name "$GITHUB_ACTOR"
             git add .
             git commit -m "$msg"
-            git push "$(getGithubSecureUrl "$token")"
+            git push "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY")"
         echo "::endgroup::" 1>&2
 
     else
         echo "no changes need to be pushed back to github"
-    fi
-}
-#deprecated: use 'if' of step in yaml
-errorIfMasterAndVersionTagExists() {
-    if [[ "${GITHUB_REF##*/}" != master ]]; then
-        echo "ok: not on master"
-    else
-        errorIfVersionTagExists
     fi
 }
 errorIfVersionTagExists() {
@@ -57,17 +49,6 @@ errorIfVersionTagExists() {
         exit 89
     fi
 }
-#deprecated: use 'if' of step in yaml
-setVersionTagIfMaster() {
-    local token="$1"; shift
-    local email="$1"; shift
-
-    if [[ "${GITHUB_REF##*/}" != master ]]; then
-        echo "ok: not on master"
-    else
-       setVersionTag "$token" "$email"
-    fi
-}
 setVersionTag() {
     local token="$1"; shift
     local email="$1"; shift
@@ -80,9 +61,68 @@ setVersionTag() {
         git config user.email "$email"
         git config user.name  "$GITHUB_ACTOR"
         git tag "$tagName"
-        git push "$(getGithubSecureUrl "$token")" "$tagName"
+        git push "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY")" "$tagName"
     else
         echo "::error::tag for this version ($tagName) already exists"
         exit 88
+    fi
+}
+getLatestAsset() {
+    local    owner="$1"; shift
+    local repoName="$1"; shift
+    local     file="$1"; shift
+
+    curlSave '' "https://github.com/$owner/$repoName/releases/latest/download/$file"
+}
+getAllLatestAssets() {
+    local    token="$1"; shift
+    local    owner="$1"; shift
+    local repoName="$1"; shift
+
+    local query='
+            {
+              repository(owner: "'"$owner"'", name: "'"$repoName"'") {
+                releases(last: 1) {
+                  nodes {
+                    releaseAssets(first:100){
+                      nodes{
+                        downloadUrl
+                      }
+                    }
+                  }
+                }
+              }
+            }
+        '
+    local select='.data.repository.releases.nodes[].releaseAssets.nodes[].downloadUrl'
+
+    for u in $(graphqlQuery "$token" "$query" "$select"); do
+        echo "downloading $u..." 1>&2
+        curlSave "$token" "$u"
+    done
+}
+
+
+
+
+
+
+#deprecated: use 'if' of step in yaml
+errorIfMasterAndVersionTagExists() {
+    if [[ "${GITHUB_REF##*/}" != master ]]; then
+        echo "ok: not on master"
+    else
+        errorIfVersionTagExists
+    fi
+}
+#deprecated: use 'if' of step in yaml
+setVersionTagIfMaster() {
+    local token="$1"; shift
+    local email="$1"; shift
+
+    if [[ "${GITHUB_REF##*/}" != master ]]; then
+        echo "ok: not on master"
+    else
+       setVersionTag "$token" "$email"
     fi
 }

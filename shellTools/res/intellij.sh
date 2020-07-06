@@ -64,7 +64,7 @@ generatePomFromDependencies() {
     <version>$v</version>
     <packaging>$e</packaging>
     <scm>
-        <url>$GITHUB_PACKAGE_URL</url>
+        <url>$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY</url>
     </scm>
     <dependencies>
 $(

@@ -30,7 +30,7 @@ installMps() {
     (
         cd "$dir"
         local tmpZip="MPS$$.zip"
-        curl_ '' -o "$tmpZip" "$(getMpsDownloadUrl "$fullVersion")"
+        curlPipe '' -o "$tmpZip" "$(getMpsDownloadUrl "$fullVersion")"
         if [[ ! -f "$tmpZip" ]]; then
             echo "::error::could not download MPS $fullVersion" 1>&2
             exit 32

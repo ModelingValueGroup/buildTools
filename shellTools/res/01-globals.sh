@@ -16,43 +16,79 @@
 
 set -euo pipefail
 
-###############################################################################
-export            GITHUB_HOST="github.com"
-export         GITHUB_BASEURL="https://$GITHUB_HOST"
-export GITHUB_PACKAGE_BASEURL="https://maven.pkg.$GITHUB_HOST"
-export     GITHUB_API_BASEURL="https://api.$GITHUB_HOST"
-###############################################################################
-if [[ "${GITHUB_REPOSITORY:-}" == "" ]]; then
-    # not on github actions, probably a localbuild: deduce names from git repo:
-    export           USERNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_BASEURL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\1|')"
-    export          REPOSNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_BASEURL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\2|')"
-    export  GITHUB_REPOSITORY="$USERNAME/$REPOSNAME"
+if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
+    # not on github actions, probably a localbuild: deduce vars from git repo:
+    export     GITHUB_SERVER_URL="https://github.com"
+    export        GITHUB_API_URL="https://api.github.com"
+    export    GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
+    export              USERNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\1|')"
+    export             REPOSNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\2|')"
+    export     GITHUB_REPOSITORY="$USERNAME/$REPOSNAME"
+    export          GITHUB_ACTOR="$USER"
 else
-    # on github actions: deduce names from env var:
-    export           USERNAME="${GITHUB_REPOSITORY/\/*}"
-    export          REPOSNAME="${GITHUB_REPOSITORY/*\/}"
+    # on github actions: the following are passed in by github: (for repo xxxx/yyyy)
+    #=============================
+    #           GITHUB_SERVER_URL="https://github.com"
+    #              GITHUB_API_URL="https://api.github.com"
+    #          GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
+    #=============================
+    #           GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
+    #            GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
+    #           GITHUB_EVENT_NAME="push"
+    #=============================
+    #           GITHUB_REPOSITORY="xxxx/yyyy"
+    #     GITHUB_REPOSITORY_OWNER="xxxx"
+    #                GITHUB_ACTOR="tombrus"
+    #=============================
+    #                  GITHUB_REF="refs/heads/bbbb"
+    #             GITHUB_BASE_REF=""
+    #             GITHUB_HEAD_REF=""
+    #                  GITHUB_SHA="1234567890"
+    #=============================
+    #               GITHUB_ACTION="aaaa"
+    #             GITHUB_WORKFLOW="wwww"
+    #                  GITHUB_JOB="jjjj"
+    #=============================
+    #               GITHUB_RUN_ID="nnnn"
+    #           GITHUB_RUN_NUMBER="mmmm"
+    #=============================
+    # deduce some vars from env vars:
+    export              USERNAME="${GITHUB_REPOSITORY/\/*}"
+    export             REPOSNAME="${GITHUB_REPOSITORY/*\/}"
 fi
 ###############################################################################
-export     GITHUB_PACKAGE_URL="$GITHUB_PACKAGE_BASEURL/$GITHUB_REPOSITORY"
-export          GIHUB_API_URL="$GITHUB_API_BASEURL/repos/$USERNAME/$REPOSNAME"
+export     GITHUB_PACKAGE_URL="https://maven.pkg.github.com"
+export   GITHUB_API_REPOS_URL="$GITHUB_API_URL/repos/$USERNAME/$REPOSNAME"
+export    GITHUB_RELEASES_URL="$GITHUB_API_REPOS_URL/releases"
+###############################################################################
 export      MAVEN_PACKAGE_URL="https://repo1.maven.org/maven2"
-#export         APACHE_PACKAGE_URL="https://repo.maven.apache.org/maven2"
 export   SONATYPE_PACKAGE_URL="https://repository.sonatype.org/service/local/repo_groups/forge/content"
-export    GITHUB_RELEASES_URL="$GIHUB_API_URL/releases"
 export           ARTIFACT_DIR="out/artifacts"                   # default for IntelliJ
 export             OUR_DOMAIN="youNeedToSet_OUR_DOMAIN"
-export            OUR_PRODUCT="youNeedToSet_OUR_PRODUCT"
+export     extraLinuxPackages=()
+export    errorDetectedMarker="errorDetectedMarker"
 ###############################################################################
 declare -A MAVEN_REPOS_LIST
-   MAVEN_REPOS_LIST[maven]="$MAVEN_PACKAGE_URL"
-MAVEN_REPOS_LIST[sonatype]="$SONATYPE_PACKAGE_URL"
-  MAVEN_REPOS_LIST[github]="$GITHUB_PACKAGE_URL"
-export MAVEN_REPOS_LIST
+export     MAVEN_REPOS_LIST=(
+       [maven]="$MAVEN_PACKAGE_URL"
+    [sonatype]="$SONATYPE_PACKAGE_URL"
+      [github]="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY"
+)
 ###############################################################################
-getGithubSecureUrl() {
+getGithubRepoSecureUrl() {
     local token="$1"; shift
+    local  repo="$1"; shift
 
-    printf "https://%s:%s@%s/%s.git" "$GITHUB_ACTOR" "$token" "$GITHUB_HOST" "$GITHUB_REPOSITORY"
+    printf "%s/%s.git" "$(sed "s|https://|&$GITHUB_ACTOR:$token@|" <<<"$GITHUB_SERVER_URL")" "$repo"
+}
+getGithubRepoOpenUrl() {
+    local  repo="$1"; shift
+
+    printf "%s/%s.git" "$GITHUB_SERVER_URL" "$repo"
 }
 ###############################################################################
-export extraLinuxPackages=()
+
+
+
+
+

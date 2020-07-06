@@ -22,12 +22,12 @@ getRelease() {
     local token="$1"; shift
     local   tag="$1"; shift
 
-    curl_ "$token" "$GITHUB_RELEASES_URL/tags/$tag" -o -
+    curlPipe "$token" "$GITHUB_RELEASES_URL/tags/$tag" -o -
 }
 getLatestRelease() {
     local token="$1"; shift
 
-    curl_ "$token" "$GITHUB_RELEASES_URL/latest" -o -
+    curlPipe "$token" "$GITHUB_RELEASES_URL/latest" -o -
 }
 downloadLatestRelease() {
     local token="$1"; shift
@@ -42,7 +42,7 @@ downloadLatestRelease() {
         echo
         echo "== $i => ${urls[$i]}  /  ${names[$i]}"
         echo
-        curl_ '' -o "$dir/${names[$i]}" "${urls[$i]}"
+        curlPipe '' -o "$dir/${names[$i]}" "${urls[$i]}"
     done
 }
 removeReleaseWithTag() {
@@ -55,7 +55,7 @@ removeReleaseWithTag() {
         echo "ERROR: trying to delete a release that does not exist" 1>&2
         exit 99
     fi
-    curl_ "$token" -X DELETE "$GITHUB_RELEASES_URL/$id" -o -
+    curlPipe "$token" -X DELETE "$GITHUB_RELEASES_URL/$id" -o -
 }
 publishRelease() {
     local  branch="$1"; shift
@@ -94,7 +94,7 @@ publishRelease() {
 }
 EOF
 )"
-    local relJson="$(curl_ "$token" -X POST -d "$json" "$GITHUB_RELEASES_URL" -o -)"
+    local relJson="$(curlPipe "$token" -X POST -d "$json" "$GITHUB_RELEASES_URL" -o -)"
     local uploadUrl="$(jq --raw-output '.upload_url' <<<"$relJson")"
     if [[ $uploadUrl == null ]]; then
         echo "ERROR: unable to create the release: $relJson" 1>&2
@@ -110,7 +110,7 @@ EOF
         echo "      attaching: $file as $name ($mimeType)"
         local cnt
         for (( cnt = 1; cnt <= 10; ++cnt )); do
-            local  attJson="$(curl_ "$token" --header "Content-Type: $mimeType" -X POST --data-binary @"$file" "$uploadUrl?name=$name" -o -)"
+            local  attJson="$(curlPipe "$token" --header "Content-Type: $mimeType" -X POST --data-binary @"$file" "$uploadUrl?name=$name" -o -)"
             echo "$attJson" >"$name.upload.json"
             local    state="$(jq --raw-output '.state' <<<"$attJson")"
             if [[ $state == uploaded ]]; then
