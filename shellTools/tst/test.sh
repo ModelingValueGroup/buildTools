@@ -179,7 +179,6 @@ test_getLatestAsset() {
     fi
 }
 test_getAllLatestAssets() {
-    . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
     getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildTools"
     # checksum varies between releases unfortunately so we only check on existence of the file
     if [[ ! -f "buildTools.jar" ]]; then
