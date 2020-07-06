@@ -111,4 +111,3 @@ jobs:
         with:
           file: "out/artifacts/buildTools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
-          trace: true
