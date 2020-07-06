@@ -70,9 +70,9 @@ export    errorDetectedMarker="errorDetectedMarker"
 ###############################################################################
 declare -A MAVEN_REPOS_LIST
 export     MAVEN_REPOS_LIST=(
-       [maven]="$MAVEN_PACKAGE_URL"
-    [sonatype]="$SONATYPE_PACKAGE_URL"
-      [github]="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY"
+       ['maven']="$MAVEN_PACKAGE_URL"
+    ['sonatype']="$SONATYPE_PACKAGE_URL"
+      ['github']="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY"
 )
 ###############################################################################
 getGithubRepoSecureUrl() {
