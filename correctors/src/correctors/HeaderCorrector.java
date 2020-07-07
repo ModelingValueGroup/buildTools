@@ -15,12 +15,19 @@
 
 package correctors;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.*;
-
 import static java.lang.Integer.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class HeaderCorrector extends CorrectorBase {
     private static final Map<String, String> EXT_TO_PRE = new HashMap<>();
@@ -33,8 +40,8 @@ public class HeaderCorrector extends CorrectorBase {
         EXT_TO_PRE.put("js", "//");
     }
 
-    private Path                      headerFile = Paths.get("build", "header").toAbsolutePath();
-    private Map<String, List<String>> ext2header = new HashMap<>();
+    private       Path                      headerFile = Paths.get("build", "header").toAbsolutePath();
+    private final Map<String, List<String>> ext2header = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         new HeaderCorrector().prepare(Arrays.asList(args)).generate();

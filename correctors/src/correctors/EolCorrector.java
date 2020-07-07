@@ -28,6 +28,7 @@ import java.util.Set;
 public class EolCorrector extends CorrectorBase {
     private static final Set<String> TEXT_FILES         = new HashSet<>(Arrays.asList(
             ".gitignore",
+            ".gitattributes",
             "LICENSE",
             "header"
     ));
@@ -46,8 +47,16 @@ public class EolCorrector extends CorrectorBase {
             "txt",
             "xml",
             "yaml",
-            "yml"
-    ));
+            "yml",
+            "adoc",
+            "project",
+            "prefs",
+            "classpath",
+            "jardesc",
+            "mps",
+            "mpl",
+            "msd"
+            ));
     private static final Set<String> NO_TEXT_EXTENSIONS = new HashSet<>(Arrays.asList(
             "class",
             "iml",

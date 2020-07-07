@@ -23,6 +23,7 @@ import java.util.stream.*;
 @SuppressWarnings({"WeakerAccess"})
 public abstract class CorrectorBase {
     static final Set<Path> FORBIDDEN_DIRS = new HashSet<>(Arrays.asList(
+            Paths.get("./MPS"),
             Paths.get("./.git"),
             Paths.get("./.idea"),
             Paths.get("./out"),

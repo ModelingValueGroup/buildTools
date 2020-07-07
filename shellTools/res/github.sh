@@ -72,7 +72,14 @@ getLatestAsset() {
     local repoName="$1"; shift
     local     file="$1"; shift
 
-    curlSave '' "https://github.com/$owner/$repoName/releases/latest/download/$file"
+    curl \
+        --location \
+        --remote-header-name \
+        --remote-name \
+        --fail \
+        --silent \
+        --show-error \
+        "https://github.com/$owner/$repoName/releases/latest/download/$file"
 }
 getAllLatestAssets() {
     local    token="$1"; shift

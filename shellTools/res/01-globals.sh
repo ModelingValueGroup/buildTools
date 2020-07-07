@@ -18,13 +18,31 @@ set -euo pipefail
 
 if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     # not on github actions, probably a localbuild: deduce vars from git repo:
+    #=============================
     export     GITHUB_SERVER_URL="https://github.com"
     export        GITHUB_API_URL="https://api.github.com"
     export    GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
-    export              USERNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\1|')"
-    export             REPOSNAME="$(git remote -v | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//" | sed 's|\([^/]*\)/\(.*\)|\2|')"
-    export     GITHUB_REPOSITORY="$USERNAME/$REPOSNAME"
+    #=============================
+    #          GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
+    #           GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
+    #          GITHUB_EVENT_NAME="push"
+    #=============================
+    export     GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//")"
+    #    GITHUB_REPOSITORY_OWNER="xxxx"
     export          GITHUB_ACTOR="$USER"
+    #=============================
+                      GITHUB_REF="$(git symbolic-ref HEAD 2>/dev/null)"
+    #            GITHUB_BASE_REF=""
+    #            GITHUB_HEAD_REF=""
+    #                GITHUB_SHA="1234567890"
+    #=============================
+    #              GITHUB_ACTION="aaaa"
+    #            GITHUB_WORKFLOW="wwww"
+    #                 GITHUB_JOB="jjjj"
+    #=============================
+    #              GITHUB_RUN_ID="nnnn"
+    #          GITHUB_RUN_NUMBER="mmmm"
+    #=============================
 else
     # on github actions: the following are passed in by github: (for repo xxxx/yyyy)
     #=============================
@@ -52,11 +70,11 @@ else
     #               GITHUB_RUN_ID="nnnn"
     #           GITHUB_RUN_NUMBER="mmmm"
     #=============================
-    # deduce some vars from env vars:
-    export              USERNAME="${GITHUB_REPOSITORY/\/*}"
-    export             REPOSNAME="${GITHUB_REPOSITORY/*\/}"
+    :
 fi
 ###############################################################################
+export               USERNAME="${GITHUB_REPOSITORY/\/*}"
+export              REPOSNAME="${GITHUB_REPOSITORY/*\/}"
 export     GITHUB_PACKAGE_URL="https://maven.pkg.github.com"
 export   GITHUB_API_REPOS_URL="$GITHUB_API_URL/repos/$USERNAME/$REPOSNAME"
 export    GITHUB_RELEASES_URL="$GITHUB_API_REPOS_URL/releases"
