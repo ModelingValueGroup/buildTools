@@ -17,8 +17,5 @@
 set -euo pipefail
 
 installJunitlauncher() {
-    echo "ANT_HOME=$ANT_HOME"
-    ls -la "$ANT_HOME"
-    ls -la "$ANT_HOME/lib"
-    downloadArtifact '' 'org.apache.ant' 'ant-junitlauncher' '1.10.8' 'jar' "$ANT_HOME/lib"
+    :
 }

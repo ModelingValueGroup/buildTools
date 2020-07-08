@@ -46,7 +46,6 @@ jobs:
       - name: "generate/adjust some files if needed"
         run: |
           . <(java -jar ~/buildTools.jar)
-          exit 11 ##################################################
           generateAll
           correctEols
           correctHeaders header
