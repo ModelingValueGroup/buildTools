@@ -175,7 +175,24 @@ generateAntTestTargets() {
 
         case "$targetName" in
         test.module.$modNameLow)
-            cat <<EOF
+            if [[ "$(fgrep 'org.junit.jupiter' project.sh)" != "" ]]; then
+                cat <<EOF
+    <target name="test.module.$modNameLow">
+        <junitlauncher haltOnFailure="true" printSummary="true">
+            <classpath refid="$modNameLow.runtime.module.classpath"/>
+            <testclasses outputdir=".">
+                <fileset dir="\${$modNameLow.testoutput.dir}">
+                    <include name="**/*Test.*"/>
+                    <include name="**/*Tests.*"/>
+                </fileset>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+                <listener type="legacy-plain" sendSysOut="true"/>
+            </testclasses>
+        </junitlauncher>
+    </target>
+EOF
+            else
+                cat <<EOF
     <target name="test.module.$modNameLow">
         <junit haltonfailure="on" logfailedtests="on" fork="on" forkmode="once">
             <!-- fork="on" forkmode="perTest" threads="8" -->
@@ -190,6 +207,9 @@ generateAntTestTargets() {
         </junit>
     </target>
 EOF
+            fi
+            ;;
+        xxxx)
             ;;
         testresults.module.$modNameLow)
             cat <<EOF
