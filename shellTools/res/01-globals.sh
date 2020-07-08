@@ -83,7 +83,7 @@ export      MAVEN_PACKAGE_URL="https://repo1.maven.org/maven2"
 export   SONATYPE_PACKAGE_URL="https://repository.sonatype.org/service/local/repo_groups/forge/content"
 export           ARTIFACT_DIR="out/artifacts"                   # default for IntelliJ
 export             OUR_DOMAIN="youNeedToSet_OUR_DOMAIN"
-export     extraLinuxPackages=(ant-optional)
+export     extraLinuxPackages=()
 export    errorDetectedMarker="errorDetectedMarker"
 ###############################################################################
 declare -A MAVEN_REPOS_LIST

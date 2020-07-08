@@ -33,6 +33,10 @@ jobs:
 
       - name: "ant build"
         run: |
+          find / -name fetch.xml | sed 's/^/+++/'
+          (cd $ANT_HOME; ant -f fetch.xml -Ddest=system)
+          exit 88
+          #
           rm -rf out
           ant
           cp out/artifacts/buildTools.jar ~
