@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -16,5 +16,9 @@
 
 set -euo pipefail
 
-installLinuxPackages
-installJunitlauncher
+installJunitlauncher() {
+    echo "ANT_HOME=$ANT_HOME"
+    ls -la "$ANT_HOME"
+    ls -la "$ANT_HOME/lib"
+    downloadArtifact '' 'org.apache.ant' 'ant-junitlauncher' '1.10.8' 'jar' "$ANT_HOME/lib"
+}
