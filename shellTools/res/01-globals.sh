@@ -27,7 +27,7 @@ if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     #           GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
     #          GITHUB_EVENT_NAME="push"
     #=============================
-    export     GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:||;s|\.git .*||;s/ .*//")"
+    export     GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:[^/]*/||;s|\.git .*||;s/ .*//")"
     #    GITHUB_REPOSITORY_OWNER="xxxx"
     export          GITHUB_ACTOR="$USER"
     #=============================
@@ -105,8 +105,11 @@ getGithubRepoOpenUrl() {
     printf "%s/%s.git" "$GITHUB_SERVER_URL" "$repo"
 }
 ###############################################################################
-
-
-
-
-
+if [[ "${ANT_HOME:-}" == "" ]]; then
+    if [[ -d "/opt/local/share/java/apache-ant" ]]; then # default for mac
+        export ANT_HOME="/opt/local/share/java/apache-ant"
+    else
+        echo "ERROR: ANT_HOME not set and can not be determined"
+        exit 37
+    fi
+fi
