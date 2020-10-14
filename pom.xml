@@ -10,7 +10,7 @@
   <version>3.0.1</version>
   <packaging>jar</packaging>
   <scm>
-    <url>https://maven.pkg.github.com/ModelingValueGroup/buildTools</url>
+    <url>https://maven.pkg.github.com/ModelingValueGroup/buildtools</url>
   </scm>
   <dependencies>
 
