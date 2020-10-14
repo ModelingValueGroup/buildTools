@@ -41,6 +41,10 @@ downloadArtifactQuick() {
     local     e="$1"; shift
     local   dir="$1"; shift
 
+    if [[ "$a" != "${a,,}" ]]; then
+        echo "::warning::artifact id $a should be only lowercase" 1>&2
+    fi
+
     local name combi ext extra
 
     mkdir -p "$dir"
@@ -84,6 +88,10 @@ downloadArtifact() {
     local     e="$1"; shift
     local   dir="$1"; shift
 
+    if [[ "$a" != "${a,,}" ]]; then
+        echo "::warning::artifact id $a should be only lowercase" 1>&2
+    fi
+
     mvn_ "$token" \
         org.apache.maven.plugins:maven-dependency-plugin:LATEST:copy \
                    -Dartifact="$g:$a:$v:$e" \
@@ -100,6 +108,10 @@ uploadArtifactQuick() {
 
     if [[ ! -f "$file" ]]; then
         echo "::error::uploadArtifactQuick: can not find file $file" 1>&2
+        exit 75
+    fi
+    if [[ "$a" != "${a,,}" ]]; then
+        echo "::error::artifact id $a should be only lowercase" 1>&2
         exit 75
     fi
 
@@ -137,6 +149,11 @@ uploadArtifact() {
         echo "::error::uploadArtifact: can not find file $file" 1>&2
         exit 75
     fi
+    if [[ "$a" != "${a,,}" ]]; then
+        echo "::error::artifact id $a should be only lowercase" 1>&2
+        exit 75
+    fi
+
     local args=("-Dfile=$file")
     if [[ "$sources" != "" ]]; then
         if [[ ! -f "$sources" ]]; then

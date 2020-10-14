@@ -13,8 +13,8 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-version="2.4.2"
+version="3.0.0"
 artifacts=(
-    "org.modelingvalue   buildTools   $version   jar  j--"
+    "org.modelingvalue   buildtools   $version   jar  j--"
 )
 
