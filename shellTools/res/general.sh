@@ -160,19 +160,27 @@ assertEqual() {
     fi
 }
 assertFileContains() {
-    local file="$1"; shift
-    local  cnt="$1"; shift
-    local patt="$1"; shift
+    local total="$1"; shift
+    local  file="$1"; shift
+    local   cnt="$1"; shift
+    local  patt="$1"; shift
 
     if [[ ! -f "$file" ]]; then
         echo "::error::did not find expected file $file" 1>&2
         exit 34
     else
+        if (( $(wc -l < "$file") != $total )); then
+            echo "::error::expected $total lines in '$file' but found :" $(wc -l < "$file") 1>&2
+            sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" "$file"
+            touch "$errorDetectedMarker"
+        fi
         local n="$(egrep "$patt" "$file" | wc -l | sed 's/ //g')"
         if [[ "$cnt" != "$n" ]]; then
             echo "::error::expected $cnt lines but found $n lines containing '$patt' in '$file':" 1>&2
-            sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" log
+            sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" "$file"
             touch "$errorDetectedMarker"
+        fi
+        if [[ -f "$errorDetectedMarker" ]]; then
             exit 35
         fi
     fi

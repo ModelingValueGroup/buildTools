@@ -20,7 +20,7 @@ set -euo pipefail
 ##### tests ###########################################################################################################
 test_packing() {
     textFromJar() {
-        java -jar ~/buildTools.jar
+        java -jar ~/buildtools.jar
     }
     textFromDir() {
         echo "#!/usr/bin/env bash"
@@ -33,17 +33,21 @@ test_packing() {
     if [[ "$(textFromJar)" != "$(textFromDir)" ]]; then
         echo "::error::test failed: jar does not correctly deliver scripts" 1>&2
         diff <(printf "%s" "$(textFromJar)") <(printf "%s" "$(textFromDir)")
+        # shellcheck disable=SC2154
         touch "$errorDetectedMarker"
         exit 46
     fi
 }
 test_downloadArtifactQuick() {
-    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildTools"    "1.1.1" "jar" "from-github" 2>log
+    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "build""Tools"  "1.1.1" "jar" "from-github1" 2> log1
+    downloadArtifactQuick "$INPUT_TOKEN" "org.modelingvalue" "buildtools"    "1.1.1" "jar" "from-github2" 2> log2
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "from-github/buildTools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github/buildTools.pom" \
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "from-github1/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github1/buildtools.pom" \
+                            "83b11ce6151a9beaa79576117f2f1c9f" "from-github2/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github2/buildtools.pom" \
                             \
                             "5b38c40c97fbd0adee29f91e60405584" "from-maven/junit.jar" \
                             "af7ca61fba26556cfe5b40cf15aadc14" "from-maven/junit.pom" \
@@ -55,12 +59,14 @@ test_downloadArtifactQuick() {
                             "ecac656aaa7ef5e9d885c4fad5168133" "from-sonatype/junit-javadoc.jar" \
                             "8f17d4271b86478a2731deebdab8c846" "from-sonatype/junit-sources.jar"
 
-    assertFileContains log 2 "::warning::could not download artifact"
+    assertFileContains 3 log1 2 "::warning::could not download artifact"
+    assertFileContains 3 log1 1 "::warning::artifact id build""Tools should be only lowercase"
+    assertFileContains 2 log2 2 "::warning::could not download artifact"
 }
 test_downloadArtifact() {
-    (downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildTools" "1.1.1" "jar" "downloaded") >log 2>&1
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildTools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildTools/1.1.1//buildTools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
+    (downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildtools" "1.1.1" "jar" "downloaded") >log 2>&1
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildtools/1.1.1//buildtools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
 }
 test_correctEols() {
@@ -165,24 +171,24 @@ EOF
         echo "::error::expected a fail but encountered success" 1>&2
         touch "$errorDetectedMarker"
     else
-        assertFileContains log.err 4 "^::warning::could not download artifact: " 1>&2
-        assertFileContains log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains 1553 log.err 4 "^::warning::could not download artifact: " 1>&2
+        assertFileContains 1553 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 test_getLatestAsset() {
-    getLatestAsset "ModelingValueGroup" "buildTools" "buildTools.jar"
+    getLatestAsset "ModelingValueGroup" "buildtools" "buildtools.jar"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildTools.jar" ]]; then
-        echo "::error:: test failed: buildTools.jar could not be downloaded"
+    if [[ ! -f "buildtools.jar" ]]; then
+        echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
     fi
 }
 test_getAllLatestAssets() {
-    getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildTools"
+    getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildtools"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildTools.jar" ]]; then
-        echo "::error:: test failed: buildTools.jar could not be downloaded"
+    if [[ ! -f "buildtools.jar" ]]; then
+        echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
     fi
@@ -192,7 +198,7 @@ test_getAllLatestAssets() {
 prepareForTesting() {
     if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
         export  GITHUB_WORKSPACE="$PWD"
-        export GITHUB_REPOSITORY="ModelingValueGroup/buildTools"
+        export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
         export        GITHUB_REF="refs/heads/local-build-fake-branch"
 
         ##### mimic github actions env for local execution:
@@ -209,8 +215,8 @@ prepareForTesting() {
 }
 #######################################################################################################################
 ##### test execution:
-cp out/artifacts/buildTools.jar ~
-. <(java -jar ~/buildTools.jar)
+cp out/artifacts/buildtools.jar ~
+. <(java -jar ~/buildtools.jar)
 if [[ "$#" == 0 ]]; then
     tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
 else
@@ -233,7 +239,7 @@ for t in "${tests[@]}"; do
         cd "$tmp"
 
         ##### include the produced jar again:
-        . <(java -jar ~/buildTools.jar)
+        . <(java -jar ~/buildtools.jar)
         "$t"
     ) || touch "tmp/$errorDetectedMarker"
     echo "::endgroup::" 1>&2
