@@ -43,7 +43,7 @@ includeBuildTools() {
 }
 
 if [[ "${1:-}" == "" ]]; then
-    echo "::error::no token passed to buildToolsMeme.sh"
+    echo "::error::no token passed to buildtoolsMeme.sh"
     exit 56
 fi
 includeBuildTools "$1" "${2:-}"
