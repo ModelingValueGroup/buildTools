@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="buildtools" default="all">
-  
-  
   <property file="build.properties"/>
   <!-- Uncomment the following property if no tests compilation is needed -->
   <!-- 
   <property name="skip.tests" value="true"/>
    -->
-  
   <!-- Compiler options -->
-  
   <property name="compiler.debug" value="on"/>
   <property name="compiler.generate.no.warnings" value="off"/>
   <property name="compiler.args" value=""/>
@@ -44,9 +40,7 @@
   <patternset id="compiler.resources">
     <include name="**/?*.sh"/>
   </patternset>
-  
   <!-- JDK definitions -->
-  
   <property name="jdk.bin.11" value="${jdk.home.11}/bin"/>
   <path id="jdk.classpath.11">
     <fileset dir="${jdk.home.11}">
@@ -122,52 +116,46 @@
       <include name="../Home!/jdk.zipfs"/>
     </fileset>
   </path>
-  
   <property name="project.jdk.home" value="${jdk.home.11}"/>
   <property name="project.jdk.bin" value="${jdk.bin.11}"/>
   <property name="project.jdk.classpath" value="jdk.classpath.11"/>
-  
   <!-- Modules -->
-  
   <import file="${basedir}/correctors/module_correctors.xml"/>
-  
   <import file="${basedir}/shellTools/module_shelltools.xml"/>
-  
   <target name="init" description="Build initialization">
     <!-- Perform any build initialization in this target -->
   </target>
-  
   <target name="clean" depends="clean.module.correctors, clean.module.shelltools" description="cleanup all"/>
-  
   <target name="build.modules" depends="init, clean, compile.module.correctors, compile.module.shelltools" description="build all modules"/>
-  
   <target name="init.artifacts">
     <property name="artifacts.temp.dir" value="${basedir}/__artifacts_temp"/>
     <property name="artifact.output.buildtools:jar" value="${basedir}/out/artifacts"/>
     <mkdir dir="${artifacts.temp.dir}"/>
     <property name="temp.jar.path.buildTools.jar" value="${artifacts.temp.dir}/buildTools.jar"/>
   </target>
-  
-  <target name="artifact.buildtools:jar" depends="init.artifacts, compile.module.shelltools, compile.module.correctors" description="Build &#39;buildtools:jar&#39; artifact">
+  <target name="artifact.buildtools:jar" depends="init.artifacts, compile.module.shelltools, compile.module.correctors" description="Build 'buildtools:jar' artifact">
     <property name="artifact.temp.output.buildtools:jar" value="${artifacts.temp.dir}/buildtools_jar"/>
     <mkdir dir="${artifact.temp.output.buildtools:jar}"/>
-    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+    <jar destfile="${temp.jar.path.buildTools.jar}" duplicate="preserve" filesetmanifest="merge">
       <zipfileset dir="${shelltools.output.dir}"/>
       <zipfileset dir="${correctors.output.dir}"/>
       <zipfileset file="${basedir}/shellTools/src/META-INF/MANIFEST.MF" prefix="META-INF"/>
     </jar>
     <copy file="${temp.jar.path.buildTools.jar}" tofile="${artifact.temp.output.buildtools:jar}/buildTools.jar"/>
   </target>
-  
   <target name="build.all.artifacts" depends="artifact.buildtools:jar" description="Build all artifacts">
     <mkdir dir="${artifact.output.buildtools:jar}"/>
     <copy todir="${artifact.output.buildtools:jar}">
       <fileset dir="${artifact.temp.output.buildtools:jar}"/>
     </copy>
-    
     <!-- Delete temporary files -->
     <delete dir="${artifacts.temp.dir}"/>
   </target>
-  
   <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
+  <target name="test" depends="testresults.module.shelltools">
+    <echo>all done for test</echo>
+  </target>
+  <target name="javadoc" depends="javadoc.module.correctors,javadoc.module.shelltools">
+    <echo>all done for javadoc</echo>
+  </target>
 </project>
