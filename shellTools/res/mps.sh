@@ -42,6 +42,6 @@ installMps() {
 }
 test_installMPS() {
     installMps "MPS" "2019.3"
-    assertChecksumsMatch    "15d9d92ace38667ba67f4160034a5a09" "MPS/about.txt" \
-                            "dae22af1b94ebf2137efe0c8bcae6ba0" "MPS/lib/annotations.jar"
+    assertChecksumsMatch    "15d9d92ace38667ba67f4160034a5a09:MPS/about.txt" \
+                            "dae22af1b94ebf2137efe0c8bcae6ba0:MPS/lib/annotations.jar"
 }

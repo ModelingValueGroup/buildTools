@@ -44,20 +44,24 @@ test_downloadArtifactQuick() {
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "from-github1/buildtools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github1/buildtools.pom" \
-                            "83b11ce6151a9beaa79576117f2f1c9f" "from-github2/buildtools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" "from-github2/buildtools.pom" \
+    ls -lR   | sed 's/^/ls   | /'
+    cat log1 | sed 's/^/log1 | /'
+    cat log2 | sed 's/^/log2 | /'
+
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/buildtools.pom" \
+                            "83b11ce6151a9beaa79576117f2f1c9f:from-github2/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github2/buildtools.pom" \
                             \
-                            "5b38c40c97fbd0adee29f91e60405584" "from-maven/junit.jar" \
-                            "af7ca61fba26556cfe5b40cf15aadc14" "from-maven/junit.pom" \
-                            "cf72f68b360b44c15fadd47a0bbc1b43" "from-maven/junit-javadoc.jar" \
-                            "97f2fb8b3005d11d5a754adb4d99c926" "from-maven/junit-sources.jar" \
+                            "5b38c40c97fbd0adee29f91e60405584:from-maven/junit.jar" \
+                            "af7ca61fba26556cfe5b40cf15aadc14:from-maven/junit.pom" \
+                            "cf72f68b360b44c15fadd47a0bbc1b43:from-maven/junit-javadoc.jar" \
+                            "97f2fb8b3005d11d5a754adb4d99c926:from-maven/junit-sources.jar" \
                             \
-                            "68380001b88006ebe49be50cef5bb23a" "from-sonatype/junit.jar" \
-                            "7cb390d6759b75fc0c2bedfdeb45877d" "from-sonatype/junit.pom" \
-                            "ecac656aaa7ef5e9d885c4fad5168133" "from-sonatype/junit-javadoc.jar" \
-                            "8f17d4271b86478a2731deebdab8c846" "from-sonatype/junit-sources.jar"
+                            "68380001b88006ebe49be50cef5bb23a:from-sonatype/junit.jar" \
+                            "7cb390d6759b75fc0c2bedfdeb45877d:from-sonatype/junit.pom" \
+                            "ecac656aaa7ef5e9d885c4fad5168133:from-sonatype/junit-javadoc.jar" \
+                            "8f17d4271b86478a2731deebdab8c846:from-sonatype/junit-sources.jar"
 
     assertFileContains 3 log1 2 "::warning::could not download artifact"
     assertFileContains 3 log1 1 "::warning::artifact id build""Tools should be only lowercase"
@@ -65,8 +69,8 @@ test_downloadArtifactQuick() {
 }
 test_downloadArtifact() {
     (downloadArtifact "$INPUT_TOKEN" "org.modelingvalue" "buildtools" "1.1.1" "jar" "downloaded") >log 2>&1
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f" "downloaded/buildtools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36" ~/".m2/repository/org/modelingvalue/buildtools/1.1.1//buildtools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:downloaded/buildtools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36:$HOME/.m2/repository/org/modelingvalue/buildtools/1.1.1//buildtools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
 }
 test_correctEols() {
@@ -145,15 +149,15 @@ EOF
 
     generateMavenSettings "uuu" "ppp" "someurl" > settings.xml
 
-    assertChecksumsMatch    "28530fe5cdb447b6f28cdd903331c629" "pom.xml" \
-                            "aeb55c0a88fa399f0604ba45b102260e" ".idea/libraries/gen__hamcrest_core.xml" \
-                            "9da13dd7b8b691d1c6781f39f36d5be8" ".idea/libraries/gen__junit.xml" \
-                            "c2f5edf722b02968392812dcfe1a10bc" ".idea/libraries/gen__multi.xml" \
-                            "e5b40e41880c8864b8c1ff7041b1fd54" "build.xml" \
-                            "208a3ecf8fc0ade893227f0387958b49" "TST/module_modtst.xml" \
-                            "606cba3391fe62749758d115233d493d" "SRC/module_modsrc.xml" \
-                            "2084d453d9c1abed6b11623d5f2d2145" "BTH/module_modbth.xml" \
-                            "851e45a3b74f2265bcfc65a36889277d" "settings.xml"
+    assertChecksumsMatch    "28530fe5cdb447b6f28cdd903331c629:pom.xml" \
+                            "aeb55c0a88fa399f0604ba45b102260e:.idea/libraries/gen__hamcrest_core.xml" \
+                            "9da13dd7b8b691d1c6781f39f36d5be8:.idea/libraries/gen__junit.xml" \
+                            "c2f5edf722b02968392812dcfe1a10bc:.idea/libraries/gen__multi.xml" \
+                            "e5b40e41880c8864b8c1ff7041b1fd54:build.xml" \
+                            "208a3ecf8fc0ade893227f0387958b49:TST/module_modtst.xml" \
+                            "606cba3391fe62749758d115233d493d:SRC/module_modsrc.xml" \
+                            "2084d453d9c1abed6b11623d5f2d2145:BTH/module_modbth.xml" \
+                            "851e45a3b74f2265bcfc65a36889277d:settings.xml"
 }
 test_uploadArtifactQuick() {
     runUploadArtifactTest "tst.modelingvalue.UpPerCase" "buildtools" "$INPUT_TOKEN"

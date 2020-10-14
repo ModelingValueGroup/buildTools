@@ -105,25 +105,17 @@ compareAndOverwrite() {
     rm "$tmp"
 }
 assertChecksumsMatch() {
-    local errorsFound=0
-    local expSum=""
-    local   file=""
-    local a
+    local a expSum file errorsFound=0
     for a in "$@"; do
-        if [[ "$expSum" == "" ]]; then
-            expSum="$a"
+        IFS=: read expSum file <<<"$a"
+        if [[ ! -f "$file" ]]; then
+            echo "::error::test failed: $file missing" 1>&2
         else
-            file="$a"
-            if [[ ! -f "$file" ]]; then
-                echo "::error::test failed: $file was not generated at all" 1>&2
-            else
-                local actSum="$(md5sum < "$file" | sed 's/ .*//')"
-                if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
-                    echo "::error::test failed: $file was not generated correctly (md5sum is $actSum not $expSum)" 1>&2
-                    touch "$errorDetectedMarker"
-                   errorsFound=1
-                fi
-                expSum=""
+            local actSum="$(md5sum < "$file" | sed 's/ .*//')"
+            if [[ ! ( "$actSum" =~ ^$expSum$ ) ]]; then
+                echo "::error::test failed: $file was not generated correctly (md5sum is $actSum not $expSum)" 1>&2
+                touch "$errorDetectedMarker"
+               errorsFound=1
             fi
         fi
     done
