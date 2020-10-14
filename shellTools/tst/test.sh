@@ -44,12 +44,8 @@ test_downloadArtifactQuick() {
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
-    ls -lR   | sed 's/^/ls   | /'
-    cat log1 | sed 's/^/log1 | /'
-    cat log2 | sed 's/^/log2 | /'
-
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/buildtools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/buildtools.pom" \
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/buildTools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/buildTools.pom" \
                             "83b11ce6151a9beaa79576117f2f1c9f:from-github2/buildtools.jar" \
                             "5d2fa9173c3c1ec0164587b4ece4ec36:from-github2/buildtools.pom" \
                             \
@@ -182,7 +178,7 @@ EOF
 test_getLatestAsset() {
     getLatestAsset "ModelingValueGroup" "buildtools" "buildtools.jar"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" ]]; then
+    if [[ ! -f "buildtools.jar" && ! -f "buildTools.jar" ]]; then
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
@@ -191,7 +187,7 @@ test_getLatestAsset() {
 test_getAllLatestAssets() {
     getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildtools"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" ]]; then
+    if [[ ! -f "buildtools.jar" && ! -f "buildTools.jar" ]]; then
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
