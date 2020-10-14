@@ -10,7 +10,7 @@
     <option name="INTERPRETER_OPTIONS" value="bash" />
     <method v="2">
       <option name="BuildArtifacts" enabled="true">
-        <artifact name="buildTools:jar" />
+        <artifact name="buildxtools:jar" />
       </option>
     </method>
   </configuration>
