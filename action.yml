@@ -13,8 +13,8 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: 'buildTools'
-description: 'load the buildTools script in the workspace'
+name: 'buildools'
+description: 'load the buildtools script in the workspace'
 author: 'Tom Brus'
 
 inputs:

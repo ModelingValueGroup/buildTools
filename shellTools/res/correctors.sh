@@ -17,10 +17,10 @@
 set -euo pipefail
 
 correctEols() {
-  java -cp ~/buildTools.jar correctors.EolCorrector
+  java -cp ~/buildtools.jar correctors.EolCorrector
 }
 correctHeaders() {
   local headerTemplate="$1"; shift
 
-  java -cp ~/buildTools.jar correctors.HeaderCorrector "$headerTemplate"
+  java -cp ~/buildtools.jar correctors.HeaderCorrector "$headerTemplate"
 }
