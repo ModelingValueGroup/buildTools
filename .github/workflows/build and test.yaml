@@ -78,8 +78,8 @@ jobs:
           . <(java -jar ~/buildTools.jar)
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
           . <(catProjectSh '')
-          echo "::set-env name=RELEASE_NAME::v$version"
-          echo "::set-env name=GITHUB_REPOSITORY::$GITHUB_REPOSITORY"
+          echo "RELEASE_NAME=v$version" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" >> $GITHUB_ENV
 
       - name: "if master: create a release"
         uses: actions/create-release@v1
