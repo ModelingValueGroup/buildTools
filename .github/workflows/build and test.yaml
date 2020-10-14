@@ -35,24 +35,24 @@ jobs:
         run: |
           rm -rf out
           ant
-          cp out/artifacts/buildTools.jar ~
+          cp out/artifacts/buildtools.jar ~
 
       - name: "if master: fail if there is already a tag for this version"
         if: github.ref == 'refs/heads/master'
         run:  |
-          . <(java -jar ~/buildTools.jar)
+          . <(java -jar ~/buildtools.jar)
           errorIfVersionTagExists
 
       - name: "generate/adjust some files if needed"
         run: |
-          . <(java -jar ~/buildTools.jar)
+          . <(java -jar ~/buildtools.jar)
           generateAll
           correctEols
           correctHeaders header
 
       - name: "push changes back to github"
         run:  |
-          . <(java -jar ~/buildTools.jar)
+          . <(java -jar ~/buildtools.jar)
           pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
 
       - name: "ant build again (in case something was adjusted in previous step)"
@@ -66,16 +66,16 @@ jobs:
           INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
 
       #### publish #####################################################################################################
-      - name: "publish action-artifact buildTools.jar"
+      - name: "publish action-artifact buildtools.jar"
         uses: actions/upload-artifact@v1
         with:
-          name: buildTools.jar
-          path: out/artifacts/buildTools.jar
+          name: buildtools.jar
+          path: out/artifacts/buildtools.jar
 
       - name: "if master: tag with version"
         if: github.ref == 'refs/heads/master'
         run:  |
-          . <(java -jar ~/buildTools.jar)
+          . <(java -jar ~/buildtools.jar)
           setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
           . <(catProjectSh '')
           echo "RELEASE_NAME=v$version" >> $GITHUB_ENV
@@ -101,13 +101,13 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           upload_url: "${{ steps.create_release.outputs.upload_url }}"
-          asset_path: out/artifacts/buildTools.jar
-          asset_name: buildTools.jar
+          asset_path: out/artifacts/buildtools.jar
+          asset_name: buildtools.jar
           asset_content_type: application/java-archive
 
       - name: "if master: upload as package"
         uses: ModelingValueGroup/upload-maven-package-action@master
         if: github.ref == 'refs/heads/master'
         with:
-          file: "out/artifacts/buildTools.jar"
+          file: "out/artifacts/buildtools.jar"
           token: "${{ secrets.GITHUB_TOKEN }}"
