@@ -68,7 +68,7 @@ downloadArtifactQuick() {
                 if [[ ! -f "$file" ]]; then
                     mv "$tmpfile" "$file"
                 elif ! cmp -s "$file" "$tmpfile"; then
-                    echo "::warning:: artifacts from diferent sources differ ($g:$a:$v)" 1>&2
+                    echo "::warning:: artifacts from different sources differ ($g:$a:$v)" 1>&2
                 fi
             fi
         done
@@ -99,12 +99,13 @@ downloadArtifact() {
           -Dmdep.stripVersion="true"
 }
 uploadArtifactQuick() {
-    local   token="$1"; shift
-    local       g="$1"; shift
-    local       a="$1"; shift
-    local       v="$1"; shift
-    local     pom="$1"; shift
-    local    file="$1"; shift
+    local token="$1"; shift
+    local     g="$1"; shift
+    local     a="$1"; shift
+    local     v="$1"; shift
+    local   pom="$1"; shift
+    local  file="$1"; shift
+    local  repo="${1:-$GITHUB_REPOSITORY}"
 
     if [[ ! -f "$file" ]]; then
         echo "::error::uploadArtifactQuick: can not find file $file" 1>&2
@@ -121,7 +122,7 @@ uploadArtifactQuick() {
         local extra="$1"; shift
 
         if [[ -f "$file" ]]; then
-            curlPipe "$token" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" "$g" "$a" "$v" "$e" "$extra")"
+            curlPipe "$token" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL/$repo" "$g" "$a" "$v" "$e" "$extra")"
         fi
     }
 
@@ -134,52 +135,56 @@ uploadArtifactQuick() {
     uploadArtifactQuick_upload "$sources" "$e"  "sources"
     uploadArtifactQuick_upload "$javadoc" "$e"  "javadoc"
 }
-uploadArtifact() {
-    local   token="$1"; shift
-    local    gave="$1"; shift
-    local     pom="$1"; shift
-    local    file="$1"; shift
-    local sources="${1:-}"
-    local javadoc="${2:-}"
-
-    local g a v e
-    gave2vars "$gave" "$pom" "$file"
-
-    if [[ ! -f "$file" ]]; then
-        echo "::error::uploadArtifact: can not find file $file" 1>&2
-        exit 75
-    fi
-    if egrep -q '[A-Z]'<<<"$a"; then
-        echo "::error::artifact id $a should be only lowercase" 1>&2
-        exit 75
-    fi
-
-    local args=("-Dfile=$file")
-    if [[ "$sources" != "" ]]; then
-        if [[ ! -f "$sources" ]]; then
-            echo "::error::uploadArtifact: can not find sources file $sources" 1>&2
-            exit 75
-        fi
-        args+=("-Dsources=$sources")
-        if [[ "$javadoc" != "" ]]; then
-            if [[ ! -f "$javadoc" ]]; then
-                echo "::error::uploadArtifact: can not find javadoc file $javadoc" 1>&2
-                exit 75
-            fi
-            args+=("-Djavadoc=$javadoc")
-        fi
-    fi
-
-    mvn_ "$token" \
-        deploy:deploy-file \
-                         -DgroupId="$g" \
-                      -DartifactId="$a" \
-                         -Dversion="$v" \
-                       -Dpackaging="$e" \
-                    -DrepositoryId="github" \
-                             -Durl="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" \
-        "${args[@]}"
-}
+#
+# kept for reference.
+# the above upload method is a lot quicker
+#
+#uploadArtifact_usingMvn() {
+#    local   token="$1"; shift
+#    local    gave="$1"; shift
+#    local     pom="$1"; shift
+#    local    file="$1"; shift
+#    local sources="${1:-}"
+#    local javadoc="${2:-}"
+#
+#    local g a v e
+#    gave2vars "$gave" "$pom" "$file"
+#
+#    if [[ ! -f "$file" ]]; then
+#        echo "::error::uploadArtifact_usingMvn: can not find file $file" 1>&2
+#        exit 75
+#    fi
+#    if egrep -q '[A-Z]'<<<"$a"; then
+#        echo "::error::uploadArtifact_usingMvn: artifact id $a should be only lowercase" 1>&2
+#        exit 75
+#    fi
+#
+#    local args=("-Dfile=$file")
+#    if [[ "$sources" != "" ]]; then
+#        if [[ ! -f "$sources" ]]; then
+#            echo "::error::uploadArtifact_usingMvn: can not find sources file $sources" 1>&2
+#            exit 75
+#        fi
+#        args+=("-Dsources=$sources")
+#        if [[ "$javadoc" != "" ]]; then
+#            if [[ ! -f "$javadoc" ]]; then
+#                echo "::error::uploadArtifact_usingMvn: can not find javadoc file $javadoc" 1>&2
+#                exit 75
+#            fi
+#            args+=("-Djavadoc=$javadoc")
+#        fi
+#    fi
+#
+#    mvn_ "$token" \
+#        deploy:deploy-file \
+#                         -DgroupId="$g" \
+#                      -DartifactId="$a" \
+#                         -Dversion="$v" \
+#                       -Dpackaging="$e" \
+#                    -DrepositoryId="github" \
+#                             -Durl="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY" \
+#        "${args[@]}"
+#}
 listPackageVersions_() { # TODO remove this backwards compatable version
     local      token="$1"; shift
     local repository="$1"; shift
@@ -253,7 +258,7 @@ EOF
         jar cf tst-sources.jar tst-sources
         jar cf tst-javadoc.jar tst-javadoc
     )
-    uploadArtifactQuick   "$token" "$g" "$a" "$v" "$tmp/tst.pom" "$tmp/tst.jar"
+    uploadArtifactQuick "$token" "$g" "$a" "$v" "$tmp/tst.pom" "$tmp/tst.jar" "ModelingValueGroup/tmp"
 
     downloadArtifactQuick "$token" "$g" "$a" "$v" "jar" "$dwn"
     assertEqualFiles "$tmp/tst.pom"         "$dwn/$a.pom"

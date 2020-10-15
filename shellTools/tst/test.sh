@@ -156,7 +156,7 @@ EOF
                             "851e45a3b74f2265bcfc65a36889277d:settings.xml"
 }
 test_uploadArtifactQuick() {
-    runUploadArtifactTest "tst.modelingvalue" "buildtools" "$INPUT_TOKEN"
+    runUploadArtifactTest "tmp.modelingvalue" "buildtools" "$INPUT_TOKEN"
 }
 test_getAllDependencies() {
     cat <<EOF >project.sh
@@ -229,7 +229,7 @@ for t in "${tests[@]}"; do
     echo "::group::$t" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$t" 1>&2
 
-    rm -rf ~/.m2/repository/org/modelingvalue       # delete our stuff from the .m2 dir
+    rm -rf ~/.m2/repository/*/modelingvalue       # delete our stuff from the .m2 dir
 
     ##### make tmp dir:
     tmp="tmp/$t"
@@ -245,7 +245,8 @@ for t in "${tests[@]}"; do
     echo "::endgroup::" 1>&2
 done
 if [[ -f "tmp/$errorDetectedMarker" ]]; then
-    printf "\nsome tests failed\n\n"
+    printf "\n::error::some tests failed\n\n"
     exit 56
+else
+    printf "\nall tests OK\n\n"
 fi
-printf "\nall tests OK\n\n"

@@ -128,6 +128,17 @@ assertEqualFiles() {
     local exp="$1"; shift
     local act="$1"; shift
 
+    if [[ ! -f "$exp" ]]; then
+        echo "::error::test failed: $exp not found" 1>&2
+        touch "$errorDetectedMarker"
+        exit 46
+    fi
+    if [[ ! -f "$act" ]]; then
+        echo "::error::test failed: $act not found" 1>&2
+        touch "$errorDetectedMarker"
+        exit 46
+    fi
+
     local expAsTxt
     local actAsTxt
 
@@ -135,7 +146,7 @@ assertEqualFiles() {
     actAsTxt="$(base64 <"$act")"
 
     if [[ "$expAsTxt" != "$actAsTxt" ]]; then
-        echo "::error::test failed: $exp was not generated correctly (diff '$exp' '$act')" 1>&2
+        echo "::error::test failed: $act was not generated correctly (diff '$PWD/$exp' '$PWD/$act')" 1>&2
         touch "$errorDetectedMarker"
         exit 46
     fi
