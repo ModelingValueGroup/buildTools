@@ -44,8 +44,8 @@ test_downloadArtifactQuick() {
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
     downloadArtifactQuick "$INPUT_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
-    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/buildTools.jar" \
-                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/buildTools.pom" \
+    assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/build""Tools.jar" \
+                            "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/build""Tools.pom" \
                             "83b11ce6151a9beaa79576117f2f1c9f:from-github2/buildtools.jar" \
                             "5d2fa9173c3c1ec0164587b4ece4ec36:from-github2/buildtools.pom" \
                             \
@@ -178,7 +178,7 @@ EOF
 test_getLatestAsset() {
     getLatestAsset "ModelingValueGroup" "buildtools" "buildtools.jar"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" && ! -f "buildTools.jar" ]]; then
+    if [[ ! -f "buildtools.jar" && ! -f "build""Tools.jar" ]]; then # TODO: remove uppercase match only for transition
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
@@ -187,7 +187,7 @@ test_getLatestAsset() {
 test_getAllLatestAssets() {
     getAllLatestAssets "$INPUT_TOKEN" "ModelingValueGroup" "buildtools"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" && ! -f "buildTools.jar" ]]; then
+    if [[ ! -f "buildtools.jar" && ! -f "build""Tools.jar" ]]; then # TODO: remove uppercase match only for transition
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
