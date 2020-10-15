@@ -63,7 +63,7 @@ jobs:
       - name: "test"
         run: shellTools/tst/test.sh
         env:
-          INPUT_TOKEN:  "${{ secrets.GITHUB_TOKEN }}"
+          INPUT_TOKEN:  "${{ secrets.REPO_AND_PACKAGES_TOKEN }}"
 
       #### publish #####################################################################################################
       - name: "publish action-artifact buildtools.jar"
