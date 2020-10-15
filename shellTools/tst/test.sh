@@ -145,7 +145,7 @@ EOF
 
     generateMavenSettings "uuu" "ppp" "someurl" > settings.xml
 
-    assertChecksumsMatch    "28530fe5cdb447b6f28cdd903331c629:pom.xml" \
+    assertChecksumsMatch    "b244bf9dc675d01a8c029aafb8b6a628:pom.xml" \
                             "aeb55c0a88fa399f0604ba45b102260e:.idea/libraries/gen__hamcrest_core.xml" \
                             "9da13dd7b8b691d1c6781f39f36d5be8:.idea/libraries/gen__junit.xml" \
                             "c2f5edf722b02968392812dcfe1a10bc:.idea/libraries/gen__multi.xml" \
