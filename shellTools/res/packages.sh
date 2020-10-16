@@ -260,6 +260,8 @@ EOF
     )
     uploadArtifactQuick "$token" "$g" "$a" "$v" "$tmp/tst.pom" "$tmp/tst.jar" "ModelingValueGroup/tmp"
 
+    wait 5 # wait for all artifacts to arrive (from experience we know that this may take some time....)
+
     downloadArtifactQuick "$token" "$g" "$a" "$v" "jar" "$dwn"
     assertEqualFiles "$tmp/tst.pom"         "$dwn/$a.pom"
     assertEqualFiles "$tmp/tst.jar"         "$dwn/$a.jar"
