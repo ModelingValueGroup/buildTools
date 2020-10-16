@@ -419,11 +419,11 @@ getIntellijModules() {
 }
 # shellcheck disable=SC2120
 catProjectSh() {
+    local maybeAbsent="$([[ ${1:-} == '-maybeAbsent' ]] && echo "yes" || :)"; [[ "$maybeAbsent" != "" ]] && shift || :
     local         pre="$1"; shift
-    local maybeAbsent="$([[ ${1:-} == '-maybeAbsent' ]] && echo yes || :)"; [[ "$maybeAbsent" != "" ]] && shift || :
 
     if [[ ! -f "project.sh" ]]; then
-        if [[ "$maybeAbsent" != "-maybeAbsent" ]]; then
+        if [[ "$maybeAbsent" == "" ]]; then
             echo "::error::project.sh file not found" 1>&2
             exit 45
         fi
