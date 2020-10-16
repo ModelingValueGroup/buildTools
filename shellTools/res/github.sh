@@ -116,9 +116,9 @@ setOutput() {
         local value="$1"
     fi
 
-    value="${value//'%'/'%25'}"
-    value="${value//'\n'/'%0A'}"
-    value="${value//'\r'/'%0D'}"
+    if (( 1 < "$(wc -l<<<"$value")" )); then
+        value="$( (sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}') <<<"$value")"
+    fi
 
     echo "::set-output name=$name::$value"
 }

@@ -195,6 +195,23 @@ test_getAllLatestAssets() {
         exit 88
     fi
 }
+test_setOutput() {
+    test_setOutput_() {
+        local e="$1"; shift
+        local v="$1"; shift
+
+        local out="$(setOutput "name" "$v")"
+        if [[ "$out" != "::set-output name=name::$e" ]]; then
+            echo "::error:: test failed: setOutput does not work correctly: '$out' but '::set-output name=name::$e' expected"
+            touch "$errorDetectedMarker"
+            exit 88
+        fi
+    }
+    test_setOutput_ "aap"               "aap"
+    test_setOutput_ "a%ap"              "a%ap"
+    test_setOutput_ "aap%0Anoot%0A"     "$(printf "%s\n%s\n" 'aap'  'noot')"
+    test_setOutput_ "a%25ap%0Anoot%0A"  "$(printf "%s\n%s\n" 'a%ap' 'noot')"
+}
 #######################################################################################################################
 #######################################################################################################################
 prepareForTesting() {
