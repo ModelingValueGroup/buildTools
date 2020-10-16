@@ -108,6 +108,20 @@ getAllLatestAssets() {
         curlSave "$token" "$u"
     done
 }
+setOutput() {
+    local  name="$1"; shift
+    if [[ "$#" == 0 ]]; then
+        local value="$(cat)"
+    else
+        local value="$1"
+    fi
+
+    value="${value//'%'/'%25'}"
+    value="${value//'\n'/'%0A'}"
+    value="${value//'\r'/'%0D'}"
+
+    echo "::set-output name=$name::$value"
+}
 
 
 

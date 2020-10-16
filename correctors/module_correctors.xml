@@ -1,50 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="module_correctors" default="compile.module.correctors">
   <dirname property="module.correctors.basedir" file="${ant.file.module_correctors}"/>
+  
   <property name="module.jdk.home.correctors" value="${project.jdk.home}"/>
   <property name="module.jdk.bin.correctors" value="${project.jdk.bin}"/>
   <property name="module.jdk.classpath.correctors" value="${project.jdk.classpath}"/>
+  
   <property name="compiler.args.correctors" value="-encoding UTF-8 -source 11 -target 11 ${compiler.args}"/>
+  
   <property name="correctors.output.dir" value="${module.correctors.basedir}/../out/production/correctors"/>
   <property name="correctors.testoutput.dir" value="${module.correctors.basedir}/../out/test/correctors"/>
+  
   <path id="correctors.module.bootclasspath">
     <!-- Paths to be included in compilation bootclasspath -->
   </path>
+  
   <path id="correctors.module.production.classpath">
     <path refid="${module.jdk.classpath.correctors}"/>
   </path>
+  
   <path id="correctors.runtime.production.module.classpath">
     <pathelement location="${correctors.output.dir}"/>
   </path>
+  
   <path id="correctors.module.classpath">
     <path refid="${module.jdk.classpath.correctors}"/>
     <pathelement location="${correctors.output.dir}"/>
   </path>
+  
   <path id="correctors.runtime.module.classpath">
     <pathelement location="${correctors.testoutput.dir}"/>
     <pathelement location="${correctors.output.dir}"/>
   </path>
+  
+  
   <patternset id="excluded.from.module.correctors">
     <patternset refid="ignored.files"/>
   </patternset>
+  
   <patternset id="excluded.from.compilation.correctors">
     <patternset refid="excluded.from.module.correctors"/>
   </patternset>
+  
   <path id="correctors.module.sourcepath">
     <dirset dir="${module.correctors.basedir}">
       <include name="src"/>
     </dirset>
   </path>
+  
+  
   <target name="compile.module.correctors" depends="compile.module.correctors.production,compile.module.correctors.tests" description="Compile module correctors"/>
+  
   <target name="compile.module.correctors.production" description="Compile module correctors; production classes">
     <mkdir dir="${correctors.output.dir}"/>
-    <javac includeantruntime="false" destdir="${correctors.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.correctors}/javac">
+    <javac destdir="${correctors.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.correctors}/javac">
       <compilerarg line="${compiler.args.correctors}"/>
       <bootclasspath refid="correctors.module.bootclasspath"/>
       <classpath refid="correctors.module.production.classpath"/>
       <src refid="correctors.module.sourcepath"/>
       <patternset refid="excluded.from.compilation.correctors"/>
     </javac>
+    
     <copy todir="${correctors.output.dir}">
       <fileset dir="${module.correctors.basedir}/src">
         <patternset refid="compiler.resources"/>
@@ -52,19 +68,11 @@
       </fileset>
     </copy>
   </target>
+  
   <target name="compile.module.correctors.tests" depends="compile.module.correctors.production" description="compile module correctors; test classes" unless="skip.tests"/>
+  
   <target name="clean.module.correctors" description="cleanup module">
     <delete dir="${correctors.output.dir}"/>
     <delete dir="${correctors.testoutput.dir}"/>
-  </target>
-  <target name="javadoc.module.correctors">
-    <property name="correctors.javadoc.dir" value="${basedir}/out/artifacts"/>
-    <property name="correctors.javadoc.tmp" value="${correctors.javadoc.dir}/tmp"/>
-    <property name="correctors.javadoc.jar" value="${correctors.javadoc.dir}/correctors-javadoc.jar"/>
-    <javadoc sourcepathref="correctors.module.sourcepath" destdir="${correctors.javadoc.tmp}" classpathref="correctors.module.classpath"/>
-    <jar destfile="${correctors.javadoc.jar}" filesetmanifest="skip">
-      <zipfileset dir="${correctors.javadoc.tmp}"/>
-    </jar>
-    <delete dir="${correctors.javadoc.tmp}"/>
   </target>
 </project>

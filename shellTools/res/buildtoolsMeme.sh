@@ -1,3 +1,4 @@
+#!/bin/bash
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 ##                                                                                                                     ~
@@ -13,8 +14,36 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-version="3.1.0"
-artifacts=(
-    "org.modelingvalue   buildtools   $version   jar  j--"
-)
+set -euo pipefail
 
+includeBuildToolsVersion() {
+    local   token="$1"; shift
+    local version="$1"; shift
+
+    local url="https://maven.pkg.github.com/ModelingValueGroup/buildtools/org.modelingvalue.buildtools/$version/buildtools-$version.jar"
+
+    rm -f ~/buildtools.jar
+    curl -s -H "Authorization: bearer $token" -L "$url" -o ~/buildtools.jar
+    if [[ "$(file ~/buildtools.jar)" =~ .*text.* ]]; then
+        echo "::error::could not download buildtools jar from: $url"
+        sed 's/^/    /' ~/buildtools.jar
+        exit 91
+    fi
+    . <(java -jar ~/buildtools.jar)
+    echo "INFO: installed buildtools version $version"
+}
+includeBuildTools() {
+    local   token="$1"; shift
+    local version="${1:-}"
+
+    includeBuildToolsVersion "$token" "${version:-3.0.3}"
+    if [[ "${version}" == "" ]]; then
+        includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
+    fi
+}
+
+if [[ "${1:-}" == "" ]]; then
+    echo "::error::no token passed to buildtoolsMeme.sh"
+    exit 56
+fi
+includeBuildTools "$1" "${2:-}"

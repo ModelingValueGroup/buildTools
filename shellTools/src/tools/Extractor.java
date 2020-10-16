@@ -27,6 +27,7 @@ public class Extractor {
     private static final String HASH_BANG  = "#!/usr/bin/env bash";
     private static final String SH_EXT     = ".sh";
     private static final String UNFINISHED = "unfinished";
+    private static final Path   MEME       = Paths.get("buildtoolsMeme.sh");
 
     public static void main(final String[] args) {
         Path ourClassPathElement = whereInClassPath(getMyPath()).orElseThrow();
@@ -34,13 +35,34 @@ public class Extractor {
         List<String> lines = walk(ourClassPathElement)
                 .filter(p -> p.getFileName().toString().endsWith(SH_EXT))
                 .filter(p -> !p.startsWith(UNFINISHED))
+                .filter(p -> !p.equals(MEME))
                 .sorted()
-                .flatMap(p -> Stream.concat(Stream.of("###@@@ " + p), readAllLines(p)))
+                .flatMap(p -> Stream.concat(Stream.of("###@@@ " + p), readAllLinesFromResource(p)))
                 .filter(l -> !l.equals(HASH_BANG))
                 .collect(Collectors.toList());
         lines.add(0, HASH_BANG);
 
         lines.forEach(System.out::println);
+
+        checkMeme();
+    }
+
+    private static void checkMeme() {
+        if (Files.isReadable(MEME)) {
+            try {
+                List<String> actMeme = Files.readAllLines(MEME);
+                List<String> expMeme = readAllLinesFromResource(MEME).collect(Collectors.toList());
+                if (!expMeme.equals(actMeme)) {
+                    System.err.println("-----------------------------------------------------------------------------------");
+                    System.err.println("WARNING: your " + MEME + " is out of date, please use:");
+                    System.err.println("-----------------------------------------------------------------------------------");
+                    expMeme.forEach(line -> System.err.println("    " + line));
+                    System.err.println("-----------------------------------------------------------------------------------");
+                }
+            } catch (IOException e) {
+                System.err.println("warning: could not read meme at " + MEME.toAbsolutePath());
+            }
+        }
     }
 
     private static Path getMyPath() {
@@ -52,7 +74,7 @@ public class Extractor {
     }
 
     private static Stream<Path> classpathStream() {
-        return Stream.of(CLASS_PATH.split(CP_SEP)).map(s -> Paths.get(s));
+        return Stream.of(CLASS_PATH.split(CP_SEP)).map(Paths::get);
     }
 
     private static boolean contains(Path p, Path toFind) {
@@ -86,7 +108,7 @@ public class Extractor {
         }
     }
 
-    private static Stream<String> readAllLines(Path p) {
+    private static Stream<String> readAllLinesFromResource(Path p) {
         InputStream inp = Thread.currentThread().getContextClassLoader().getResourceAsStream(p.toString());
         if (inp == null) {
             throw new Error("can not find resource: " + p);

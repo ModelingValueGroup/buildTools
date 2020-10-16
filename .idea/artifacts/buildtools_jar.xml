@@ -7,6 +7,7 @@
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/shellTools/src/META-INF/MANIFEST.MF" />
       </element>
+      <element id="file-copy" path="$PROJECT_DIR$/buildtoolsMeme.sh" />
     </root>
   </artifact>
 </component>
