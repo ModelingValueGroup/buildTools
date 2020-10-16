@@ -158,7 +158,7 @@ EOF
                             "851e45a3b74f2265bcfc65a36889277d:settings.xml"
 }
 test_uploadArtifactQuick() {
-    runUploadArtifactTest "tmp.modelingvalue" "buildtools" "$INPUT_TOKEN"
+    runUploadArtifactTest "tmp.modelingvalue.testingbuildtoolsbuilding" "buildtools" "$INPUT_TOKEN"
 }
 test_getAllDependencies() {
     cat <<EOF >project.sh
