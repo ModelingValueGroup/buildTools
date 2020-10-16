@@ -25,8 +25,10 @@ test_packing() {
     textFromDir() {
         echo "#!/usr/bin/env bash"
         for sh in ../../shellTools/res/*.sh; do
-            echo "###@@@ $(basename "$sh")"
-            sed '/^#!\/usr\/bin\/env bash$/d' "$sh"
+            if [[ $(basename "$sh") != buildtoolsMeme.sh ]]; then
+                echo "###@@@ $(basename "$sh")"
+                sed '/^#!\/usr\/bin\/env bash$/d' "$sh"
+            fi
         done
     }
 
@@ -223,6 +225,7 @@ else
     tests=("$@")
 fi
 prepareForTesting
+numErrors=0
 rm -rf tmp
 for t in "${tests[@]}"; do
     echo 1>&2
@@ -243,9 +246,14 @@ for t in "${tests[@]}"; do
         "$t"
     ) || touch "tmp/$errorDetectedMarker"
     echo "::endgroup::" 1>&2
+    if [[ -f "tmp/$errorDetectedMarker" ]]; then
+        numErrors=$((numErrors+1))
+        rm "tmp/$errorDetectedMarker"
+        echo "$t failed"
+    fi
 done
-if [[ -f "tmp/$errorDetectedMarker" ]]; then
-    printf "\n::error::some tests failed\n\n"
+if [[ "$numErrors" != 0 ]]; then
+    printf "\n::error::$numErrors tests failed\n\n"
     exit 56
 else
     printf "\nall tests OK\n\n"
