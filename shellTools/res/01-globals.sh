@@ -16,6 +16,11 @@
 
 set -euo pipefail
 
+if ! (echo 4.0.0; echo $BASH_VERSION) | sort -VC; then
+    echo "::error::this shell version ($BASH_VERSION) is too old, I need at least bash 5.0.0."
+    exit 99
+fi
+
 if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     # not on github actions, probably a localbuild: deduce vars from git repo:
     #=============================
@@ -29,7 +34,7 @@ if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     #=============================
     export     GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:[^/]*/||;s|\.git .*||;s/ .*//")"
     #    GITHUB_REPOSITORY_OWNER="xxxx"
-    export          GITHUB_ACTOR="$USER"
+    export          GITHUB_ACTOR="${USER:-ModelingValueGroup}"
     #=============================
                       GITHUB_REF="$(git symbolic-ref HEAD 2>/dev/null)"
     #            GITHUB_BASE_REF=""
@@ -56,7 +61,7 @@ else
     #=============================
     #           GITHUB_REPOSITORY="xxxx/yyyy"
     #     GITHUB_REPOSITORY_OWNER="xxxx"
-    #                GITHUB_ACTOR="tombrus"
+    #                GITHUB_ACTOR="ModelingValueGroup"
     #=============================
     #                  GITHUB_REF="refs/heads/bbbb"
     #             GITHUB_BASE_REF=""

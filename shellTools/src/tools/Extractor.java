@@ -28,14 +28,31 @@ public class Extractor {
     private static final String SH_EXT     = ".sh";
     private static final String UNFINISHED = "unfinished";
     private static final Path   MEME       = Paths.get("buildtoolsMeme.sh");
+    private static final Path   PROJECT    = Paths.get("project.sh");
 
     public static void main(final String[] args) {
+        for (String arg : args) {
+            if (arg.equals("-check")) {
+                checkMeme();
+                System.exit(0);
+            }
+            if (arg.equals("-version")) {
+                showVersion();
+                System.exit(0);
+            }
+            if (arg.equals("-meme")) {
+                getMemeLines().forEach(System.out::println);
+                System.exit(0);
+            }
+        }
+
         Path ourClassPathElement = whereInClassPath(getMyPath()).orElseThrow();
 
         List<String> lines = walk(ourClassPathElement)
                 .filter(p -> p.getFileName().toString().endsWith(SH_EXT))
                 .filter(p -> !p.startsWith(UNFINISHED))
                 .filter(p -> !p.equals(MEME))
+                .filter(p -> !p.equals(PROJECT))
                 .sorted()
                 .flatMap(p -> Stream.concat(Stream.of("###@@@ " + p), readAllLinesFromResource(p)))
                 .filter(l -> !l.equals(HASH_BANG))
@@ -43,15 +60,22 @@ public class Extractor {
         lines.add(0, HASH_BANG);
 
         lines.forEach(System.out::println);
+    }
 
-        checkMeme();
+    private static void showVersion() {
+        String version = readAllLinesFromResource(PROJECT)
+                .filter(l -> l.startsWith("version="))
+                .map(l -> l.replaceAll("version=", ""))
+                .map(l -> l.replaceAll("\"", ""))
+                .findFirst().orElseThrow(() -> new Error("version not found in " + PROJECT));
+        System.out.println(version);
     }
 
     private static void checkMeme() {
         if (Files.isReadable(MEME)) {
             try {
                 List<String> actMeme = Files.readAllLines(MEME);
-                List<String> expMeme = readAllLinesFromResource(MEME).collect(Collectors.toList());
+                List<String> expMeme = getMemeLines();
                 if (!expMeme.equals(actMeme)) {
                     System.err.println("-----------------------------------------------------------------------------------");
                     System.err.println("WARNING: your " + MEME + " is out of date, please use:");
@@ -60,9 +84,15 @@ public class Extractor {
                     System.err.println("-----------------------------------------------------------------------------------");
                 }
             } catch (IOException e) {
-                System.err.println("warning: could not read meme at " + MEME.toAbsolutePath());
+                System.err.println("WARNING: could not read meme at " + MEME.toAbsolutePath());
             }
+        } else {
+            System.err.println("WARNING: meme file could not be found: " + MEME);
         }
+    }
+
+    private static List<String> getMemeLines() {
+        return readAllLinesFromResource(MEME).collect(Collectors.toList());
     }
 
     private static Path getMyPath() {

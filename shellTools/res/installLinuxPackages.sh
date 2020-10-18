@@ -22,6 +22,7 @@ installLinuxPackages() {
 
     toInstall=()
     # shellcheck disable=SC2154
+    extraLinuxPackages=( $(printf "%s\n" "${extraLinuxPackages[@]}" | sort -u) )
     for i in "${extraLinuxPackages[@]}"; do
         IFS=: read n c <<<"$i"
         c="${c:-$n}"

@@ -1,13 +1,13 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test_generateAll" type="ShConfigurationType" folderName="shell">
+  <configuration default="false" name="run -check" type="ShConfigurationType" folderName="java">
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/shellTools/tst/test.sh" />
-    <option name="SCRIPT_OPTIONS" value="test_generateAll" />
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/out/artifacts/buildtools.jar" />
+    <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
-    <option name="INTERPRETER_PATH" value="/usr/bin/env" />
-    <option name="INTERPRETER_OPTIONS" value="bash" />
+    <option name="INTERPRETER_PATH" value="/usr/bin/java" />
+    <option name="INTERPRETER_OPTIONS" value="-jar $PROJECT_DIR$/out/artifacts/buildtools.jar -check" />
     <method v="2">
       <option name="BuildArtifacts" enabled="true">
         <artifact name="buildtools:jar" />

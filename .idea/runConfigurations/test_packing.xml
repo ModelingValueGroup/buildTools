@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test_packing" type="ShConfigurationType">
+  <configuration default="false" name="test_packing" type="ShConfigurationType" folderName="shell">
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="$PROJECT_DIR$/shellTools/tst/test.sh" />
     <option name="SCRIPT_OPTIONS" value="test_packing" />

@@ -16,11 +16,23 @@
 
 set -euo pipefail
 
-includeBuildToolsVersion() {
-    local   token="$1"; shift
-    local version="$1"; shift
+  MEME_TOKEN="${1:-}"
+MEME_VERSION="${2:-}"
 
-    local url="https://maven.pkg.github.com/ModelingValueGroup/buildtools/org.modelingvalue.buildtools/$version/buildtools-$version.jar"
+if [[ "$MEME_TOKEN" == "" ]]; then
+    echo "::error::no token passed to buildtoolsMeme.sh"
+    exit 56
+fi
+if ! (echo 4.0.0; echo $BASH_VERSION) | sort -VC; then
+    echo "::error::this shell version ($BASH_VERSION) is too old, I need at least bash 4.0.0."
+    exit 99
+fi
+
+getBuildtoolsVersion() {
+    local            token="$1"; shift
+    local requestedVersion="$1"; shift
+
+    local url="https://maven.pkg.github.com/ModelingValueGroup/buildtools/org.modelingvalue.buildtools/$requestedVersion/buildtools-$requestedVersion.jar"
 
     rm -f ~/buildtools.jar
     curl -s -H "Authorization: bearer $token" -L "$url" -o ~/buildtools.jar
@@ -29,21 +41,35 @@ includeBuildToolsVersion() {
         sed 's/^/    /' ~/buildtools.jar
         exit 91
     fi
-    . <(java -jar ~/buildtools.jar)
-    echo "INFO: installed buildtools version $version"
 }
-includeBuildTools() {
-    local   token="$1"; shift
-    local version="${1:-}"
+getBuildtools() {
+    local            token="$1"; shift
+    local requestedVersion="$1"; shift
 
-    includeBuildToolsVersion "$token" "${version:-3.1.5}"
-    if [[ "${version}" == "" ]]; then
-        includeBuildToolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
+    local latestVersion
+    local installedVersion
+
+    if [[ -f ~/buildtools.jar ]]; then
+        . <(java -jar ~/buildtools.jar)
+           latestVersion="$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools" || :)"
+        installedVersion="$(java -jar ~/buildtools.jar -requestedVersion)"
+        if [[ ( "$requestedVersion" != "" && "$installedVersion" != "$requestedVersion" ) || ( "$requestedVersion" == "" && "$installedVersion" != "$latestVersion" ) ]]; then
+            # not the right requestedVersion
+            rm  ~/buildtools.jar
+            installedVersion=
+        else
+            echo "info: buildtools requestedVersion $installedVersion already installed"
+        fi
+    fi
+    if [[ ! -f ~/buildtools.jar ]]; then
+        if [[ "$requestedVersion" == "" ]]; then
+            getBuildtoolsVersion "$token" "3.1.5" # older version, just to make lastPackageVersion() work
+            . <(java -jar ~/buildtools.jar)
+            getBuildtoolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
+        else
+            getBuildtoolsVersion "$token" "$requestedVersion"
+        fi
+        . <(java -jar ~/buildtools.jar -check)
     fi
 }
-
-if [[ "${1:-}" == "" ]]; then
-    echo "::error::no token passed to buildtoolsMeme.sh"
-    exit 56
-fi
-includeBuildTools "$1" "${2:-}"
+getBuildtools "$MEME_TOKEN" "$MEME_VERSION"

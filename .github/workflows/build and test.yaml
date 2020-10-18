@@ -22,7 +22,7 @@ jobs:
       - name: "get generic info"
         uses: ModelingValueGroup/generic-info@master
 
-      #### build #####################################################################################################
+      #### build ######################################################################################################
       - name: "prepare ant"
         run:  |
           cat <<EOF >build.properties
@@ -36,12 +36,6 @@ jobs:
           rm -rf out
           ant
           cp out/artifacts/buildtools.jar ~
-
-      - name: "if master: fail if there is already a tag for this version"
-        if: github.ref == 'refs/heads/master'
-        run:  |
-          . <(java -jar ~/buildtools.jar)
-          errorIfVersionTagExists
 
       - name: "generate/adjust some files if needed"
         run: |
@@ -60,17 +54,25 @@ jobs:
           rm -rf out
           ant
 
-      - name: "test"
-        run: shellTools/tst/test.sh
-        env:
-          INPUT_TOKEN:  "${{ secrets.REPO_AND_PACKAGES_TOKEN }}"
-
-      #### publish #####################################################################################################
+      #### publish ####################################################################################################
       - name: "publish action-artifact buildtools.jar"
         uses: actions/upload-artifact@v1
         with:
           name: buildtools.jar
           path: out/artifacts/buildtools.jar
+
+      #### test #######################################################################################################
+      - name: "test"
+        run: shellTools/tst/test.sh
+        env:
+          INPUT_TOKEN:  "${{ secrets.REPO_AND_PACKAGES_TOKEN }}"
+
+      #### only master things from here on ############################################################################
+      - name: "if master: fail if there is already a tag for this version"
+        if: github.ref == 'refs/heads/master'
+        run: |
+          . <(java -jar ~/buildtools.jar)
+          errorIfVersionTagExists
 
       - name: "if master: tag with version"
         if: github.ref == 'refs/heads/master'

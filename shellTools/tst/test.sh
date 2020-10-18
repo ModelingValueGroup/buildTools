@@ -18,6 +18,44 @@ set -euo pipefail
 
 #######################################################################################################################
 ##### tests ###########################################################################################################
+test_version() {
+    local e="$(sed -n 's/"//g;s/^version=//p' ../../project.sh)"
+    local v="$(java -jar ~/buildtools.jar -version)"
+    if [[ "$v" != "$e" ]]; then
+        echo "::error::test failed: expected version $e but found version $v"
+        touch "$errorDetectedMarker"
+        exit 46
+    else
+        echo "ok: correct version found: $e"
+    fi
+}
+test_memecheck() {
+    java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
+    if [[ "$(java -jar ~/buildtools.jar -check 2>&1)" != "" ]]; then
+        echo "::error::test failed: the meme check did not succeed"
+        touch "$errorDetectedMarker"
+        exit 46
+    else
+        echo "ok: meme check ok"
+    fi
+}
+test_meme() {
+    java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
+    rm ~/buildtools.jar
+    if ! env -i "$(which bash)" -c "
+        export USER=$USER
+        export PATH=$PATH
+        . buildtoolsMeme.sh $INPUT_TOKEN 2>/dev/null
+        [[ -f ~/buildtools.jar ]]
+        declare -f lastPackageVersion >/dev/null
+    "; then
+        echo "::error::test failed: the meme failed"
+        touch "$errorDetectedMarker"
+        exit 46
+    else
+        echo "ok: meme works ok"
+    fi
+}
 test_packing() {
     textFromJar() {
         java -jar ~/buildtools.jar
@@ -234,21 +272,21 @@ prepareForTesting() {
 }
 #######################################################################################################################
 ##### test execution:
-cp out/artifacts/buildtools.jar ~
-. <(java -jar ~/buildtools.jar)
 if [[ "$#" == 0 ]]; then
     tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
 else
     tests=("$@")
 fi
 prepareForTesting
-numErrors=0
+export errorDetectedMarker="errorDetectedMarker"
+failingTests=()
 rm -rf tmp
 for t in "${tests[@]}"; do
     echo 1>&2
     echo "::group::$t" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$t" 1>&2
 
+    cp out/artifacts/buildtools.jar ~             # fresh jar copy to ~
     rm -rf ~/.m2/repository/*/modelingvalue       # delete our stuff from the .m2 dir
 
     ##### make tmp dir:
@@ -260,17 +298,20 @@ for t in "${tests[@]}"; do
 
         ##### include the produced jar again:
         . <(java -jar ~/buildtools.jar)
-        "$t"
+        "$t" || touch "$errorDetectedMarker" "../$errorDetectedMarker"
+        if [[ -f "$errorDetectedMarker" ]]; then
+            touch "../$errorDetectedMarker"
+        fi
     ) || touch "tmp/$errorDetectedMarker"
     echo "::endgroup::" 1>&2
     if [[ -f "tmp/$errorDetectedMarker" ]]; then
-        numErrors=$((numErrors+1))
+        failingTests+=("$t")
         rm "tmp/$errorDetectedMarker"
         echo "$t failed"
     fi
 done
-if [[ "$numErrors" != 0 ]]; then
-    printf "\n::error::$numErrors tests failed\n\n"
+if [[ "${#failingTests[@]}" != 0 ]]; then
+    printf "\n::error::${#failingTests[@]} tests failed: ${failingTests[*]}\n\n"
     exit 56
 else
     printf "\nall tests OK\n\n"
