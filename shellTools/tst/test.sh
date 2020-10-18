@@ -40,15 +40,12 @@ test_memecheck() {
     fi
 }
 test_meme() {
-echo AAA ANT_HOME=$ANT_HOME
-fgrep ANT_HOME ~/.* || :
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
-echo AAA ANT_HOME=\$ANT_HOME
-fgrep ANT_HOME ~/.* || :
-        export USER=$USER
-        export PATH=$PATH
+        export     USER=$USER
+        export     PATH=$PATH
+        export ANT_HOME=$ANT_HOME
         . buildtoolsMeme.sh $INPUT_TOKEN 2>/dev/null
         [[ -f ~/buildtools.jar ]]
         declare -f lastPackageVersion >/dev/null
