@@ -53,13 +53,13 @@ getBuildtools() {
     if [[ -f ~/buildtools.jar ]]; then
         . <(java -jar ~/buildtools.jar)
            latestVersion="$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools" || :)"
-        installedVersion="$(java -jar ~/buildtools.jar -requestedVersion)"
+        installedVersion="$(java -jar ~/buildtools.jar -version)"
         if [[ ( "$requestedVersion" != "" && "$installedVersion" != "$requestedVersion" ) || ( "$requestedVersion" == "" && "$installedVersion" != "$latestVersion" ) ]]; then
-            # not the right requestedVersion
+            # not the right version
             rm  ~/buildtools.jar
             installedVersion=
         else
-            echo "info: buildtools requestedVersion $installedVersion already installed"
+            echo "info: buildtools version $installedVersion already installed"
         fi
     fi
     if [[ ! -f ~/buildtools.jar ]]; then
