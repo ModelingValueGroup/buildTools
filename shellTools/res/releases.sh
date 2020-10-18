@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-extraLinuxPackages+=(jq)
+inOptionalLinuxPackage jq
 
 getRelease() {
     local token="$1"; shift

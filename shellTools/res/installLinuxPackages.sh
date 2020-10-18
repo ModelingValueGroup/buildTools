@@ -17,49 +17,52 @@
 set -euo pipefail
 
 ##########################################################################################################################
-installLinuxPackages() {
-    local toInstall c n problems
+inOptionalLinuxPackage() {
+    local command="$1"; shift
+    local package="${1:-$command}"
 
-    toInstall=()
-    # shellcheck disable=SC2154
-    extraLinuxPackages=( $(printf "%s\n" "${extraLinuxPackages[@]}" | sort -u) )
-    for i in "${extraLinuxPackages[@]}"; do
-        IFS=: read n c <<<"$i"
-        c="${c:-$n}"
-        if ! which $c 1>/dev/null; then
-            toInstall+=("$n")
-        fi
-    done
-    if [[ "${#toInstall[@]}" != 0 ]]; then
-        echo "::group::install extra packages" 1>&2
-        echo "## installing: ${toInstall[*]}"
-        if ! command -v apt-get; then
-            echo "::warning::no apt-get command so I have no way to install the required linux tools: ${toInstall[*]}" 1>&2
-            exit 92
-        fi
+    if ! which $command >/dev/null; then
+        . <(cat <<EOF
+$command() {
+    installbefore $command $package
+    unset $command
+    $command "\$@"
+}
+EOF
+        )
+    fi
+}
+installbefore() {
+    local command="$1"; shift
+    local package="$1"; shift
 
-        #### WORAROUND_START
-        # the following line is a workaround for a broken mirror...
-        # see: https://github.community/t5/GitHub-Actions/File-has-unexpected-size-89974-89668-Mirror-sync-in-progress/m-p/44270
-        for apt_file in $(grep -lr microsoft /etc/apt/sources.list.d/); do
-            sudo rm "$apt_file"
-        done
-        #### WORAROUND_END
-
-        sudo apt-get update
-        sudo apt-get install -y "${toInstall[@]}"
-        problems=false
-        for i in "${extraLinuxPackages[@]}"; do
-            IFS=: read n c <<<"$i"
-            c="${c:-$n}"
-            if ! which $c 1>/dev/null; then
-                echo "::error::linux tool $c could not be installed (package $n)" 1>&2
-                problems=true
+    if [[ "$(type -at $command | fgrep file)" == "" ]]; then
+        (
+            echo "::group::install $command from $package"
+            if ! type apt-get >/dev/null 2>&1; then
+                echo "::error::no apt-get command so I have no way to install $command from $package"
+                exit 92
             fi
-        done
-        if [[ "$problems" == true ]]; then
-            exit 95
-        fi
-        echo "::endgroup::" 1>&2
+            if [[ "$(type -t $command)" != function ]]; then
+                echo "::error::inconsistent use of installBefore(): called while $command already available"
+                exit 91
+            fi
+
+            #### WORAROUND_START ####################################################################################################
+            # the following line is a workaround for a broken mirror...
+            # see: https://github.community/t5/GitHub-Actions/File-has-unexpected-size-89974-89668-Mirror-sync-in-progress/m-p/44270
+            for apt_file in $(grep -lr microsoft /etc/apt/sources.list.d/ 2>/dev/null || :); do
+                rm "$apt_file"
+            done
+            #### WORAROUND_END ######################################################################################################
+
+            apt-get update
+            apt-get install -y "$package"
+            if ! type "$command" >/dev/null 2>&1; then
+                echo "::error::could not install $command from $package"
+                exit 93
+            fi
+            echo "::endgroup::"
+        ) 1>&2
     fi
 }

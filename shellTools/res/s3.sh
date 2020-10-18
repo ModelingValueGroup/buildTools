@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-extraLinuxPackages+=(s3cmd)
+inOptionalLinuxPackage s3cmd
 
 export PROJECT_SH="project.sh"
 export TRIGGERS_DIR="triggers"

@@ -57,6 +57,102 @@ test_meme() {
         echo "ok: meme works ok"
     fi
 }
+test_extraInstall() {
+    (
+        inOptionalLinuxPackage test_command
+
+        export PATH="$PWD:$PATH"
+        cat <<"EOF1" > "apt-get"
+if [[ "$1 $2 $3" == "install -y test_command" ]]; then
+    cat <<"EOF2" > "test_command"
+printf "##%s" "$@"
+printf "##\n"
+EOF2
+    chmod +x "test_command"
+    echo "more logging to stdout"
+    echo "end more to stderr" 1>&2
+fi
+EOF1
+        chmod +x "apt-get"
+
+        local o="$(test_command a b c 2>err || echo FAILED)"
+        local e="##a##b##c##"
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test A1 failed: simulated extra install command returned '$o' but expected '$e' (on stdout)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(cat err)"
+        local e="::group::install test_command from test_command
+more logging to stdout
+end more to stderr
+::endgroup::"
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test A2 failed: simulated extra install command returned '$o' but expected '$e'"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(test_command q w e 2>err || echo FAILED)"
+        local e="##q##w##e##"
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test B1 failed: simulated extra install command returned '$o' but expected '$e' (on stdout)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(cat err)"
+        local e=""
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test B2 failed: simulated extra install command returned '$o' but expected '$e' (on stderr)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+    )
+    if [[ "$(uname -s)" != "Darwin" ]]; then
+        # this does not work on mac: no apt-get available
+        inOptionalLinuxPackage jq
+
+        local o="$(jq . <<<'{"a":1,"b":2}' 2>err || echo FAILED)"
+        local e='{
+  "a": 1,
+  "b": 2
+}'
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test C1 failed: simulated extra install command returned '$o' but expected '$e' (on stdout)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(cat err)"
+        local e=""
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test C2 failed: simulated extra install command returned '$o' but expected '$e' (on stderr)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(jq . <<<'{"a":222,"b":111}' 2>err || echo FAILED)"
+        local e='{
+  "a": 222,
+  "b": 111
+}'
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test C1 failed: simulated extra install command returned '$o' but expected '$e' (on stdout)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+
+        local o="$(cat err)"
+        local e=""
+        if [[ "$o" != "$e" ]]; then
+            echo "::error::test C2 failed: simulated extra install command returned '$o' but expected '$e' (on stderr)"
+            touch "$errorDetectedMarker"
+            exit 23
+        fi
+    fi
+}
 test_packing() {
     textFromJar() {
         java -jar ~/buildtools.jar
