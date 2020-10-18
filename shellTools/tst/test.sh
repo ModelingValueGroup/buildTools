@@ -40,9 +40,13 @@ test_memecheck() {
     fi
 }
 test_meme() {
+echo AAA ANT_HOME=$ANT_HOME
+fgrep ANT_HOME ~/.* || :
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
+echo AAA ANT_HOME=\$ANT_HOME
+fgrep ANT_HOME ~/.* || :
         export USER=$USER
         export PATH=$PATH
         . buildtoolsMeme.sh $INPUT_TOKEN 2>/dev/null
@@ -282,7 +286,6 @@ export errorDetectedMarker="errorDetectedMarker"
 failingTests=()
 rm -rf tmp
 for t in "${tests[@]}"; do
-    echo 1>&2
     echo "::group::$t" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$t" 1>&2
 
