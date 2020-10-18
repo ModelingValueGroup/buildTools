@@ -13,14 +13,11 @@
 ##     Arjan Kok, Carel Bast                                                                                           ~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: 'buildools'
+name: 'buildtools'
 description: 'load the buildtools script in the workspace'
 author: 'Tom Brus'
 
 inputs:
-  token: # deprecated
-    description: 'github token'
-    required: false
   version:
     description: 'the version to get'
     required: false
