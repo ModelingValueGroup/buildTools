@@ -52,12 +52,12 @@ installbefore() {
             # the following line is a workaround for a broken mirror...
             # see: https://github.community/t5/GitHub-Actions/File-has-unexpected-size-89974-89668-Mirror-sync-in-progress/m-p/44270
             for apt_file in $(grep -lr microsoft /etc/apt/sources.list.d/ 2>/dev/null || :); do
-                rm "$apt_file"
+                sudo rm "$apt_file"
             done
             #### WORAROUND_END ######################################################################################################
 
-            apt-get update
-            apt-get install -y "$package"
+            sudo apt-get update
+            sudo apt-get install -y "$package"
             if ! type "$command" >/dev/null 2>&1; then
                 echo "::error::could not install $command from $package"
                 exit 93

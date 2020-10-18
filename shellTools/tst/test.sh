@@ -60,6 +60,9 @@ test_meme() {
 test_extraInstall() {
     (
         inOptionalLinuxPackage test_command
+        sudo() {
+            "$@"
+        }
 
         export PATH="$PWD:$PATH"
         cat <<"EOF1" > "apt-get"
