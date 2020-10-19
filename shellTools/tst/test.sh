@@ -53,7 +53,8 @@ test_meme() {
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
         set -ue
-        export PATH='$PATH'
+        export     PATH='$PATH'
+        export ANT_HOME='$ANT_HOME'
         . buildtoolsMeme.sh '$INPUT_TOKEN' '' 2>/dev/null
         [[ -f ~/buildtools.jar ]]
         declare -f lastPackageVersion >/dev/null

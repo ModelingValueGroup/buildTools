@@ -110,10 +110,7 @@ getGithubRepoOpenUrl() {
 }
 ###############################################################################
 if [[ "${ANT_HOME:-}" == "" ]]; then
-    if [[ -d "/opt/local/share/java/apache-ant" ]]; then # default for mac
-        export ANT_HOME="/opt/local/share/java/apache-ant"
-    else
-        echo "ERROR: ANT_HOME not set and can not be determined"
-        exit 37
-    fi
+    # default for MacOS: /opt/local/share/java/apache-ant
+    echo "::error::ANT_HOME not set"
+    exit 37
 fi
