@@ -52,10 +52,9 @@ test_meme() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
-        export     USER=$USER
-        export     PATH=$PATH
-        export ANT_HOME=$ANT_HOME
-        . buildtoolsMeme.sh $INPUT_TOKEN 2>/dev/null
+        set -ue
+        export PATH='$PATH'
+        . buildtoolsMeme.sh '$INPUT_TOKEN' '' 2>/dev/null
         [[ -f ~/buildtools.jar ]]
         declare -f lastPackageVersion >/dev/null
     "; then
