@@ -25,19 +25,28 @@ test_version() {
         echo "::error::test failed: expected version $e but found version $v"
         touch "$errorDetectedMarker"
         exit 46
-    else
-        echo "ok: correct version found: $e"
     fi
+    echo "ok: correct version found: $e"
 }
 test_memecheck() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
-    if [[ "$(java -jar ~/buildtools.jar -check 2>&1)" != "" ]]; then
-        echo "::error::test failed: the meme check did not succeed"
+    local o="$(java -jar ~/buildtools.jar -check 2>&1)"
+    local e=""
+    if [[ "$o" != "$e" ]]; then
+        echo "::error::test failed: the meme-identical check did not succeed: got $o instead of $e"
         touch "$errorDetectedMarker"
         exit 46
-    else
-        echo "ok: meme check ok"
     fi
+
+    sed 's/shift/_____/' buildtoolsMeme.sh > meme2
+    local o="$(java -jar ~/buildtools.jar -check=meme2 2>&1 | wc -l | tr -d ' ')"
+    local e="17"
+    if (( $o != $e )); then
+        echo "::error::test failed: the diff-meme check did not succeed: got $o instead of $e"
+        touch "$errorDetectedMarker"
+        exit 46
+    fi
+    echo "ok: meme check ok"
 }
 test_meme() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh

@@ -16,8 +16,8 @@
 
 set -euo pipefail
 
-  MEME_TOKEN="${1:-}"
-MEME_VERSION="${2:-}"
+  MEME_TOKEN="$1"; shift
+MEME_VERSION="$1"; shift
 
 if [[ "$MEME_TOKEN" == "" ]]; then
     echo "::error::no token passed to buildtoolsMeme.sh"

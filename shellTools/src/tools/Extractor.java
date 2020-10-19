@@ -18,6 +18,8 @@ package tools;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.Map.*;
+import java.util.function.*;
 import java.util.stream.*;
 import java.util.zip.*;
 
@@ -32,8 +34,12 @@ public class Extractor {
 
     public static void main(final String[] args) {
         for (String arg : args) {
-            if (arg.equals("-check")) {
-                checkMeme();
+            if (arg.startsWith("-check")) {
+                if (arg.startsWith("-check=")) {
+                    checkMeme(Paths.get(arg.replaceFirst("^-check=", "")));
+                } else {
+                    checkMeme();
+                }
                 System.exit(0);
             }
             if (arg.equals("-version")) {
@@ -72,22 +78,22 @@ public class Extractor {
     }
 
     private static void checkMeme() {
-        if (Files.isReadable(MEME)) {
+        checkMeme(MEME);
+    }
+
+    private static void checkMeme(Path file) {
+        if (Files.isReadable(file)) {
             try {
-                List<String> actMeme = Files.readAllLines(MEME);
+                List<String> actMeme = Files.readAllLines(file);
                 List<String> expMeme = getMemeLines();
                 if (!expMeme.equals(actMeme)) {
-                    System.err.println("-----------------------------------------------------------------------------------");
-                    System.err.println("WARNING: your " + MEME + " is out of date, please use:");
-                    System.err.println("-----------------------------------------------------------------------------------");
-                    expMeme.forEach(line -> System.err.println("    " + line));
-                    System.err.println("-----------------------------------------------------------------------------------");
+                    poormansDiff(file, actMeme, expMeme).forEach(System.err::println);
                 }
             } catch (IOException e) {
-                System.err.println("WARNING: could not read meme at " + MEME.toAbsolutePath());
+                System.err.println("WARNING: could not read meme at " + file.toAbsolutePath());
             }
         } else {
-            System.err.println("WARNING: meme file could not be found: " + MEME);
+            System.err.println("WARNING: meme file could not be found: " + file);
         }
     }
 
@@ -144,5 +150,42 @@ public class Extractor {
             throw new Error("can not find resource: " + p);
         }
         return new BufferedReader(new InputStreamReader(inp)).lines();
+    }
+
+    private static Stream<String> poormansDiff(Path meme, List<String> act, List<String> exp) {
+        List<Integer> uniqueHashes = Stream.concat(
+                act.stream().distinct(),
+                exp.stream().distinct()
+        )
+                .map(String::hashCode)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(p -> 1 == p.getValue())
+                .map(Entry::getKey)
+                .collect(Collectors.toList());
+
+        List<String> l = new ArrayList<>();
+        l.add("------------------------------------------------------------------------------------------------------------------------");
+        l.add("WARNING: your meme at " + meme + " is out of date:");
+        l.add("-------- only in your version: -----------------------------------------------------------------------------------------");
+        l.addAll(addUniqueLines(uniqueHashes, act));
+        l.add("-------- only in expected version: -------------------------------------------------------------------------------------");
+        l.addAll(addUniqueLines(uniqueHashes, exp));
+        l.add("------------------------------------------------------------------------------------------------------------------------");
+
+        return l.stream();
+    }
+
+    private static List<String> addUniqueLines(List<Integer> uniqueHashes, List<String> lines) {
+        return IntStream.range(0, lines.size())
+                .boxed()
+                .collect(Collectors.toMap(n -> n, lines::get))
+                .entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt(Entry::getKey))
+                .filter(e -> uniqueHashes.contains(e.getValue().hashCode()))
+                .map(e -> String.format("%4d %s", e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
     }
 }
