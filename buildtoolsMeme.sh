@@ -64,7 +64,7 @@ getBuildtools() {
     fi
     if [[ ! -f ~/buildtools.jar ]]; then
         if [[ "$requestedVersion" == "" ]]; then
-            getBuildtoolsVersion "$token" "3.3.0" # older version, just to make lastPackageVersion() work
+            getBuildtoolsVersion "$token" "3.3.3" # older version, just to make lastPackageVersion() work
             . <(java -jar ~/buildtools.jar)
             getBuildtoolsVersion "$token" "$(lastPackageVersion "$token" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
         else
