@@ -337,7 +337,6 @@ EOF
     fi
 }
 getAllDependencies() {
-    local token="$1"; shift
     local s3ACC="${1:-}"
     local s3SEC="${2:-}"
 
@@ -346,20 +345,19 @@ getAllDependencies() {
     local    lib="lib"
     mkdir -p "$lib"
 
-    if [[ "$token" != "" ]]; then
-        echo "## trying to get dependencies from maven..."
-        while read g a v e flags; do
-            if [[ $g != '' ]]; then
-                downloadArtifactQuick "$token" "$g" "$a" "$v" "$e" "$lib"
-            fi
-        done < <(getDependencyGavesWithFlags)
-    fi
+    echo "## trying to get dependencies from maven..."
+    while read g a v e flags; do
+        if [[ $g != '' ]]; then
+            downloadArtifactQuick "$GITHUB_TOKEN" "$g" "$a" "$v" "$e" "$lib"
+        fi
+    done < <(getDependencyGavesWithFlags)
 
+    ############# old BEGIN
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        local confArg="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
         echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
-        local     tmpLib="tmpLib"
+        local    confArg="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
         local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
+        local     tmpLib="tmpLib"
         mkdir -p $tmpLib
         printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
         while read g a v e flags; do
@@ -380,9 +378,50 @@ getAllDependencies() {
             fi
         done < <(getDependencyGavesWithFlags)
         rm "$tmpLib/$tmpTrigger"
+        ls -l "$tmpLib" >/tmp/from-s3
         mv $tmpLib/* "$lib" 2>/dev/null || :
         rm -rf $tmpLib
     fi
+    ############# old END
+
+    ############# new BEGIN
+    local branch="${GITHUB_REF#refs/heads/}"
+    if [[ "$branch" != "master" ]]; then
+        prepareTmpArtifacts "$GITHUB_TOKEN" "$branch"
+
+        local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
+        local     tmpLib="tmpLib2"
+        mkdir -p $tmpLib
+        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
+
+        while read g a v e flags; do
+            if [[ $g != '' ]]; then
+                local parts=()
+                if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
+                if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
+                if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
+                local artiLibDir="$ARTIFACTS_CLONE/lib/${g//./\/}/$a"
+                for aa in "${parts[@]}"; do
+                    if [[ -f "$artiLibDir/$aa" ]]; then
+                        echo "## got latest $g:$aa for branch $branch from GitHub"
+                        cp "$artiLibDir/$aa" "$tmpLib"
+                    else
+                        echo "## could not get $g:$aa for branch $branch from GitHub"
+                    fi
+                done
+                local artiTrgDir="$ARTIFACTS_CLONE/trigger/${g//./\/}/$a"
+                mkdir -p "$artiTrgDir"
+                cp "$tmpLib/$tmpTrigger" "$artiTrgDir"
+            fi
+        done < <(getDependencyGavesWithFlags)
+        rm "$tmpLib/$tmpTrigger"
+        ls -l "$tmpLib" >/tmp/from-github
+        pushTmpArtifacts
+        # mv $tmpLib/* "$lib" 2>/dev/null || :
+        rm -rf $tmpLib
+    fi
+    diff /tmp/from-s3 /tmp/from-github || :
+    ############# new END
 
     echo "## checking if we have the required dependencies..." 1>&2
     local missingSome=false
@@ -392,6 +431,7 @@ getAllDependencies() {
             missingSome=true
         fi
     done < <(getDependencyGavesWithFlags)
+
     if [[ "$missingSome" == true ]]; then
         exit 82
     else

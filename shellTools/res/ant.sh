@@ -16,6 +16,12 @@
 
 set -euo pipefail
 
+if [[ "${ANT_HOME:-}" == "" ]]; then
+    # default for MacOS: /opt/local/share/java/apache-ant
+    echo "::error::ANT_HOME not set"
+    exit 37
+fi
+
 installJunitlauncher() {
     if [[ ! -f "$ANT_HOME/lib/ant-junitlauncher.jar" ]]; then
         echo "downloading missing ant-junitlauncher.jar..."

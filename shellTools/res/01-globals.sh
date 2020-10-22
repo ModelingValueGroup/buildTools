@@ -23,58 +23,58 @@ fi
 
 if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     # not on github actions, probably a localbuild: deduce vars from git repo:
-    #=============================
-    export     GITHUB_SERVER_URL="https://github.com"
-    export        GITHUB_API_URL="https://api.github.com"
-    export    GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
-    #=============================
-    #          GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
-    #           GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
-    #          GITHUB_EVENT_NAME="push"
-    #=============================
-    export     GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:[^/]*/||;s|\.git .*||;s/ .*//")"
-    #    GITHUB_REPOSITORY_OWNER="xxxx"
-    export          GITHUB_ACTOR="${USER:-ModelingValueGroup}"
-    #=============================
-                      GITHUB_REF="$(git symbolic-ref HEAD 2>/dev/null)"
-    #            GITHUB_BASE_REF=""
-    #            GITHUB_HEAD_REF=""
-    #                GITHUB_SHA="1234567890"
-    #=============================
-    #              GITHUB_ACTION="aaaa"
-    #            GITHUB_WORKFLOW="wwww"
-    #                 GITHUB_JOB="jjjj"
-    #=============================
-    #              GITHUB_RUN_ID="nnnn"
-    #          GITHUB_RUN_NUMBER="mmmm"
-    #=============================
+    #===============================
+    export       GITHUB_SERVER_URL="https://github.com"
+    export          GITHUB_API_URL="https://api.github.com"
+    export      GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
+    #===============================
+    #            GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
+    #             GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
+    #            GITHUB_EVENT_NAME="push"
+    #===============================
+    export       GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:[^/]*/||;s|\.git .*||;s/ .*//")"
+    export GITHUB_REPOSITORY_OWNER="ModelingValueGroup"
+    export            GITHUB_ACTOR="${USER:-ModelingValueGroup}"
+    #===============================
+    export              GITHUB_REF="$(git symbolic-ref HEAD 2>/dev/null)"
+    #              GITHUB_BASE_REF=""
+    #              GITHUB_HEAD_REF=""
+    #                  GITHUB_SHA="1234567890"
+    #===============================
+    #                GITHUB_ACTION="aaaa"
+    #              GITHUB_WORKFLOW="wwww"
+    #                   GITHUB_JOB="jjjj"
+    #===============================
+    #                GITHUB_RUN_ID="nnnn"
+    #            GITHUB_RUN_NUMBER="mmmm"
+    #===============================
 else
     # on github actions: the following are passed in by github: (for repo xxxx/yyyy)
-    #=============================
-    #           GITHUB_SERVER_URL="https://github.com"
-    #              GITHUB_API_URL="https://api.github.com"
-    #          GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
-    #=============================
-    #           GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
-    #            GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
-    #           GITHUB_EVENT_NAME="push"
-    #=============================
-    #           GITHUB_REPOSITORY="xxxx/yyyy"
-    #     GITHUB_REPOSITORY_OWNER="xxxx"
-    #                GITHUB_ACTOR="ModelingValueGroup"
-    #=============================
-    #                  GITHUB_REF="refs/heads/bbbb"
-    #             GITHUB_BASE_REF=""
-    #             GITHUB_HEAD_REF=""
-    #                  GITHUB_SHA="1234567890"
-    #=============================
-    #               GITHUB_ACTION="aaaa"
-    #             GITHUB_WORKFLOW="wwww"
-    #                  GITHUB_JOB="jjjj"
-    #=============================
-    #               GITHUB_RUN_ID="nnnn"
-    #           GITHUB_RUN_NUMBER="mmmm"
-    #=============================
+    #===============================
+    #             GITHUB_SERVER_URL="https://github.com"
+    #                GITHUB_API_URL="https://api.github.com"
+    #            GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
+    #===============================
+    #             GITHUB_EVENT_PATH="/home/runner/work/_temp/_github_workflow/event.json"
+    #              GITHUB_WORKSPACE="/home/runner/work/yyyy/yyyy"
+    #             GITHUB_EVENT_NAME="push"
+    #===============================
+    #             GITHUB_REPOSITORY="xxxx/yyyy"
+    #       GITHUB_REPOSITORY_OWNER="xxxx"
+    #                  GITHUB_ACTOR="ModelingValueGroup"
+    #===============================
+    #                    GITHUB_REF="refs/heads/bbbb"
+    #               GITHUB_BASE_REF=""
+    #               GITHUB_HEAD_REF=""
+    #                    GITHUB_SHA="1234567890"
+    #===============================
+    #                 GITHUB_ACTION="aaaa"
+    #               GITHUB_WORKFLOW="wwww"
+    #                    GITHUB_JOB="jjjj"
+    #===============================
+    #                 GITHUB_RUN_ID="nnnn"
+    #             GITHUB_RUN_NUMBER="mmmm"
+    #===============================
     :
 fi
 ###############################################################################
@@ -92,25 +92,8 @@ export    errorDetectedMarker="errorDetectedMarker"
 ###############################################################################
 declare -A MAVEN_REPOS_LIST
 export     MAVEN_REPOS_LIST
-# NB: do not init with ([xxx]=xxx) the shell on github actions does not allow this!
+# NB: do not init with ([xxx]=xxx) the shell on github actions does not allow this (yet)!
    MAVEN_REPOS_LIST[maven]="$MAVEN_PACKAGE_URL"
 MAVEN_REPOS_LIST[sonatype]="$SONATYPE_PACKAGE_URL"
   MAVEN_REPOS_LIST[github]="$GITHUB_PACKAGE_URL/$GITHUB_REPOSITORY"
 ###############################################################################
-getGithubRepoSecureUrl() {
-    local token="$1"; shift
-    local  repo="$1"; shift
-
-    printf "%s/%s.git" "$(sed "s|https://|&$GITHUB_ACTOR:$token@|" <<<"$GITHUB_SERVER_URL")" "$repo"
-}
-getGithubRepoOpenUrl() {
-    local  repo="$1"; shift
-
-    printf "%s/%s.git" "$GITHUB_SERVER_URL" "$repo"
-}
-###############################################################################
-if [[ "${ANT_HOME:-}" == "" ]]; then
-    # default for MacOS: /opt/local/share/java/apache-ant
-    echo "::error::ANT_HOME not set"
-    exit 37
-fi

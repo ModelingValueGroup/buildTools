@@ -40,9 +40,10 @@ test_memecheck() {
 
     sed 's/shift/_____/' buildtoolsMeme.sh > meme2
     local o="$(java -jar ~/buildtools.jar -check=meme2 2>&1 | wc -l | tr -d ' ')"
-    local e="17"
+    local e="9"
     if (( $o != $e )); then
-        echo "::error::test failed: the diff-meme check did not succeed: got $o instead of $e"
+        echo "::error::test failed: the diff-meme check did not succeed: got $o instead of $e diff lines:"
+        java -jar ~/buildtools.jar -check=meme2
         touch "$errorDetectedMarker"
         exit 46
     fi
@@ -53,13 +54,15 @@ test_meme() {
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
         set -ue
-        export     PATH='$PATH'
-        export ANT_HOME='$ANT_HOME'
-        . buildtoolsMeme.sh '$INPUT_TOKEN' '' 2>/dev/null
+        export         PATH='$PATH'
+        export     ANT_HOME='$ANT_HOME'
+        export GITHUB_TOKEN='$GITHUB_TOKEN'
+        . buildtoolsMeme.sh
         [[ -f ~/buildtools.jar ]]
-        declare -f lastPackageVersion >/dev/null
-    "; then
-        echo "::error::test failed: the meme failed"
+        declare -f lastPackageVersion
+    " > log 2>&1; then
+        echo "::error::test failed: the meme failed:"
+        sed 's/^/@@@ /' log
         touch "$errorDetectedMarker"
         exit 46
     else
@@ -316,12 +319,12 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
-    if (set -x; getAllDependencies "${INPUT_TOKEN:-}" "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log.out 2>log.err; then
+    if (set -x; GITHUB_REF="refs/heads/blabla" getAllDependencies "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log.out 2>log.err; then
         echo "::error::expected a fail but encountered success" 1>&2
         touch "$errorDetectedMarker"
     else
-        assertFileContains 1553 log.err 4 "^::warning::could not download artifact: " 1>&2
-        assertFileContains 1553 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains 1855 log.err 4 "^::warning::could not download artifact: "                                1>&2
+        assertFileContains 1855 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 test_getLatestAsset() {
@@ -359,37 +362,56 @@ test_setOutput() {
     test_setOutput_ "aap%0Anoot%0A"     "$(printf "%s\n%s\n" 'aap'  'noot')"
     test_setOutput_ "a%25ap%0Anoot%0A"  "$(printf "%s\n%s\n" 'a%ap' 'noot')"
 }
-#######################################################################################################################
-#######################################################################################################################
-prepareForTesting() {
-    if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
-        export  GITHUB_WORKSPACE="$PWD"
-        export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
-        export        GITHUB_REF="refs/heads/local-build-fake-branch"
+test_tmpArtifact() {
+    rm -rf "$ARTIFACTS_CLONE"
 
-        ##### mimic github actions env for local execution:
-        . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
-        if [[ "${INPUT_TOKEN:-}" == "" || "${INPUT_SCALEWAY_ACCESS_KEY:-}" == ""  || "${INPUT_SCALEWAY_SECRET_KEY:-}" == "" ]]; then
-            echo ":error:: local test runs require a file ~/sercrets.sh that defines INPUT_TOKEN INPUT_SCALEWAY_ACCESS_KEY and INPUT_SCALEWAY_SECRET_KEY"
-            exit 23
-        fi
+    mkdir upload
+    echo "aap$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset1.txt
+    echo "bla$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset2.txt
 
-        if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
-            md5sum() { md5; }
-        fi
+    if ! storeTmpArtifacts \
+            "$INPUT_TOKEN" \
+            "upload" \
+            "the.group.name" \
+            "the-artifact-name" \
+            "feature/should-be-based-on-_-$RANDOM" 2>log 1>&2; then
+        echo "::error:: test failed: storeTmpArtifacts failed"
+        touch "$errorDetectedMarker"
+        exit 85
     fi
+    assertFileContains 23 log 1 "^::info::need to push" 1>&2
 }
+
+#######################################################################################################################
 #######################################################################################################################
 ##### test execution:
+#######################################################################################################################
+#######################################################################################################################
+if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
+    ##### mimic github actions env for local execution:
+    . ~/secrets.sh # defines INPUT_TOKEN without exposing it in the github repos
+    if [[ "${INPUT_TOKEN:-}" == "" || "${INPUT_SCALEWAY_ACCESS_KEY:-}" == ""  || "${INPUT_SCALEWAY_SECRET_KEY:-}" == "" ]]; then
+        echo ":error:: local test runs require a file ~/sercrets.sh that defines INPUT_TOKEN INPUT_SCALEWAY_ACCESS_KEY and INPUT_SCALEWAY_SECRET_KEY"
+        exit 23
+    fi
+
+    export  GITHUB_WORKSPACE="$PWD"
+    export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
+    export        GITHUB_REF="refs/heads/local-build-fake-branch"
+    export      GITHUB_TOKEN="$INPUT_TOKEN"
+
+    if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
+        md5sum() { md5; }
+    fi
+fi
+rm -rf tmp
 if [[ "$#" == 0 ]]; then
     tests=( $(declare -F | sed 's/declare -f //' | egrep '^test_' | sort) )
 else
     tests=("$@")
 fi
-prepareForTesting
 export errorDetectedMarker="errorDetectedMarker"
 failingTests=()
-rm -rf tmp
 for t in "${tests[@]}"; do
     echo "::group::$t" 1>&2
     printf "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" "$t" 1>&2
@@ -418,6 +440,7 @@ for t in "${tests[@]}"; do
         echo "$t failed"
     fi
 done
+
 if [[ "${#failingTests[@]}" != 0 ]]; then
     printf "\n::error::${#failingTests[@]} tests failed: ${failingTests[*]}\n\n"
     exit 56

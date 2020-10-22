@@ -16,21 +16,18 @@
 
 set -euo pipefail
 
-pushBackToGithub() {
-    local token="$1"; shift
-    local email="$1"; shift
-    local   msg="$1"; shift
+git config --global user.email "automation@modelingvalue.com"
+git config --global user.name  "automation"
 
+pushBackToGithub() {
     git ls-files --deleted --modified --others --exclude-standard || :
     if [[ "$(git ls-files --deleted --modified --others --exclude-standard)" ]]; then
         echo "changes need to be pushed back to github"
 
         echo "::group::git commit and push" 1>&2
-            git config user.email "$email"
-            git config user.name "$GITHUB_ACTOR"
             git add .
-            git commit -m "$msg"
-            git push "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY")"
+            git commit -m "automatic reformat by actions"
+            git push "$(getGithubRepoSecureUrl "$GITHUB_TOKEN" "$GITHUB_REPOSITORY")"
         echo "::endgroup::" 1>&2
 
     else
@@ -50,18 +47,13 @@ errorIfVersionTagExists() {
     fi
 }
 setVersionTag() {
-    local token="$1"; shift
-    local email="$1"; shift
-
     . <(catProjectSh 'local ')
     # shellcheck disable=SC2154
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "setting tag $tagName"
-        git config user.email "$email"
-        git config user.name  "$GITHUB_ACTOR"
         git tag "$tagName"
-        git push "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY")" "$tagName"
+        git push "$(getGithubRepoSecureUrl "$GITHUB_TOKEN" "$GITHUB_REPOSITORY")" "$tagName"
     else
         echo "::error::tag for this version ($tagName) already exists"
         exit 88
@@ -122,28 +114,14 @@ setOutput() {
 
     echo "::set-output name=$name::$value"
 }
-
-
-
-
-
-
-#deprecated: use 'if' of step in yaml
-errorIfMasterAndVersionTagExists() {
-    if [[ "${GITHUB_REF##*/}" != master ]]; then
-        echo "ok: not on master"
-    else
-        errorIfVersionTagExists
-    fi
-}
-#deprecated: use 'if' of step in yaml
-setVersionTagIfMaster() {
+getGithubRepoSecureUrl() {
     local token="$1"; shift
-    local email="$1"; shift
+    local  repo="$1"; shift
 
-    if [[ "${GITHUB_REF##*/}" != master ]]; then
-        echo "ok: not on master"
-    else
-       setVersionTag "$token" "$email"
-    fi
+    printf "%s/%s.git" "$(sed "s|https://|&$GITHUB_ACTOR:$token@|" <<<"$GITHUB_SERVER_URL")" "$repo"
+}
+getGithubRepoOpenUrl() {
+    local  repo="$1"; shift
+
+    printf "%s/%s.git" "$GITHUB_SERVER_URL" "$repo"
 }

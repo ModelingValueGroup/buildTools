@@ -1,10 +1,12 @@
-name: build and test
+name: build
 on:
   push:
 
 jobs:
   build:
     runs-on: [ubuntu-latest]
+    env:
+      GITHUB_TOKEN: "${{secrets.GITHUB_TOKEN}}"
     steps:
 
       #### prepare #####################################################################################################
@@ -47,7 +49,7 @@ jobs:
       - name: "push changes back to github"
         run:  |
           . <(java -jar ~/buildtools.jar)
-          pushBackToGithub "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com" "adjusted files [by github actions]"
+          pushBackToGithub
 
       - name: "ant build again (in case something was adjusted in previous step)"
         run: |
@@ -65,7 +67,7 @@ jobs:
       - name: "test"
         run: shellTools/tst/test.sh
         env:
-          INPUT_TOKEN:  "${{ secrets.REPO_AND_PACKAGES_TOKEN }}"
+          INPUT_TOKEN:  "${{secrets.REPO_AND_PACKAGES_TOKEN}}"
 
       #### only master things from here on ############################################################################
       - name: "if master: fail if there is already a tag for this version"
@@ -78,7 +80,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run:  |
           . <(java -jar ~/buildtools.jar)
-          setVersionTag "${{ secrets.GITHUB_TOKEN }}" "automation@modelingvalue.com"
+          setVersionTag
           . <(catProjectSh '')
           echo "RELEASE_NAME=v$version" >> $GITHUB_ENV
           echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" >> $GITHUB_ENV
@@ -87,22 +89,18 @@ jobs:
         uses: actions/create-release@v1
         if: github.ref == 'refs/heads/master'
         id: create_release
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          tag_name: "${{ env.RELEASE_NAME }}"
-          release_name: "${{ env.RELEASE_NAME }}"
-          body: "release ${{ env.RELEASE_NAME }}"
+          tag_name: "${{env.RELEASE_NAME}}"
+          release_name: "${{env.RELEASE_NAME}}"
+          body: "release ${{env.RELEASE_NAME}}"
           draft: false
           prerelease: false
 
       - name: "if master: upload as release"
         uses: actions/upload-release-asset@v1
         if: github.ref == 'refs/heads/master'
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          upload_url: "${{ steps.create_release.outputs.upload_url }}"
+          upload_url: "${{steps.create_release.outputs.upload_url}}"
           asset_path: out/artifacts/buildtools.jar
           asset_name: buildtools.jar
           asset_content_type: application/java-archive
@@ -112,4 +110,3 @@ jobs:
         if: github.ref == 'refs/heads/master'
         with:
           file: "out/artifacts/buildtools.jar"
-          token: "${{ secrets.GITHUB_TOKEN }}"
