@@ -130,16 +130,22 @@ triggerOther() {
     if [[ "$totalCount" == 0 ]]; then
         echo "::warning:: no build on $repo branch $branch, retrigger impossible..."
     elif [[ "$conclusion" == "null" ]]; then
-        echo "::warning::the build on $repo branch $branch did not finish in time"
+        echo "::warning::I have waited a long time but the build on $repo branch $branch did not finish yet, giving up..."
     elif [[ "$conclusion" != "failure" ]]; then
         echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible, sorry..."
-    elif [[ "$message" == "Unable to re-run this workflow run because it was created over a month ago" ]]; then
-        echo "::warning::the latest build on $repo branch $branch is too old, retrigger impossible, sorry..."
     else
         echo "::info::triggering: $rerunUrl"
         curl -s \
             -XPOST \
             -u "automation:$token"  \
-            "$rerunUrl"
+            "$rerunUrl" \
+            -o "$tmpJson"
+
+        message="$(firstFieldFromJsonLog "message")"
+        if [[ "$message" == "Unable to re-run this workflow run because it was created over a month ago" ]]; then
+            echo "::warning::the latest build on $repo branch $branch is too old, retrigger impossible, sorry..."
+        else
+            echo "::info::triggering yielded: $message"
+        fi
     fi
 }
