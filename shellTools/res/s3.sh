@@ -21,6 +21,10 @@ inOptionalLinuxPackage s3cmd
 export PROJECT_SH="project.sh"
 export TRIGGERS_DIR="triggers"
 
+#
+# prepare for using S3 with the given parameters
+# echos the config flag to use on the commands below
+#
 prepS3cmd() {
     local   host="$1"; shift
     local access="$1"; shift
@@ -39,6 +43,9 @@ EOF
     find ~ -maxdepth 1 -type f -name '.s3cfg-*' -mtime +1 -delete # delete configs older then 1 hour
     echo "--config=$configFile"
 }
+#
+# get a file or folder from S3
+#
 s3get() {
     local confArg="$1"; shift
     local     buc="$1"; shift
@@ -48,6 +55,9 @@ s3get() {
     mkdir -p "$to"
     s3cmd "$confArg" --recursive get "$from" "$to"
 }
+#
+# put a file or folder to S3
+#
 s3put() {
     local confArg="$1"; shift
     local     buc="$1"; shift
@@ -62,7 +72,7 @@ s3put() {
 }
 s3trigger() {
     local confArg="$1"; shift
-    local trigger="$1"; shift
+    local   token="$1"; shift
     local      to="$1"; shift
 
     if [[ "$(s3cmd "$confArg" ls "$to$TRIGGERS_DIR/" | wc -l)" != 0 ]]; then
@@ -74,21 +84,21 @@ s3trigger() {
             if [[ -f "$f" ]]; then
                 local TRIGGER_REPOSITORY TRIGGER_BRANCH
                 . "$f"
-                triggerOther "$trigger" "$TRIGGER_REPOSITORY" "$TRIGGER_BRANCH"
+                triggerOther "$token" "$TRIGGER_REPOSITORY" "$TRIGGER_BRANCH"
             fi
         done
         rm -rf "$triggersTmpDir"
     fi
 }
 triggerOther() {
-    local trigger="$1"; shift
+    local   token="$1"; shift
     local    repo="$1"; shift
     local  branch="$1"; shift
 
-    local i total_count conclusion rerunUrl
+    local i totalCount conclusion message rerunUrl
     local tmpJson="runs.json"
 
-    firstFieldFromJson() {
+    firstFieldFromJsonLog() {
         local field="$1"; shift
 
         grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g'
@@ -97,36 +107,39 @@ triggerOther() {
     echo "====== triggering: $repo  [$branch]"
     for i in $(seq 0 600); do
         curl -s \
-            -u "automation:$trigger"  \
+            -u "automation:$token"  \
             "https://api.github.com/repos/$repo/actions/runs?branch=$branch" \
             -o "$tmpJson"
-        total_count="$(firstFieldFromJson "total_count")"
-        if [[ "$total_count" == 0 ]]; then
+
+        totalCount="$(firstFieldFromJsonLog "totalCount")"
+        conclusion="$(firstFieldFromJsonLog "conclusion")"
+           message="$(firstFieldFromJsonLog "message")"
+          rerunUrl="$(firstFieldFromJsonLog "rerun_url")"
+
+        echo "::info::totalCount=$totalCount"
+        echo "::info::conclusion=$conclusion"
+        echo "::info::   message=$message"
+        echo "::info:: rerun_url=$rerunUrl"
+
+        if [[ "$totalCount" == 0 || "$conclusion" != "null" ]]; then
             break
         fi
-        conclusion="$(firstFieldFromJson "conclusion")"
-        if [[ "$conclusion" != "null" ]]; then
-            break
-        fi
-        echo "::info:: waiting for build on $repo branch $branch to finish ($i)"
+        echo "::info::waiting for build on $repo branch $branch to finish ($i...)"
         sleep 2
     done
-    if [[ "$total_count" == 0 ]]; then
+    if [[ "$totalCount" == 0 ]]; then
         echo "::warning:: no build on $repo branch $branch, retrigger impossible..."
     elif [[ "$conclusion" == "null" ]]; then
         echo "::warning::the build on $repo branch $branch did not finish in time"
+    elif [[ "$conclusion" != "failure" ]]; then
+        echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible, sorry..."
+    elif [[ "$message" == "Unable to re-run this workflow run because it was created over a month ago" ]]; then
+        echo "::warning::the latest build on $repo branch $branch is too old, retrigger impossible, sorry..."
     else
-        conclusion="$(firstFieldFromJson "conclusion")"
-        echo "::info:: conclusion: $conclusion"
-        if [[ "$conclusion" != failure ]]; then
-            echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible..."
-        else
-            rerunUrl="$(firstFieldFromJson "rerun_url")"
-            echo "::info::triggering: $rerunUrl"
-            curl -s \
-                -XPOST \
-                -u "automation:$trigger"  \
-                "$rerunUrl"
-        fi
+        echo "::info::triggering: $rerunUrl"
+        curl -s \
+            -XPOST \
+            -u "automation:$token"  \
+            "$rerunUrl"
     fi
 }

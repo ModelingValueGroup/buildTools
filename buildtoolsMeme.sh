@@ -59,7 +59,7 @@ getBuildtools() {
             rm  ~/buildtools.jar
             installedVersion=
         else
-            echo "info: buildtools version $installedVersion already installed"
+            echo "::info::buildtools version $installedVersion already installed"
         fi
     fi
     if [[ ! -f ~/buildtools.jar ]]; then

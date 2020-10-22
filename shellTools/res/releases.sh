@@ -123,7 +123,7 @@ EOF
                 exit 99
             fi
             echo "        => oops, not correctly attached: '$state', trying again... ($cnt)"
-            echo "INFO: $attJson"
+            echo "::info::$attJson"
         done
     done
 }
