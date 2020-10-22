@@ -101,7 +101,7 @@ triggerOther() {
     firstFieldFromJsonLog() {
         local field="$1"; shift
 
-        grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g'
+        (grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g') || :
     }
 
     echo "====== triggering: $repo  [$branch]"
