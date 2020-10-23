@@ -343,7 +343,7 @@ EOF
 test_getLatestAsset() {
     getLatestAsset "ModelingValueGroup" "buildtools" "buildtools.jar"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" && ! -f "build""Tools.jar" ]]; then # TODO: remove uppercase match only for transition
+    if [[ ! -f "buildtools.jar" ]]; then
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
@@ -352,7 +352,7 @@ test_getLatestAsset() {
 test_getAllLatestAssets() {
     getAllLatestAssets "ModelingValueGroup" "buildtools"
     # checksum varies between releases unfortunately so we only check on existence of the file
-    if [[ ! -f "buildtools.jar" && ! -f "build""Tools.jar" ]]; then # TODO: remove uppercase match only for transition
+    if [[ ! -f "buildtools.jar" ]]; then
         echo "::error:: test failed: buildtools.jar could not be downloaded"
         touch "$errorDetectedMarker"
         exit 88
@@ -382,10 +382,8 @@ test_tmpArtifact() {
     echo "aap$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset1.txt
     echo "bla$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset2.txt
 
-echo "%%GHT%%${GITHUB_TOKEN:0:4}" # TODO
-echo "%%ALL%%${GITHUB_TOKEN_4ALL:0:4}" # TODO
     if ! storeTmpArtifacts \
-            "$GITHUB_TOKEN_4ALL" \
+            "$ALLREP_TOKEN" \
             "upload" \
             "the.group.name" \
             "the-artifact-name" \
@@ -419,7 +417,7 @@ if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
     export  GITHUB_WORKSPACE="$PWD"
     export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
     export        GITHUB_REF="refs/heads/local-build-fake-branch"
-    export GITHUB_TOKEN_4ALL="$GITHUB_TOKEN"
+    export      ALLREP_TOKEN="$GITHUB_TOKEN"
 
     if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
         md5sum() { md5; }

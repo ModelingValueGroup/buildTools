@@ -41,7 +41,6 @@ prepareTmpArtifacts() {
     rm -rf "$ARTIFACTS_CLONE"
     mkdir -p "$ARTIFACTS_CLONE"
     (   cd "$ARTIFACTS_CLONE/.."
-echo "%%%%$(getGithubRepoSecureUrl "${token:0:4}" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")" # TODO
         if [[ -d "$ARTIFACTS_CLONE/.git" ]]; then
             echo "::info::clone already on disk"
         elif git clone "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"; then
