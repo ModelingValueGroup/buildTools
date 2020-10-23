@@ -79,7 +79,7 @@ prepareTmpArtifacts() {
             echo "::error::could not clone or create $GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS" 1>&2
             exit 24
         fi
-        sed 's/^/@@@ /' "$ARTIFACTS_CLONE/.git/config" # TODO
+        sed "s/^/@@@ /;s/$token/[TOKEN]/" "$ARTIFACTS_CLONE/.git/config" # TODO
 
         (   cd "$ARTIFACTS_CLONE"
             echo "::info::checkout $bareBranch"
