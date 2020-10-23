@@ -63,6 +63,7 @@ test_meme() {
     " > log 2>&1; then
         echo "::error::test failed: the meme failed:"
         sed 's/^/@@@ /' log
+        sed '1,1480d;1499,$d' <(java -jar  ~/buildtools.jar)
         touch "$errorDetectedMarker"
         exit 46
     else
@@ -335,8 +336,8 @@ EOF
         echo "::error::expected a fail but encountered success" 1>&2
         touch "$errorDetectedMarker"
     else
-        assertFileContains 1856 log.err 4 "^::warning::could not download artifact: "                                1>&2
-        assertFileContains 1856 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains 1848 log.err 4 "^::warning::could not download artifact: "                                1>&2
+        assertFileContains 1848 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 test_getLatestAsset() {
