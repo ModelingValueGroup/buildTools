@@ -38,13 +38,15 @@ prepareTmpArtifacts() {
     local      token="$1"; shift
     local bareBranch="$1"; shift
 
+    local repoUrl="$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"
+
     rm -rf "$ARTIFACTS_CLONE"
     mkdir -p "$ARTIFACTS_CLONE"
     (   cd "$ARTIFACTS_CLONE/.."
         if [[ -d "$ARTIFACTS_CLONE/.git" ]]; then
             echo "::info::clone already on disk"
-        elif git clone "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"; then
-            echo "::info::clone made from $(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"
+        elif git clone "$repoUrl"; then
+            echo "::info::clone made from $repoUrl"
         else
             echo "::info::create new repo"
             (   cd "$ARTIFACTS_CLONE"
@@ -53,7 +55,8 @@ prepareTmpArtifacts() {
                 git init
                 git add "README.md"
                 git commit -m "first commit"
-                git remote add origin "git@github.com:$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS.git"
+                #git remote add origin "git@github.com:$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS.git" # TODO
+                git remote add origin "$repoUrl"
                 curl -X POST \
                         --location \
                         --remote-header-name \
