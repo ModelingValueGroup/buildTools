@@ -382,6 +382,8 @@ test_tmpArtifact() {
     echo "aap$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset1.txt
     echo "bla$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset2.txt
 
+echo "%%GHT%%${GITHUB_TOKEN:0:4}" # TODO
+echo "%%ALL%%${GITHUB_TOKEN_4ALL:0:4}" # TODO
     if ! storeTmpArtifacts \
             "$GITHUB_TOKEN_4ALL" \
             "upload" \
@@ -392,7 +394,7 @@ test_tmpArtifact() {
         touch "$errorDetectedMarker"
         exit 85
     fi
-    if [[ "$(sed 'Authentication failed' log)" != "" ]]; then
+    if [[ "$(fgrep 'Authentication failed' log)" != "" ]]; then
         echo "::error:: test failed: some authentication failed"
         sed 's/^/  | /' log
         touch "$errorDetectedMarker"
