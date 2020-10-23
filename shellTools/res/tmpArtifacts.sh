@@ -99,7 +99,7 @@ copyAndPushTmpArtifacts() {
     local subPath="$1"; shift
 
     mkdir -p "$ARTIFACTS_CLONE/lib/$subPath"
-    cp -r "$srcDir/" "$ARTIFACTS_CLONE/lib/$subPath"
+    cp -r "$srcDir/"* "$ARTIFACTS_CLONE/lib/$subPath"
 }
 pushTmpArtifacts() {
     (   cd "$ARTIFACTS_CLONE"
