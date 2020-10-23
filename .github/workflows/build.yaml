@@ -33,6 +33,9 @@ jobs:
           path.variable.maven_repository=$HOME/.m2/repository
           EOF
           sed -i 's/filesetmanifest="mergewithoutmain"/filesetmanifest="merge"/' build.xml
+          qq="${{secrets.GITHUB_TOKEN}}"            ; echo "%%%%% ${#qq} %%%% ${qq:0:8}"
+          qq="${{secrets.GITHUB_TOKEN_4ALL}}"       ; echo "%%%%% ${#qq} %%%% ${qq:0:8}"
+          qq="${{secrets.REPO_AND_PACKAGES_TOKEN}}" ; echo "%%%%% ${#qq} %%%% ${qq:0:8}"
 
       - name: "ant build"
         run: |
