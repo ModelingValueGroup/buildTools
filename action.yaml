@@ -33,4 +33,4 @@ runs:
       id: main
       run: |
         [[ "${{inputs.trace}}" == "true" ]] && set -x
-        . "${{github.action_path}}/buildtoolsMeme.sh" "${{github.token}}" "${{inputs.version}}"
+        . "${{github.action_path}}/buildtoolsMeme.sh" "${{inputs.version}}"
