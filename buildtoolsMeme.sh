@@ -37,7 +37,7 @@ getBuildtoolsVersion() {
         sed 's/^/    /' ~/buildtools.jar
         exit 91
     fi
-    echo "installed buildTools $(java -jar ~/buildtools.jar -version)"
+    echo "::info::installed buildTools $(java -jar ~/buildtools.jar -version)"
 }
 getBuildtools() {
     local requestedVersion="$1"; shift
