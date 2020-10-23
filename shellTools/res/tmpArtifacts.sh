@@ -79,6 +79,7 @@ prepareTmpArtifacts() {
             echo "::error::could not clone or create $GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS" 1>&2
             exit 24
         fi
+        sed 's/^/@@@ /' "$ARTIFACTS_REPOS/.git/config" //TODO
 
         (   cd "$ARTIFACTS_CLONE"
             echo "::info::checkout $bareBranch"
@@ -87,6 +88,16 @@ prepareTmpArtifacts() {
                 git checkout _
                 git checkout -b "$bareBranch"
                 git push -u origin "$bareBranch"
+            else # TODO
+                # just try to push a new branch to test writability
+                local tmpBranch="tmp/$RANDOM"
+                git checkout -b "$tmpBranch"
+                if ! git push origin "$tmpBranch"; then
+                    echo "::error::CAN NOT PUSH TO ARTIFACT REPO"
+                    exit 66
+                fi
+                git branch -d "$tmpBranch"
+                git push origin -delete "$tmpBranch"
             fi
         )
     )
