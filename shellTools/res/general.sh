@@ -172,7 +172,7 @@ assertFileContains() {
         echo "::error::did not find expected file $file" 1>&2
         exit 34
     else
-        if (( $(wc -l < "$file") != $total )); then
+        if (( $total != -1 && $(wc -l < "$file") != $total )); then
             echo "::error::expected $total lines in '$file' but found :" $(wc -l < "$file") 1>&2
             sed "s/^/  | /;s/  | \(.*$patt\)/  > \1/" "$file"
             touch "$errorDetectedMarker"
