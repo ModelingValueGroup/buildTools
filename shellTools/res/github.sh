@@ -118,7 +118,7 @@ getGithubRepoSecureUrl() {
     local token="$1"; shift
     local  repo="$1"; shift
 
-    printf "%s/%s.git" "$(sed "s|https://|&$GITHUB_ACTOR:$token@|" <<<"$GITHUB_SERVER_URL")" "$repo"
+    printf "https://%s:%s@%s/%s.git" "$GITHUB_REPOSITORY_OWNER" "$token" "${GITHUB_SERVER_URL#https://}" "$repo"
 }
 getGithubRepoOpenUrl() {
     local  repo="$1"; shift

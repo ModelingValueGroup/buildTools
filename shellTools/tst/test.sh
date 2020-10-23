@@ -310,6 +310,18 @@ EOF
 test_uploadArtifactQuick() {
     runUploadArtifactTest "tmp.modelingvalue.testingbuildtoolsbuilding" "buildtools" "$INPUT_TOKEN"
 }
+test_getGithubRepoUrl() {
+    if [[ "$(getGithubRepoSecureUrl "token" "a-repo")" != "https://ModelingValueGroup:token@github.com/a-repo.git" ]]; then
+        echo "::error:: test failed: getGithubRepoSecureUrl() does not work: $(getGithubRepoSecureUrl "token" "a-repo")"
+        touch "$errorDetectedMarker"
+        exit 88
+    fi
+    if [[ "$(getGithubRepoOpenUrl "a-repo")" != "https://github.com/a-repo.git" ]]; then
+        echo "::error:: test failed: getGithubRepoOpenUrl() does not work: $(getGithubRepoOpenUrl "a-repo")"
+        touch "$errorDetectedMarker"
+        exit 88
+    fi
+}
 test_getAllDependencies() {
     cat <<EOF >project.sh
 dependencies=(

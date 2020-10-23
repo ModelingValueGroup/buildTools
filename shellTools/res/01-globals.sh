@@ -34,7 +34,7 @@ if [[ ${GITHUB_ACTIONS:-} == "" ]]; then
     #===============================
     export       GITHUB_REPOSITORY="$(git remote -v 2>/dev/null | head -1 | sed "s|.*$GITHUB_SERVER_URL/||;s|.*:[^/]*/||;s|\.git .*||;s/ .*//")"
     export GITHUB_REPOSITORY_OWNER="ModelingValueGroup"
-    export            GITHUB_ACTOR="${USER:-ModelingValueGroup}"
+    export            GITHUB_ACTOR="${USER:-tom}"
     #===============================
     export              GITHUB_REF="$(git symbolic-ref HEAD 2>/dev/null)"
     #              GITHUB_BASE_REF=""
@@ -61,7 +61,7 @@ else
     #===============================
     #             GITHUB_REPOSITORY="xxxx/yyyy"
     #       GITHUB_REPOSITORY_OWNER="xxxx"
-    #                  GITHUB_ACTOR="ModelingValueGroup"
+    #                  GITHUB_ACTOR="tom"
     #===============================
     #                    GITHUB_REF="refs/heads/bbbb"
     #               GITHUB_BASE_REF=""
