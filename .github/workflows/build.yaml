@@ -4,10 +4,10 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-20.04
     env:
-      # N.B. this token should be more powerfull then ${{secrets.GITHUB_TOKEN}} to be able to push to the tmp-artifacts repo
-      GITHUB_TOKEN: "${{secrets.REPO_AND_PACKAGES_TOKEN}}"
+      GITHUB_TOKEN     : "${{secrets.GITHUB_TOKEN}}"
+      GITHUB_TOKEN_4ALL: "${{secrets.GITHUB_TOKEN_4ALL}}"
     steps:
 
       #### prepare #####################################################################################################

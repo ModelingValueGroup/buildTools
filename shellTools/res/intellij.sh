@@ -348,7 +348,7 @@ getAllDependencies() {
     echo "::info::trying to get dependencies from maven..."
     while read g a v e flags; do
         if [[ $g != '' ]]; then
-            downloadArtifactQuick "$GITHUB_TOKEN" "$g" "$a" "$v" "$e" "$lib"
+            downloadArtifactQuick "$g" "$a" "$v" "$e" "$lib"
         fi
     done < <(getDependencyGavesWithFlags)
 
@@ -387,7 +387,7 @@ getAllDependencies() {
     ############# new BEGIN
     local branch="${GITHUB_REF#refs/heads/}"
     if [[ "$branch" != "master" ]]; then
-        prepareTmpArtifacts "$GITHUB_TOKEN" "$branch"
+        prepareTmpArtifacts "$GITHUB_TOKEN_4ALL" "$branch"
 
         local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
         local     tmpLib="tmpLib2"

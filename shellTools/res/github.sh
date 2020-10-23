@@ -74,7 +74,6 @@ getLatestAsset() {
         "https://github.com/$owner/$repoName/releases/latest/download/$file"
 }
 getAllLatestAssets() {
-    local    token="$1"; shift
     local    owner="$1"; shift
     local repoName="$1"; shift
 
@@ -95,9 +94,9 @@ getAllLatestAssets() {
         '
     local select='.data.repository.releases.nodes[].releaseAssets.nodes[].downloadUrl'
 
-    for u in $(graphqlQuery "$token" "$query" "$select"); do
+    for u in $(graphqlQuery "$GITHUB_TOKEN" "$query" "$select"); do
         echo "::info::downloading $u..." 1>&2
-        curlSave "$token" "$u"
+        curlSave "$GITHUB_TOKEN" "$u"
     done
 }
 setOutput() {

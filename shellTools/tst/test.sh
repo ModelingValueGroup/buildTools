@@ -191,10 +191,10 @@ test_packing() {
     fi
 }
 test_downloadArtifactQuick() {
-    downloadArtifactQuick "$GITHUB_TOKEN" "org.modelingvalue" "build""Tools"  "1.1.1" "jar" "from-github1" 2> log1
-    downloadArtifactQuick "$GITHUB_TOKEN" "org.modelingvalue" "buildtools"    "1.1.1" "jar" "from-github2" 2> log2
-    downloadArtifactQuick "$GITHUB_TOKEN" "junit"             "junit"         "4.12"  "jar" "from-maven"
-    downloadArtifactQuick "$GITHUB_TOKEN" "junit"             "junit"         "4.10"  "jar" "from-sonatype"
+    downloadArtifactQuick "org.modelingvalue" "build""Tools"  "1.1.1" "jar" "from-github1" 2> log1
+    downloadArtifactQuick "org.modelingvalue" "buildtools"    "1.1.1" "jar" "from-github2" 2> log2
+    downloadArtifactQuick "junit"             "junit"         "4.12"  "jar" "from-maven"
+    downloadArtifactQuick "junit"             "junit"         "4.10"  "jar" "from-sonatype"
 
     assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:from-github1/build""Tools.jar" \
                             "5d2fa9173c3c1ec0164587b4ece4ec36:from-github1/build""Tools.pom" \
@@ -216,7 +216,7 @@ test_downloadArtifactQuick() {
     assertFileContains 2 log2 2 "::warning::could not download artifact"
 }
 test_downloadArtifact() {
-    (downloadArtifact "$GITHUB_TOKEN" "org.modelingvalue" "buildtools" "1.1.1" "jar" "downloaded") >log 2>&1
+    (downloadArtifact "org.modelingvalue" "buildtools" "1.1.1" "jar" "downloaded") >log 2>&1
     assertChecksumsMatch    "83b11ce6151a9beaa79576117f2f1c9f:downloaded/buildtools.jar" \
                             "5d2fa9173c3c1ec0164587b4ece4ec36:$HOME/.m2/repository/org/modelingvalue/buildtools/1.1.1//buildtools-1.1.1.pom" # pom not copied to indicated dir so checking in m2-repos
     rm -rf downloaded
@@ -308,7 +308,7 @@ EOF
                             "851e45a3b74f2265bcfc65a36889277d:settings.xml"
 }
 test_uploadArtifactQuick() {
-    runUploadArtifactTest "tmp.modelingvalue.testingbuildtoolsbuilding" "buildtools" "$GITHUB_TOKEN"
+    runUploadArtifactTest "tmp.modelingvalue.testingbuildtoolsbuilding" "buildtools"
 }
 test_getGithubRepoUrl() {
     if [[ "$(getGithubRepoSecureUrl "token" "a-repo")" != "https://ModelingValueGroup:token@github.com/a-repo.git" ]]; then
@@ -349,7 +349,7 @@ test_getLatestAsset() {
     fi
 }
 test_getAllLatestAssets() {
-    getAllLatestAssets "$GITHUB_TOKEN" "ModelingValueGroup" "buildtools"
+    getAllLatestAssets "ModelingValueGroup" "buildtools"
     # checksum varies between releases unfortunately so we only check on existence of the file
     if [[ ! -f "buildtools.jar" && ! -f "build""Tools.jar" ]]; then # TODO: remove uppercase match only for transition
         echo "::error:: test failed: buildtools.jar could not be downloaded"
@@ -382,7 +382,7 @@ test_tmpArtifact() {
     echo "bla$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset2.txt
 
     if ! storeTmpArtifacts \
-            "$GITHUB_TOKEN" \
+            "$GITHUB_TOKEN_4ALL" \
             "upload" \
             "the.group.name" \
             "the-artifact-name" \
@@ -410,6 +410,7 @@ if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
     export  GITHUB_WORKSPACE="$PWD"
     export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
     export        GITHUB_REF="refs/heads/local-build-fake-branch"
+    export GITHUB_TOKEN_4ALL="$GITHUB_TOKEN"
 
     if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
         md5sum() { md5; }

@@ -47,7 +47,7 @@ getBuildtools() {
 
     if [[ -f ~/buildtools.jar ]]; then
         . <(java -jar ~/buildtools.jar)
-           latestVersion="$(lastPackageVersion "$GITHUB_TOKEN" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools" || :)"
+           latestVersion="$(lastPackageVersion "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools" || :)"
         installedVersion="$(java -jar ~/buildtools.jar -version)"
         if [[ ( "$requestedVersion" != "" && "$installedVersion" != "$requestedVersion" ) || ( "$requestedVersion" == "" && "$installedVersion" != "$latestVersion" ) ]]; then
             # not the right version
@@ -61,7 +61,7 @@ getBuildtools() {
         if [[ "$requestedVersion" == "" ]]; then
             getBuildtoolsVersion "3.3.3" # older version, just to make lastPackageVersion() work
             . <(java -jar ~/buildtools.jar)
-            latestVersion="$(lastPackageVersion "$GITHUB_TOKEN" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
+            latestVersion="$(lastPackageVersion "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
             getBuildtoolsVersion "$latestVersion"
         else
             getBuildtoolsVersion "$requestedVersion"
