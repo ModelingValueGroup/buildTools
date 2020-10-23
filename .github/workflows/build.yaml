@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: [ubuntu-latest]
     env:
-      #GITHUB_TOKEN: "${{secrets.GITHUB_TOKEN}}"
+      # N.B. this token should be more powerfull then ${{secrets.GITHUB_TOKEN}} to be able to push to the tmp-artifacts repo
       GITHUB_TOKEN: "${{secrets.REPO_AND_PACKAGES_TOKEN}}"
     steps:
 
@@ -68,7 +68,6 @@ jobs:
       - name: "test"
         run: shellTools/tst/test.sh
         env:
-          INPUT_TOKEN               : "${{secrets.REPO_AND_PACKAGES_TOKEN}}"
           INPUT_SCALEWAY_ACCESS_KEY : "${{secrets.SCALEWAY_ACCESS_KEY}}"
           INPUT_SCALEWAY_SECRET_KEY : "${{secrets.SCALEWAY_SECRET_KEY}}"
 

@@ -80,8 +80,6 @@ prepareTmpArtifacts() {
             exit 24
         fi
 
-(ls -l "$ARTIFACTS_CLONE/.git"; cat "$ARTIFACTS_CLONE/.git/config") | sed "s/^/~@~@ /;s/$token/[TOKEN]/" 1>&2 # TODO
-
         (   cd "$ARTIFACTS_CLONE"
             echo "::info::checkout $bareBranch"
             if ! git checkout "$bareBranch"; then
@@ -89,17 +87,6 @@ prepareTmpArtifacts() {
                 git checkout _
                 git checkout -b "$bareBranch"
                 git push -u origin "$bareBranch"
-            else
-                # TODO
-                # just try to push a new branch to test writability
-                local tmpBranch="tmp/$RANDOM"
-                git checkout -b "$tmpBranch"
-                if ! git push origin "$tmpBranch"; then
-                    echo "::error::CAN NOT PUSH TO ARTIFACT REPO"
-                    exit 66
-                fi
-                git branch -d "$tmpBranch"
-                git push origin -delete "$tmpBranch"
             fi
         )
     )

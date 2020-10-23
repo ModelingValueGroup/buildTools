@@ -19,11 +19,10 @@
 GITHUB_GRAPHQL_URL="https://api.github.com/graphql"
 OWNER=ModelingValueGroup
 REPOS=tmp
-TOKEN=$INPUT_TOKEN2
 
 for ARTIF in \
-    tmp.modelingvalue.buildtools \
-    tmp.modelingvalue.upload-maven-package-action-test \
+        tmp.modelingvalue.buildtools \
+        tmp.modelingvalue.upload-maven-package-action-test \
     ; do
     q='
       repository(owner: "'$OWNER'", name: "'$REPOS'") {
@@ -46,7 +45,7 @@ for ARTIF in \
             --fail \
             --silent \
             --show-error \
-            --header "Authorization: token $TOKEN" \
+            --header "Authorization: token $GITHUB_TOKEN" \
             -d '{"query":"query { '"$(sed 's/"/\\"/g' <<<"$q" | tr -d '\n')"' } "}' \
             "$GITHUB_GRAPHQL_URL" \
             -o - \
@@ -63,7 +62,7 @@ for ARTIF in \
                     --silent \
                     --show-error \
                     --header "Accept: application/vnd.github.package-deletes-preview+json" \
-                    --header "Authorization: token $TOKEN" \
+                    --header "Authorization: token $GITHUB_TOKEN" \
                     -d '{"query":"mutation { deletePackageVersion(input:{packageVersionId:\"'"$id"'\"}) { success }}"}' \
                     "$GITHUB_GRAPHQL_URL" \
                     -o - \
