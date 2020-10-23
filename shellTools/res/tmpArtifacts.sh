@@ -41,10 +41,10 @@ prepareTmpArtifacts() {
     rm -rf "$ARTIFACTS_CLONE"
     mkdir -p "$ARTIFACTS_CLONE"
     (   cd "$ARTIFACTS_CLONE/.."
-        if [[ -d "$ARTIFACTS_REPOS/.git" ]]; then
+        if [[ -d "$ARTIFACTS_CLONE/.git" ]]; then
             echo "::info::clone already on disk"
         elif git clone "$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"; then
-            echo "::info::clone made"
+            echo "::info::clone made from $(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS")"
         else
             echo "::info::create new repo"
             (   cd "$ARTIFACTS_CLONE"
@@ -75,11 +75,11 @@ prepareTmpArtifacts() {
             )
         fi
 
-        if [[ ! -d "$ARTIFACTS_REPOS/.git" ]]; then
+        if [[ ! -d "$ARTIFACTS_CLONE/.git" ]]; then
             echo "::error::could not clone or create $GITHUB_REPOSITORY_OWNER/$ARTIFACTS_REPOS" 1>&2
             exit 24
         fi
-        sed 's/^/@@@ /' "$ARTIFACTS_REPOS/.git/config" //TODO
+        sed 's/^/@@@ /' "$ARTIFACTS_CLONE/.git/config" # TODO
 
         (   cd "$ARTIFACTS_CLONE"
             echo "::info::checkout $bareBranch"
