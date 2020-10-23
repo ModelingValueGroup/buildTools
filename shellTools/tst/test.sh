@@ -53,7 +53,7 @@ test_meme() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
-        set -ue
+        set -uex
         export         PATH='$PATH'
         export     ANT_HOME='$ANT_HOME'
         export GITHUB_TOKEN='$GITHUB_TOKEN'
