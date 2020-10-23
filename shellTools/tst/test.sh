@@ -335,8 +335,8 @@ EOF
         echo "::error::expected a fail but encountered success" 1>&2
         touch "$errorDetectedMarker"
     else
-        assertFileContains 1844 log.err 4 "^::warning::could not download artifact: "                                1>&2
-        assertFileContains 1844 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains 1856 log.err 4 "^::warning::could not download artifact: "                                1>&2
+        assertFileContains 1856 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 test_getLatestAsset() {
