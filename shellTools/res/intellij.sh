@@ -340,7 +340,7 @@ getAllDependencies() {
     local s3ACC="${1:-}"
     local s3SEC="${2:-}"
 
-    local g a v e flags
+    local g a v e flags aa
     local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
     local    lib="lib"
     mkdir -p "$lib"
@@ -396,22 +396,25 @@ getAllDependencies() {
 
         while read g a v e flags; do
             if [[ $g != '' ]]; then
+                local artiLibDir="$ARTIFACTS_CLONE/lib/${g//./\/}/$a"
+                local artiTrgDir="$ARTIFACTS_CLONE/trigger/${g//./\/}/$a"
+
+                mkdir -p "$artiTrgDir"
+                cp "$tmpLib/$tmpTrigger" "$artiTrgDir"
+
                 local parts=()
                 if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
                 if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
                 if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
-                local artiLibDir="$ARTIFACTS_CLONE/lib/${g//./\/}/$a"
                 for aa in "${parts[@]}"; do
-                    if [[ -f "$artiLibDir/$aa" ]]; then
-                        echo "::info::got latest $g:$aa for branch $branch from GitHub ($artiLibDir/$aa)"
-                        cp "$artiLibDir/$aa" "$tmpLib"
+                    local f="$artiLibDir/$aa.$e"
+                    if [[ -f "$f" ]]; then
+                        echo "::info::got latest $g:$aa for branch $branch from GitHub ($f)"
+                        cp "$f" "$tmpLib"
                     else
-                        echo "::info::could not get $g:$aa for branch $branch from GitHub ($artiLibDir/$aa)"
+                        echo "::info::could not get $g:$aa for branch $branch from GitHub ($f)"
                     fi
                 done
-                local artiTrgDir="$ARTIFACTS_CLONE/trigger/${g//./\/}/$a"
-                mkdir -p "$artiTrgDir"
-                cp "$tmpLib/$tmpTrigger" "$artiTrgDir"
             fi
         done < <(getDependencyGavesWithFlags)
         rm "$tmpLib/$tmpTrigger"
