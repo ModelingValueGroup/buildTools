@@ -26,7 +26,7 @@ test_version() {
         touch "$errorDetectedMarker"
         exit 46
     fi
-    echo "ok: correct version found: $e"
+    echo "::info::ok: correct version found: $e"
 }
 test_memecheck() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
@@ -47,7 +47,7 @@ test_memecheck() {
         touch "$errorDetectedMarker"
         exit 46
     fi
-    echo "ok: meme check ok"
+    echo "::info::ok: meme check ok"
 }
 test_meme() {
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
@@ -66,7 +66,7 @@ test_meme() {
         touch "$errorDetectedMarker"
         exit 46
     else
-        echo "ok: meme works ok"
+        echo "::info::ok: meme works ok"
     fi
 }
 test_extraInstall() {
@@ -448,7 +448,7 @@ for t in "${tests[@]}"; do
     if [[ -f "tmp/$errorDetectedMarker" ]]; then
         failingTests+=("$t")
         rm "tmp/$errorDetectedMarker"
-        echo "$t failed"
+        echo "::error::$t failed"
     fi
 done
 

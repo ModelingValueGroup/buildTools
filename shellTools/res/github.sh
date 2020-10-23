@@ -22,7 +22,7 @@ git config --global user.name  "automation"
 pushBackToGithub() {
     git ls-files --deleted --modified --others --exclude-standard || :
     if [[ "$(git ls-files --deleted --modified --others --exclude-standard)" ]]; then
-        echo "changes need to be pushed back to github"
+        echo "::info::changes need to be pushed back to github"
 
         echo "::group::git commit and push" 1>&2
             git add .
@@ -31,17 +31,17 @@ pushBackToGithub() {
         echo "::endgroup::" 1>&2
 
     else
-        echo "no changes need to be pushed back to github"
+        echo "::info::no changes need to be pushed back to github"
     fi
 }
 errorIfVersionTagExists() {
     . <(catProjectSh 'local ')
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
-        echo "ok: no such tag ($tagName)"
+        echo "::info::ok: no such tag ($tagName)"
     else
-        echo "existing tags:"
-        git tag | sed 's/^/=== /'
+        echo "::info::existing tags:"
+        git tag | sed 's/^/::info::   /'
         echo "::error::tag for this version ($tagName) already set, can not build on master"
         exit 89
     fi
@@ -51,7 +51,7 @@ setVersionTag() {
     # shellcheck disable=SC2154
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
-        echo "setting tag $tagName"
+        echo "::info::setting tag $tagName"
         git tag "$tagName"
         git push "$(getGithubRepoSecureUrl "$GITHUB_TOKEN" "$GITHUB_REPOSITORY")" "$tagName"
     else
@@ -96,7 +96,7 @@ getAllLatestAssets() {
     local select='.data.repository.releases.nodes[].releaseAssets.nodes[].downloadUrl'
 
     for u in $(graphqlQuery "$token" "$query" "$select"); do
-        echo "downloading $u..." 1>&2
+        echo "::info::downloading $u..." 1>&2
         curlSave "$token" "$u"
     done
 }

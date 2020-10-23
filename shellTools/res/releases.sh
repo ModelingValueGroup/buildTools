@@ -40,7 +40,7 @@ downloadLatestRelease() {
     mkdir "$dir"
     for i in "${!urls[@]}" ; do
         echo
-        echo "== $i => ${urls[$i]}  /  ${names[$i]}"
+        echo "::info::== $i => ${urls[$i]}  /  ${names[$i]}"
         echo
         curlPipe '' -o "$dir/${names[$i]}" "${urls[$i]}"
     done
@@ -52,7 +52,7 @@ removeReleaseWithTag() {
     local relJson="$(getRelease "$token" "$tag")"
     local      id="$(jq --raw-output '.id' <<<"$relJson")"
     if [[ $id == null || $id == "" ]]; then
-        echo "ERROR: trying to delete a release that does not exist" 1>&2
+        echo "::error::trying to delete a release that does not exist" 1>&2
         exit 99
     fi
     curlPipe "$token" -X DELETE "$GITHUB_RELEASES_URL/$id" -o -
@@ -79,10 +79,10 @@ publishRelease() {
     local   relJson="$(getRelease "$token" "$tag")"
     local uploadUrl="$(jq --raw-output '.upload_url' <<<"$relJson")"
     if [[ $uploadUrl != null ]]; then
-        echo "ERROR: this release already exists, delete it first" 1>&2
+        echo "::error::this release already exists, delete it first" 1>&2
         exit 99
     fi
-    echo "    creating new release..."
+    echo "::info::creating new release..."
     json="$(cat <<EOF
 {
 "tag_name"        : "$tag",
@@ -97,7 +97,7 @@ EOF
     local relJson="$(curlPipe "$token" -X POST -d "$json" "$GITHUB_RELEASES_URL" -o -)"
     local uploadUrl="$(jq --raw-output '.upload_url' <<<"$relJson")"
     if [[ $uploadUrl == null ]]; then
-        echo "ERROR: unable to create the release: $relJson" 1>&2
+        echo "::error::unable to create the release: $relJson" 1>&2
         echo
         exit 99
     fi
@@ -107,22 +107,22 @@ EOF
     for file in "${assets[@]}"; do
         local mimeType="$(file -b --mime-type "$file")"
         local     name="$(basename "$file" | sed "s/SNAPSHOT/$tag/")"
-        echo "      attaching: $file as $name ($mimeType)"
+        echo "::info::attaching: $file as $name ($mimeType)"
         local cnt
         for (( cnt = 1; cnt <= 10; ++cnt )); do
             local  attJson="$(curlPipe "$token" --header "Content-Type: $mimeType" -X POST --data-binary @"$file" "$uploadUrl?name=$name" -o -)"
             echo "$attJson" >"$name.upload.json"
             local    state="$(jq --raw-output '.state' <<<"$attJson")"
             if [[ $state == uploaded ]]; then
-                echo "        => ok"
+                echo "::info::        => ok"
                 break
             fi
             if (( 10 <= $cnt )); then
-                echo "        => ERROR: asset could not be attached"
+                echo "::info::        => ERROR: asset could not be attached"
                 echo
                 exit 99
             fi
-            echo "        => oops, not correctly attached: '$state', trying again... ($cnt)"
+            echo "::info::        => oops, not correctly attached: '$state', trying again... ($cnt)"
             echo "::info::$attJson"
         done
     done

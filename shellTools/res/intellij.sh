@@ -345,7 +345,7 @@ getAllDependencies() {
     local    lib="lib"
     mkdir -p "$lib"
 
-    echo "## trying to get dependencies from maven..."
+    echo "::info::trying to get dependencies from maven..."
     while read g a v e flags; do
         if [[ $g != '' ]]; then
             downloadArtifactQuick "$GITHUB_TOKEN" "$g" "$a" "$v" "$e" "$lib"
@@ -354,7 +354,7 @@ getAllDependencies() {
 
     ############# old BEGIN
     if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        echo "## trying to get dependencies from S3 (because this is NOT the master branch)..."
+        echo "::info::trying to get dependencies from S3 (because this is NOT the master branch)..."
         local    confArg="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
         local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
         local     tmpLib="tmpLib"
@@ -369,9 +369,9 @@ getAllDependencies() {
                 local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
                 for aa in "${parts[@]}"; do
                     if s3cmd "$confArg" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
-                        echo "## got latest $g:$aa for branch $branch from S3"
+                        echo "::info::got latest $g:$aa for branch $branch from S3"
                     else
-                        echo "## could not get $g:$aa for branch $branch from S3"
+                        echo "::info::could not get $g:$aa for branch $branch from S3"
                     fi
                 done
                 s3cmd "$confArg" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
@@ -403,10 +403,10 @@ getAllDependencies() {
                 local artiLibDir="$ARTIFACTS_CLONE/lib/${g//./\/}/$a"
                 for aa in "${parts[@]}"; do
                     if [[ -f "$artiLibDir/$aa" ]]; then
-                        echo "## got latest $g:$aa for branch $branch from GitHub"
+                        echo "::info::got latest $g:$aa for branch $branch from GitHub ($artiLibDir/$aa)"
                         cp "$artiLibDir/$aa" "$tmpLib"
                     else
-                        echo "## could not get $g:$aa for branch $branch from GitHub"
+                        echo "::info::could not get $g:$aa for branch $branch from GitHub ($artiLibDir/$aa)"
                     fi
                 done
                 local artiTrgDir="$ARTIFACTS_CLONE/trigger/${g//./\/}/$a"
@@ -423,7 +423,7 @@ getAllDependencies() {
     diff /tmp/from-s3 /tmp/from-github || :
     ############# new END
 
-    echo "## checking if we have the required dependencies..." 1>&2
+    echo "::info::checking if we have the required dependencies..." 1>&2
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
@@ -435,7 +435,7 @@ getAllDependencies() {
     if [[ "$missingSome" == true ]]; then
         exit 82
     else
-        echo "## all dependencies downloaded ok"
+        echo "::info::all dependencies downloaded ok"
     fi
 }
 getFirstArtifactWithFlags() {
