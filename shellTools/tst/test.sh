@@ -332,13 +332,13 @@ dependencies=(
     "org.hamcrest        hamcrest-core           1.3         jar jds-"
 )
 EOF
-    if (set -x; GITHUB_REF="refs/heads/blabla" getAllDependencies "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log.out 2>log.err; then
+    if (set -x; GITHUB_REF="refs/heads/blabla" getAllDependencies "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log 2>&1; then
         echo "::error::expected a fail but encountered success"
         touch "$errorDetectedMarker"
     else
-        assertFileContains -1 log.err  4 "^::warning::could not download artifact: "
-        assertFileContains -1 log.err  1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar"
-        assertFileContains -1 log.err 31 "^::info::"
+        assertFileContains -1 log  4 "^::warning::could not download artifact: "
+        assertFileContains -1 log  1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar"
+        assertFileContains -1 log 31 "^::info::"
     fi 1>&2
 }
 test_getLatestAsset() {
