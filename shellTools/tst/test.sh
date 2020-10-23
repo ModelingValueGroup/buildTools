@@ -336,8 +336,8 @@ EOF
         echo "::error::expected a fail but encountered success" 1>&2
         touch "$errorDetectedMarker"
     else
-        assertFileContains 1848 log.err 4 "^::warning::could not download artifact: "                                1>&2
-        assertFileContains 1848 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
+        assertFileContains 1849 log.err 4 "^::warning::could not download artifact: "                                1>&2
+        assertFileContains 1849 log.err 1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar" 1>&2
     fi
 }
 test_getLatestAsset() {
@@ -391,6 +391,12 @@ test_tmpArtifact() {
         echo "::error:: test failed: storeTmpArtifacts failed"
         touch "$errorDetectedMarker"
         exit 85
+    fi
+    if [[ "$(sed 'Authentication failed' log)" != "" ]]; then
+        echo "::error:: test failed: some authentication failed"
+        sed 's/^/  | /' log
+        touch "$errorDetectedMarker"
+        exit 88
     fi
     assertFileContains 23 log 1 "^::info::need to push" 1>&2
 }
