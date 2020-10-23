@@ -69,4 +69,4 @@ getBuildtools() {
         . <(java -jar ~/buildtools.jar -check)
     fi
 }
-getBuildtools "$1"
+getBuildtools "${1:-}"
