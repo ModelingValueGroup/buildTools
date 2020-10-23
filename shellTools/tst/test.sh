@@ -338,7 +338,7 @@ EOF
     else
         assertFileContains -1 log  4 "^::warning::could not download artifact: "
         assertFileContains -1 log  1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar"
-        assertFileContains -1 log 31 "^::info::"
+        assertFileContains -1 log 30 "^::info::"
     fi 1>&2
 }
 test_getLatestAsset() {
