@@ -92,11 +92,11 @@ prepareBranchSnapshots() {
         echo "::info::clone of $repoUrl already on disk"
     else
         rm -rf "$SNAPSHOTS_CLONE"
+        mkdir -p "$SNAPSHOTS_CLONE"
         if (cd "$SNAPSHOTS_CLONE/.."; git clone "$repoUrl"); then
             echo "::info::cloned $repoUrl"
         else
             echo "::info::clone of $repoUrl not possible: create new repo"
-            mkdir -p "$SNAPSHOTS_CLONE"
             (   cd "$SNAPSHOTS_CLONE"
                 echo "::info::create repos $GITHUB_REPOSITORY_OWNER/$SNAPSHOTS_REPOS"
                 printf "%s\n%s\n%s\n" "# Branch Snapshots repo" "Build files from branches are stored here for other projects to depend on." "This is an ephemeral repo." > "README.md"
