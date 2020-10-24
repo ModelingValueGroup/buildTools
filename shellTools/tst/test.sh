@@ -19,7 +19,7 @@ set -euo pipefail
 #######################################################################################################################
 ##### tests ###########################################################################################################
 test_version() {
-    local e="$(sed -n 's/"//g;s/^version=//p' ../../project.sh)"
+    local e="$(sed -n 's/"//g;s/^version=//p' ../../$PROJECT_SH)"
     local v="$(java -jar ~/buildtools.jar -version)"
     if [[ "$v" != "$e" ]]; then
         echo "::error::test failed: expected version $e but found version $v"
@@ -72,7 +72,7 @@ test_meme() {
 }
 test_extraInstall() {
     (
-        inOptionalLinuxPackage test_command
+        registerForJitInstall test_command
         sudo() {
             "$@"
         }
@@ -128,7 +128,7 @@ end more to stderr
     )
     if [[ "$(uname -s)" != "Darwin" ]]; then
         # this does not work on mac: no apt-get available
-        inOptionalLinuxPackage jq
+        registerForJitInstall jq
 
         local o="$(jq . <<<'{"a":1,"b":2}' 2>err || echo FAILED)"
         local e='{
@@ -252,7 +252,7 @@ test_correctHeaders() {
 }
 test_generateAll() {
     mkdir -p .idea TST/tst SRC/src BTH/src BTH/tst
-    cat <<EOF >project.sh
+    cat <<EOF >$PROJECT_SH
 artifacts=(
     "test.modelingvalue  zomaar                  9.9.9       jar j--"
 )
@@ -323,23 +323,32 @@ test_getGithubRepoUrl() {
         exit 88
     fi
 }
-test_getAllDependencies() {
-    cat <<EOF >project.sh
+test_getBranchSnapshots() {
+    cat <<EOF >$PROJECT_SH
+artifacts=(
+    "test.modelingvalue  test-artifact   0.0.0   jar  j--"
+)
 dependencies=(
-    "org.modelingvalue   immutable-collections   0.0.0       jar jds-"  # will never exist
-    "org.modelingvalue   dclare                  0.0.13      jar jds-"  # does exist
-    "junit               junit                   4.12        jar jdst"
-    "org.hamcrest        hamcrest-core           1.3         jar jds-"
+    "test.modelingvalue  test-artifact   0.0.0   jar jds-"
+    "junit               junit            4.12   jar jdst"
 )
 EOF
-    if (set -x; GITHUB_REF="refs/heads/blabla" getAllDependencies "${INPUT_SCALEWAY_ACCESS_KEY:-}" "${INPUT_SCALEWAY_SECRET_KEY:-}" ) >log 2>&1; then
-        echo "::error::expected a fail but encountered success"
+    mkdir -p out/artifacts
+    echo "not a jar" > out/artifacts/test-artifact.jar
+
+    local fakeBranch="refs/heads/test-branch-for-buildtools"
+
+    if ! (GITHUB_REF="$fakeBranch" storeMyBranchSnapshots); then
+        echo "::error::storeMyBranchSnapshots failed"
         touch "$errorDetectedMarker"
-    else
-        assertFileContains -1 log  4 "^::warning::could not download artifact: "
-        assertFileContains -1 log  1 "^::error::missing dependency org.modelingvalue:immutable-collections.jar"
-        assertFileContains -1 log 30 "^::info::"
-    fi 1>&2
+        exit 25
+    fi
+    if ! (GITHUB_REF="$fakeBranch" getAllDependencies); then
+        echo "::error::getAllDependencies failed"
+        touch "$errorDetectedMarker"
+        exit 25
+    fi
+    assertEqualFiles "out/artifacts/test-artifact.jar" "lib/test-artifact.jar"
 }
 test_getLatestAsset() {
     getLatestAsset "ModelingValueGroup" "buildtools" "buildtools.jar"
@@ -376,32 +385,6 @@ test_setOutput() {
     test_setOutput_ "aap%0Anoot%0A"     "$(printf "%s\n%s\n" 'aap'  'noot')"
     test_setOutput_ "a%25ap%0Anoot%0A"  "$(printf "%s\n%s\n" 'a%ap' 'noot')"
 }
-test_tmpArtifact() {
-    rm -rf "$ARTIFACTS_CLONE"
-
-    mkdir upload
-    echo "aap$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset1.txt
-    echo "bla$(date +'%Y-%m-%d %H:%M:%S')" > upload/asset2.txt
-
-    if ! storeTmpArtifacts \
-            "$ALLREP_TOKEN" \
-            "upload" \
-            "the.group.name" \
-            "the-artifact-name" \
-            "feature/should-be-based-on-_-$RANDOM" 2>log 1>&2; then
-        echo "::error:: test failed: storeTmpArtifacts failed"
-        touch "$errorDetectedMarker"
-        exit 85
-    fi
-    if [[ "$(fgrep 'Authentication failed' log)" != "" ]]; then
-        echo "::error:: test failed: some authentication failed"
-        sed 's/^/  | /' log
-        touch "$errorDetectedMarker"
-        exit 88
-    fi
-    assertFileContains 23 log 1 "^::info::need to push" 1>&2
-}
-
 #######################################################################################################################
 #######################################################################################################################
 ##### test execution:
@@ -410,8 +393,8 @@ test_tmpArtifact() {
 if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
     ##### mimic github actions env for local execution:
     . ~/secrets.sh # defines GITHUB_TOKEN without exposing it in the github repos
-    if [[ "${GITHUB_TOKEN:-}" == "" || "${INPUT_SCALEWAY_ACCESS_KEY:-}" == ""  || "${INPUT_SCALEWAY_SECRET_KEY:-}" == "" ]]; then
-        echo ":error:: local test runs require a file ~/sercrets.sh that defines GITHUB_TOKEN INPUT_SCALEWAY_ACCESS_KEY and INPUT_SCALEWAY_SECRET_KEY"
+    if [[ "${GITHUB_TOKEN:-}" == "" ]]; then
+        echo ":error:: local test runs require a file ~/sercrets.sh that defines GITHUB_TOKEN"
         exit 23
     fi
 

@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-inOptionalLinuxPackage jq
+registerForJitInstall jq
 
 getRelease() {
     local token="$1"; shift

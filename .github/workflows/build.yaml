@@ -67,10 +67,6 @@ jobs:
       #### test #######################################################################################################
       - name: "test"
         run: shellTools/tst/test.sh
-        env:
-          INPUT_SCALEWAY_ACCESS_KEY : "${{secrets.SCALEWAY_ACCESS_KEY}}"
-          INPUT_SCALEWAY_SECRET_KEY : "${{secrets.SCALEWAY_SECRET_KEY}}"
-
 
       #### only master things from here on ############################################################################
       - name: "if master: fail if there is already a tag for this version"

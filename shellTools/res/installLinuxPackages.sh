@@ -17,7 +17,7 @@
 set -euo pipefail
 
 ##########################################################################################################################
-inOptionalLinuxPackage() {
+registerForJitInstall() {
     local command="$1"; shift
     local package="${1:-$command}"
 

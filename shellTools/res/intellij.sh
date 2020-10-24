@@ -16,11 +16,10 @@
 
 set -euo pipefail
 
-export   artifactS3Host="s3.nl-ams.scw.cloud"
-export artifactS3Bucket="mvg-artifacts"
+export PROJECT_SH="project.sh"
 
-inOptionalLinuxPackage xmlstarlet
-inOptionalLinuxPackage s3cmd
+registerForJitInstall xmlstarlet
+registerForJitInstall s3cmd
 
 generateAll() {
     cleanupIntellijGeneratedAntFiles
@@ -54,7 +53,7 @@ generatePomFromDependencies() {
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
-<!--          change  project.sh  instead                         -->
+<!--          change  $PROJECT_SH  instead                         -->
 <!--==============================================================-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -98,7 +97,7 @@ generateIntellijLibraryFilesFromDependencies() {
                 cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
-<!--          change  project.sh  instead                         -->
+<!--          change  $PROJECT_SH  instead                         -->
 <!--==============================================================-->
 <component name="libraryTable">
   <library name="gen: $a">
@@ -143,7 +142,7 @@ EOF
                 cat <<EOF | compareAndOverwrite ".idea/libraries/$fileName.xml"
 <!--==============================================================-->
 <!-- WARNING: this file will be overwritten by the build scripts! -->
-<!--          change  project.sh  instead                         -->
+<!--          change  $PROJECT_SH  instead                         -->
 <!--==============================================================-->
 <component name="libraryTable">
   <library name="gen: $var">
@@ -176,7 +175,7 @@ generateAntTestTargets() {
 
         case "$targetName" in
         test.module.$modNameLow)
-            if [[ "$(fgrep 'org.junit.jupiter' project.sh)" != "" ]]; then
+            if [[ "$(fgrep 'org.junit.jupiter' $PROJECT_SH)" != "" ]]; then
                 cat <<EOF
     <target name="test.module.$modNameLow">
         <junitlauncher haltOnFailure="true" printSummary="true">
@@ -337,96 +336,24 @@ EOF
     fi
 }
 getAllDependencies() {
-    local s3ACC="${1:-}"
-    local s3SEC="${2:-}"
-
-    local g a v e flags aa
-    local branch="$(sed 's|^refs/heads/||;s|/|_|g' <<<"$GITHUB_REF")"
+    local branch="${GITHUB_REF#refs/heads/}"
     local    lib="lib"
     mkdir -p "$lib"
 
     echo "::info::trying to get dependencies from maven..."
+    local g a v e flags
     while read g a v e flags; do
         if [[ $g != '' ]]; then
             downloadArtifactQuick "$g" "$a" "$v" "$e" "$lib"
         fi
     done < <(getDependencyGavesWithFlags)
 
-    ############# old BEGIN
-    if [[ "$branch" != "master" && "$s3ACC" != "" && "$s3SEC" != "" ]]; then
-        echo "::info::trying to get dependencies from S3 (because this is NOT the master branch)..."
-        local    confArg="$(prepS3cmd "https://$artifactS3Host" "$s3ACC" "$s3SEC")"
-        local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
-        local     tmpLib="tmpLib"
-        mkdir -p $tmpLib
-        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
-        while read g a v e flags; do
-            if [[ $g != '' ]]; then
-                local parts=()
-                if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
-                if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
-                if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
-                local s3dir="s3://$artifactS3Bucket/$g/$a/$branch"
-                for aa in "${parts[@]}"; do
-                    if s3cmd "$confArg" --force get "$s3dir/$aa.$e" $tmpLib 2>/dev/null 1>&2; then
-                        echo "::info::got latest $g:$aa for branch $branch from S3"
-                    else
-                        echo "::info::could not get $g:$aa for branch $branch from S3"
-                    fi
-                done
-                s3cmd "$confArg" --force put "$tmpLib/$tmpTrigger" "$s3dir/triggers/$tmpTrigger"
-            fi
-        done < <(getDependencyGavesWithFlags)
-        rm "$tmpLib/$tmpTrigger"
-        ls -l "$tmpLib" >/tmp/from-s3
-        mv $tmpLib/* "$lib" 2>/dev/null || :
-        rm -rf $tmpLib
-    fi
-    ############# old END
-
-    ############# new BEGIN
-    local branch="${GITHUB_REF#refs/heads/}"
     if [[ "$branch" != "master" ]]; then
-        prepareTmpArtifacts "$ALLREP_TOKEN" "$branch"
-
-        local tmpTrigger="${GITHUB_REPOSITORY////#}.trigger"
-        local     tmpLib="tmpLib2"
-        mkdir -p $tmpLib
-        printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$tmpLib/$tmpTrigger"
-
-        while read g a v e flags; do
-            if [[ $g != '' ]]; then
-                local artiLibDir="$ARTIFACTS_CLONE/lib/${g//./\/}/$a"
-                local artiTrgDir="$ARTIFACTS_CLONE/trigger/${g//./\/}/$a"
-
-                mkdir -p "$artiTrgDir"
-                cp "$tmpLib/$tmpTrigger" "$artiTrgDir"
-
-                local parts=()
-                if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
-                if [[ "$flags" =~ .*d.* ]]; then parts+=("$a-javadoc"); fi
-                if [[ "$flags" =~ .*s.* ]]; then parts+=("$a-sources"); fi
-                for aa in "${parts[@]}"; do
-                    local f="$artiLibDir/$aa.$e"
-                    if [[ -f "$f" ]]; then
-                        echo "::info::got latest $g:$aa for branch $branch from GitHub ($f)"
-                        cp "$f" "$tmpLib"
-                    else
-                        echo "::info::could not get $g:$aa for branch $branch from GitHub ($f)"
-                    fi
-                done
-            fi
-        done < <(getDependencyGavesWithFlags)
-        rm "$tmpLib/$tmpTrigger"
-        ls -l "$tmpLib" >/tmp/from-github
-        pushTmpArtifacts
-        # mv $tmpLib/* "$lib" 2>/dev/null || :
-        rm -rf $tmpLib
+        echo "::info::not on branch master so try get branch snapshots..."
+        retrieveBranchSnapshots "$branch" "$lib"
     fi
-    diff /tmp/from-s3 /tmp/from-github || :
-    ############# new END
 
-    echo "::info::checking if we have the required dependencies..." 1>&2
+    echo "::info::checking if we found the required dependencies..." 1>&2
     local missingSome=false
     while read g a v e flags; do
         if [[ $g != '' && ! -f "$lib/$a.$e" ]]; then
@@ -434,12 +361,10 @@ getAllDependencies() {
             missingSome=true
         fi
     done < <(getDependencyGavesWithFlags)
-
     if [[ "$missingSome" == true ]]; then
         exit 82
-    else
-        echo "::info::all dependencies downloaded ok"
     fi
+    echo "::info::all dependencies downloaded ok"
 }
 getFirstArtifactWithFlags() {
     . <(catProjectSh 'local ')
@@ -466,9 +391,9 @@ catProjectSh() {
     local maybeAbsent="$([[ ${1:-} == '-maybeAbsent' ]] && echo "yes" || :)"; [[ "$maybeAbsent" != "" ]] && shift || :
     local         pre="$1"; shift
 
-    if [[ ! -f "project.sh" ]]; then
+    if [[ ! -f "$PROJECT_SH" ]]; then
         if [[ "$maybeAbsent" == "" ]]; then
-            echo "::error::project.sh file not found" 1>&2
+            echo "::error::$PROJECT_SH file not found" 1>&2
             exit 45
         fi
     else
@@ -476,7 +401,7 @@ catProjectSh() {
 ${pre}artifacts=()
 ${pre}dependencies=()
 ${pre}repositories=()
-$(cat project.sh)
+$(cat $PROJECT_SH)
 EOF
     fi
 }

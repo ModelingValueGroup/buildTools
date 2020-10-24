@@ -16,8 +16,8 @@
 
 set -euo pipefail
 
-inOptionalLinuxPackage xmlstarlet
-inOptionalLinuxPackage maven mvn
+registerForJitInstall xmlstarlet
+registerForJitInstall maven mvn
 
 mvn_() {
     local token="$1"; shift
