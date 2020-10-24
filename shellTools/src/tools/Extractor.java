@@ -90,10 +90,8 @@ public class Extractor {
                     poormansDiff(file, actMeme, expMeme).forEach(System.err::println);
                 }
             } catch (IOException e) {
-                System.err.println("WARNING: could not read meme at " + file.toAbsolutePath());
+                System.err.println("::warning::could not read meme at " + file.toAbsolutePath());
             }
-        } else {
-            System.err.println("WARNING: meme file could not be found: " + file);
         }
     }
 
