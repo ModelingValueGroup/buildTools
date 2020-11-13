@@ -19,7 +19,6 @@ set -euo pipefail
 export PROJECT_SH="project.sh"
 
 registerForJitInstall xmlstarlet
-registerForJitInstall s3cmd
 
 generateAll() {
     cleanupIntellijGeneratedAntFiles
@@ -36,7 +35,10 @@ cleanupIntellijGeneratedAntFiles() {
         if [[ -f "$xml" ]]; then
 
             # - add includeantruntime="false" for all <javac> calls:
-            sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|' "$xml" | compareAndOverwrite "$xml"
+            sed 's|<javac \([^i]\)|<javac includeantruntime="false" \1|'        "$xml" | compareAndOverwrite "$xml"
+
+            # - jar tasks should use filesetmanifest="merge" and not filesetmanifest="mergewithoutmain":
+            sed 's|filesetmanifest="mergewithoutmain"|filesetmanifest="merge"|' "$xml" | compareAndOverwrite "$xml"
 
             # - unfortunately IntellJ generates absolute paths for some zipfileset, I cant find a way to correct this automatically....
             if grep -Fq '="/' "$xml"; then
@@ -208,8 +210,6 @@ EOF
     </target>
 EOF
             fi
-            ;;
-        xxxx)
             ;;
         testresults.module.$modNameLow)
             cat <<EOF
