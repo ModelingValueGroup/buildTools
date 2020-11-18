@@ -140,7 +140,7 @@ prepareBranchSnapshots() {
             git checkout -b "$bareBranch"
             git push -u origin "$bareBranch"
         fi
-        git pull
+        git pull --ff-only
     )
 }
 copyAndPushBranchSnapshots() {
