@@ -90,6 +90,7 @@ prepareBranchSnapshots() {
 
     if [[ -d "$SNAPSHOTS_CLONE/.git" ]]; then
         echo "::info::clone of $repoUrl already on disk"
+        git fetch --all
     else
         rm -rf "$SNAPSHOTS_CLONE"
         mkdir -p "$SNAPSHOTS_CLONE"
@@ -139,6 +140,7 @@ prepareBranchSnapshots() {
             git checkout -b "$bareBranch"
             git push -u origin "$bareBranch"
         fi
+        git pull
     )
 }
 copyAndPushBranchSnapshots() {
