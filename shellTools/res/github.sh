@@ -48,7 +48,6 @@ errorIfVersionTagExists() {
 }
 setVersionTag() {
     . <(catProjectSh 'local ')
-    # shellcheck disable=SC2154
     local tagName="v$version"
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "::info::setting tag $tagName"
@@ -57,6 +56,32 @@ setVersionTag() {
     else
         echo "::error::tag for this version ($tagName) already exists"
         exit 88
+    fi
+}
+findUntaggedVersionNumber() {
+    . <(catProjectSh 'local ')
+    local tagName="v$version"
+    if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
+        echo "::info::ok: no such tag ($tagName)"
+    else
+        while [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; do
+            echo "::info::tag exists ($tagName), going to next..."
+            version="$(bumpMinor "$version")"
+            tagName="v$version"
+        done
+        echo "::info::ok: found next untagged version ($tagName), updating project.sh..."
+        sed -i "s/^version=.*/version='$version'/" project.sh
+    fi
+}
+bumpMinor() {
+    local v="$1"; shift
+
+    if [[ "$v" =~ ^[0-9]+$ ]]; then
+        printf "%d" "$((v+1))"
+    else
+        local n="$(sed 's/^.*[.]//' <<<"$v")"
+        local p="$(sed 's/[.][^.]*$//' <<<"$v")"
+        printf "%s.%d" "$p" "$((n+1))"
     fi
 }
 getLatestAsset() {

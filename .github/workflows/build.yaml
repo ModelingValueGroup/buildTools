@@ -40,6 +40,12 @@ jobs:
           ant
           cp out/artifacts/buildtools.jar ~
 
+      - name: "if master: find a tag-free version number"
+        if: github.ref == 'refs/heads/master'
+        run: |
+          . <(java -jar ~/buildtools.jar)
+          findUntaggedVersionNumber
+
       - name: "generate/adjust some files if needed"
         run: |
           . <(java -jar ~/buildtools.jar)
