@@ -88,7 +88,7 @@ prepareBranchSnapshots() {
 
     local repoUrl="$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$SNAPSHOTS_REPOS")"
 
-    if [[ -d "$SNAPSHOTS_CLONE/.git" ]] && git fsck --full --no-progress >/dev/null 2>&1; then
+    if [[ -d "$SNAPSHOTS_CLONE/.git" ]] && (cd "$SNAPSHOTS_CLONE"; git fsck --full --no-progress >/dev/null 2>&1); then
         echo "::info::clone of $repoUrl already on disk"
         git fetch --all
     else
