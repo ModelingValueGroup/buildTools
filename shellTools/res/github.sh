@@ -62,18 +62,19 @@ setVersionTag() {
 }
 findUntaggedVersionNumber() {
     . <(catProjectSh 'local ')
-    local tagName="v$version"
+    local initialVersion="$version"
+    local        tagName="v$version"
+    local     initialTag="$tagName"
     git fetch --tags --quiet
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
-        echo "::info::ok: no such tag ($tagName)"
+        echo "::info::version $version accepted because there is no tag $tagName for it yet"
     else
         while [[ "$(git tag | fgrep -Fx "$tagName")" != "" ]]; do
-            echo "::info::tag exists ($tagName), going to next..."
             version="$(bumpMinor "$version")"
             tagName="v$version"
         done
-        echo "::info::ok: found next untagged version ($tagName), updating project.sh..."
         sed -i "s/^version=.*/version='$version'/" project.sh
+        echo "::info::version $initialVersion bumped to $version because there already is a tag $initialTag"
     fi
 }
 bumpMinor() {
