@@ -401,7 +401,6 @@ if [[ "${GITHUB_WORKSPACE:-}" == "" ]]; then
     export  GITHUB_WORKSPACE="$PWD"
     export GITHUB_REPOSITORY="ModelingValueGroup/buildtools"
     export        GITHUB_REF="refs/heads/local-build-fake-branch"
-    export      ALLREP_TOKEN="$GITHUB_TOKEN"
 
     if [[ "$(command -v md5)" != "" && "$(command -v md5sum)" == "" ]]; then
         md5sum() { md5; }

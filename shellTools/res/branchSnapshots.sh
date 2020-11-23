@@ -23,7 +23,7 @@ retrieveBranchSnapshots() {
     local branch="$1"; shift
     local    lib="$1"; shift
 
-    prepareBranchSnapshots "$ALLREP_TOKEN" "$branch"
+    prepareBranchSnapshots "${ALLREP_TOKEN:-$GITHUB_TOKEN}" "$branch"
 
     local g a v e flags
     while read g a v e flags; do
@@ -58,7 +58,7 @@ storeMyBranchSnapshots() {
     if [[ "$g" != "" && "$a" != "" ]]; then
         echo "::info::storing artifacts $g:$a in the branch snapshot repo"
         storeBranchSnapshots \
-            "$ALLREP_TOKEN"  \
+            "${ALLREP_TOKEN:-$GITHUB_TOKEN}"  \
             "out/artifacts"  \
             "$g"             \
             "$a"             \

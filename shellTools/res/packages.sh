@@ -119,7 +119,7 @@ uploadArtifactQuick() {
         local extra="$1"; shift
 
         if [[ -f "$file" ]]; then
-            curlPipe "$ALLREP_TOKEN" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL/$repo" "$g" "$a" "$v" "$e" "$extra")"
+            curlPipe "${ALLREP_TOKEN:-$GITHUB_TOKEN}" -X PUT --upload-file "$file" "$(makeArtifactPath "$GITHUB_PACKAGE_URL/$repo" "$g" "$a" "$v" "$e" "$extra")"
         fi
     }
 
