@@ -37,6 +37,7 @@ pushBackToGithub() {
 errorIfVersionTagExists() {
     . <(catProjectSh 'local ')
     local tagName="v$version"
+    git fetch --tags --quiet
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "::info::ok: no such tag ($tagName)"
     else
@@ -49,6 +50,7 @@ errorIfVersionTagExists() {
 setVersionTag() {
     . <(catProjectSh 'local ')
     local tagName="v$version"
+    git fetch --tags --quiet
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "::info::setting tag $tagName"
         git tag "$tagName"
@@ -61,6 +63,7 @@ setVersionTag() {
 findUntaggedVersionNumber() {
     . <(catProjectSh 'local ')
     local tagName="v$version"
+    git fetch --tags --quiet
     if [[ "$(git tag | fgrep -Fx "$tagName")" == "" ]]; then
         echo "::info::ok: no such tag ($tagName)"
     else

@@ -153,6 +153,7 @@ publishReleaseOnGitHub() {
         echo "ERROR: version is empty" 1>&2
         exit 60
     fi
+    git fetch --tags --quiet
     if [[ $version != SNAPSHOT && $(git tag -l "$version") ]]; then
         echo "ERROR: tag $version already exists" 1>&2
         exit 70
