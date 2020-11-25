@@ -59,9 +59,9 @@ getBuildtools() {
     fi
     if [[ ! -f ~/buildtools.jar ]]; then
         if [[ "$requestedVersion" == "" ]]; then
-            getBuildtoolsVersion "4.0.1" # older version, just to make lastPackageVersion() work
+            getBuildtoolsVersion "4.0.3"
             . <(java -jar ~/buildtools.jar)
-            latestVersion="$(lastPackageVersion "$GITHUB_TOKEN" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
+            latestVersion="$(lastPackageVersion "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
             getBuildtoolsVersion "$latestVersion"
         else
             getBuildtoolsVersion "$requestedVersion"
