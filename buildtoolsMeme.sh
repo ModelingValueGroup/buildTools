@@ -20,7 +20,7 @@ if [[ "$GITHUB_TOKEN" == "" ]]; then
     echo "::error::no token passed to buildtoolsMeme.sh"
     exit 56
 fi
-if ! (echo 4.0.0; echo $BASH_VERSION) | sort -VC; then
+if ! (echo "4.0.0"; echo $BASH_VERSION) | sort -VC; then
     echo "::error::this shell version ($BASH_VERSION) is too old, I need at least bash 4.0.0."
     exit 99
 fi
@@ -59,7 +59,7 @@ getBuildtools() {
     fi
     if [[ ! -f ~/buildtools.jar ]]; then
         if [[ "$requestedVersion" == "" ]]; then
-            getBuildtoolsVersion "3.3.3" # older version, just to make lastPackageVersion() work
+            getBuildtoolsVersion "4.0.0" # older version, just to make lastPackageVersion() work
             . <(java -jar ~/buildtools.jar)
             latestVersion="$(lastPackageVersion "$GITHUB_TOKEN" "ModelingValueGroup/buildtools" "org.modelingvalue" "buildtools")"
             getBuildtoolsVersion "$latestVersion"
