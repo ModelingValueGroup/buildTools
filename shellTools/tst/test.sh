@@ -50,7 +50,6 @@ test_memecheck() {
     echo "::info::ok: meme check ok"
 }
 test_meme() {
-    return
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
