@@ -16,8 +16,9 @@
 
 set -euo pipefail
 
-git config --global user.email "automation@modelingvalue.com"
-git config --global user.name  "automation"
+# set user mail and name but only if not set yet:
+git config user.name  >/dev/null || git config --global user.name  "automation"
+git config user.email >/dev/null || git config --global user.email "automation@modelingvalue.com"
 
 pushBackToGithub() {
     git ls-files --deleted --modified --others --exclude-standard || :
