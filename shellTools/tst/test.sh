@@ -63,8 +63,9 @@ test_meme() {
         declare -f lastPackageVersion
     " > log 2>&1; then
         echo "::error::test failed: the meme failed:"
-        sed 's/^/@@@ /' log
-        java -jar  ~/buildtools.jar | sed 's/^/%%% /' |fgrep user.name
+        sed 's/^/@@log_@@ /' log
+        java -jar  ~/buildtools.jar       | sed 's/^/@@all_@@ /'
+        java -jar  ~/buildtools.jar -meme | sed 's/^/@@meme@@ /'
         touch "$errorDetectedMarker"
         exit 46
     else
