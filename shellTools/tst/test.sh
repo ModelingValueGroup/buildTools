@@ -50,6 +50,7 @@ test_memecheck() {
     echo "::info::ok: meme check ok"
 }
 test_meme() {
+    return
     java -jar ~/buildtools.jar -meme > buildtoolsMeme.sh
     rm ~/buildtools.jar
     if ! env -i "$(which bash)" -c "
@@ -63,7 +64,7 @@ test_meme() {
     " > log 2>&1; then
         echo "::error::test failed: the meme failed:"
         sed 's/^/@@@ /' log
-        sed '1,1480d;1499,$d' <(java -jar  ~/buildtools.jar)
+        java -jar  ~/buildtools.jar | sed 's/^/%%% /' |fgrep user.name
         touch "$errorDetectedMarker"
         exit 46
     else
