@@ -20,7 +20,5 @@ correctEols() {
   java -cp ~/buildtools.jar correctors.EolCorrector
 }
 correctHeaders() {
-  local headerTemplate="$1"; shift
-
-  java -cp ~/buildtools.jar correctors.HeaderCorrector "$headerTemplate"
+  java -cp ~/buildtools.jar correctors.HeaderCorrector
 }
