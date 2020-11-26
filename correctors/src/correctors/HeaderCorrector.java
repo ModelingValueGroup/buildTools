@@ -1,5 +1,5 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
+// (C) Copyright 2018-2020 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 //                                                                                                                     ~
 // Licensed under the GNU Lesser General Public License v3.0 (the 'License'). You may not use this file except in      ~
 // compliance with the License. You may obtain a copy of the License at: https://choosealicense.com/licenses/lgpl-3.0  ~
@@ -15,13 +15,17 @@
 
 package correctors;
 
-import static java.lang.Integer.*;
+import static java.lang.Integer.min;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +34,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HeaderCorrector extends CorrectorBase {
+    private static final URL                 headerUrl  = getUrl("https://raw.githubusercontent.com/ModelingValueGroup/generic-info/master/header");
     private static final Map<String, String> EXT_TO_PRE = new HashMap<>();
 
     static {
@@ -40,73 +45,91 @@ public class HeaderCorrector extends CorrectorBase {
         EXT_TO_PRE.put("js", "//");
     }
 
-    private       Path                      headerFile = Paths.get("build", "header").toAbsolutePath();
-    private final Map<String, List<String>> ext2header = new HashMap<>();
-
-    public static void main(String[] args) throws IOException {
-        new HeaderCorrector().prepare(Arrays.asList(args)).generate();
+    @SuppressWarnings("SameParameterValue")
+    private static URL getUrl(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            throw new Error("unlikely error", e);
+        }
     }
 
-    private HeaderCorrector prepare(List<String> args) {
-        if (args.size() != 1) {
-            System.err.println("arg error: one arg expected: <header-template-file>");
-            System.exit(53);
-        }
-        headerFile = Paths.get(args.get(0));
+    public static void main(String[] args) throws IOException {
+        new HeaderCorrector(args).generate();
+    }
 
-        if (!Files.isRegularFile(headerFile)) {
-            throw new Error("no such file: " + headerFile);
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private final Path                      optHeaderFile;
+    private final List<String>              headerLines;
+    private final Map<String, List<String>> ext2header = new HashMap<>();
+
+    public HeaderCorrector(String[] args) {
+        super("header");
+
+        if (args.length == 0) {
+            try (InputStream in = headerUrl.openStream()) {
+                optHeaderFile = null;
+                headerLines = replaceVars(Arrays.asList(new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\n")));
+                System.err.println("header taken from " + headerUrl);
+            } catch (IOException e) {
+                throw new Error("can not download header from github " + headerUrl, e);
+            }
+        } else if (args.length == 1) {
+            optHeaderFile = Paths.get(args[0]);
+            if (!Files.isRegularFile(optHeaderFile)) {
+                throw new Error("no such file: " + optHeaderFile);
+            }
+            headerLines = replaceVars(readAllLines(optHeaderFile));
+            System.err.println("header taken from " + optHeaderFile.toAbsolutePath());
+        } else {
+            throw new Error("usage: HeaderCorrector [headerFile]");
         }
-        return this;
+    }
+
+    private List<String> replaceVars(List<String> lines) {
+        return lines.stream().map(this::replaceVars).collect(Collectors.toList());
+    }
+
+    private String replaceVars(String line) {
+        return line.replaceAll("yyyy", ""+LocalDateTime.now().getYear());
     }
 
     private void generate() throws IOException {
-        allFiles()
-                .filter(this::needsHeader)
-                .forEach(this::replaceHeader);
+        allFiles().forEach(this::replaceHeader);
+    }
+
+    private void replaceHeader(Path f) {
+        if (needsHeader(f)) {
+            String       ext        = getExtension(f.getFileName().toString()).orElseThrow();
+            List<String> header     = ext2header.computeIfAbsent(ext, e -> border(EXT_TO_PRE.get(e)));
+            List<String> lines      = readAllLines(f);
+            boolean      isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
+            int          baseIndex  = isHashBang ? 1 : 0;
+            while (baseIndex < lines.size() && isHeaderLine(lines.get(baseIndex), ext)) {
+                lines.remove(baseIndex);
+            }
+            isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
+            baseIndex = isHashBang ? 1 : 0;
+            lines.addAll(baseIndex, header);
+            overwrite(f, lines);
+        }
     }
 
     private boolean needsHeader(Path f) {
         Optional<String> ext = getExtension(f.getFileName().toString());
-        try {
-            if (Files.size(f) == 0) {
-                return false;
-            }
-            if (f.equals(headerFile)) {
-                return true;
-            }
-            if (ext.isEmpty()) {
-                return false;
-            }
-            return EXT_TO_PRE.containsKey(ext.get());
-        } catch (IOException e) {
-            throw new Error("file size failed", e);
-        }
+        return getFileSize(f) != 0 && !f.equals(optHeaderFile) && ext.isPresent() && EXT_TO_PRE.containsKey(ext.get());
     }
 
-    private void replaceHeader(Path f) {
-        String       ext    = getExtension(f.getFileName().toString()).orElseThrow();
-        List<String> header = ext2header.computeIfAbsent(ext, e -> readHeader(EXT_TO_PRE.get(e)));
-
-        List<String> lines      = f.equals(headerFile) ? new ArrayList<>() : readAllLines(f);
-        boolean      isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
-        int          baseIndex  = isHashBang ? 1 : 0;
-        while (baseIndex < lines.size() && isHeaderLine(lines.get(baseIndex), ext)) {
-            lines.remove(baseIndex);
-        }
-        isHashBang = !lines.isEmpty() && lines.get(0).startsWith("#!");
-        baseIndex = isHashBang ? 1 : 0;
-        lines.addAll(baseIndex, header);
-        overwrite(f, lines);
-    }
-
-    private boolean isHeaderLine(String line, String ext) {
-        return (line.startsWith(EXT_TO_PRE.get(ext)) && line.endsWith("~")) || line.trim().isEmpty();
-    }
-
-    private List<String> readHeader(String pre) {
-        Path f = this.headerFile;
-        return border(pre, cleanup(pre, readAllLines(f)));
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    private List<String> border(String pre) {
+        List<String> cleaned  = cleanup(pre, headerLines);
+        int          len      = cleaned.stream().mapToInt(String::length).max().getAsInt();
+        String       border   = pre + "~" + String.format("%" + len + "s", "").replace(' ', '~') + "~~";
+        List<String> bordered = cleaned.stream().map(l -> String.format(pre + " %-" + len + "s ~", l)).collect(Collectors.toList());
+        bordered.add(0, border);
+        bordered.add(border);
+        bordered.add("");
+        return bordered;
     }
 
     private List<String> cleanup(String pre, List<String> inFile) {
@@ -135,15 +158,8 @@ public class HeaderCorrector extends CorrectorBase {
         return h;
     }
 
-    private List<String> border(String pre, List<String> cleaned) {
-        //noinspection OptionalGetWithoutIsPresent
-        int          len      = cleaned.stream().mapToInt(String::length).max().getAsInt();
-        String       border   = pre + "~" + String.format("%" + len + "s", "").replace(' ', '~') + "~~";
-        List<String> bordered = cleaned.stream().map(l -> String.format(pre + " %-" + len + "s ~", l)).collect(Collectors.toList());
-        bordered.add(0, border);
-        bordered.add(border);
-        bordered.add("");
-        return bordered;
+    private boolean isHeaderLine(String line, String ext) {
+        return (line.startsWith(EXT_TO_PRE.get(ext)) && line.endsWith("~")) || line.trim().isEmpty();
     }
 
     private int calcIndent(List<String> h) {
@@ -156,11 +172,20 @@ public class HeaderCorrector extends CorrectorBase {
         return indent;
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static List<String> readAllLines(Path f) {
         try {
             return Files.readAllLines(f);
         } catch (IOException e) {
             throw new Error("could not read lines: " + f, e);
+        }
+    }
+
+    private static long getFileSize(Path f) {
+        try {
+            return Files.size(f);
+        } catch (IOException e) {
+            throw new Error("file size failed", e);
         }
     }
 }

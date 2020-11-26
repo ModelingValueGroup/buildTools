@@ -1,5 +1,5 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// (C) Copyright 2018-2019 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
+// (C) Copyright 2018-2020 Modeling Value Group B.V. (http://modelingvalue.org)                                        ~
 //                                                                                                                     ~
 // Licensed under the GNU Lesser General Public License v3.0 (the 'License'). You may not use this file except in      ~
 // compliance with the License. You may obtain a copy of the License at: https://choosealicense.com/licenses/lgpl-3.0  ~
@@ -15,10 +15,17 @@
 
 package correctors;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"WeakerAccess"})
 public abstract class CorrectorBase {
@@ -30,6 +37,12 @@ public abstract class CorrectorBase {
             Paths.get("./lib"),
             Paths.get("./.github/workflows/") // github refuses bot pushes of workflows
     ));
+
+    private final String name;
+
+    public CorrectorBase(String name) {
+        this.name = name;
+    }
 
     Stream<Path> allFiles() throws IOException {
         return Files.walk(Paths.get("."))
@@ -45,20 +58,20 @@ public abstract class CorrectorBase {
         removeTrailingEmptyLines(lines);
         try {
             if (forced || !Files.isRegularFile(file)) {
-                System.err.println("+ generated  : " + file);
+                System.err.println("+ " + name + " generated  : " + file);
                 Files.write(file, lines);
             } else {
                 List<String> old = Files.readAllLines(file);
                 removeTrailingEmptyLines(old);
                 if (!lines.equals(old)) {
-                    System.err.println("+ regenerated: " + file);
+                    System.err.println("+ " + name + " regenerated: " + file);
                     Files.write(file, lines);
                 } else {
-                    System.err.println("+ already ok : " + file);
+                    System.err.println("+ " + name + " ok         : " + file);
                 }
             }
         } catch (IOException e) {
-            throw new Error("could not overwrite: " + file, e);
+            throw new Error("could not overwrite file for " + name + " : " + file, e);
         }
     }
 

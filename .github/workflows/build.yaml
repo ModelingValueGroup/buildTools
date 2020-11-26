@@ -22,9 +22,6 @@ jobs:
         with:
           java-version: 11
 
-      - name: "get generic info"
-        uses: ModelingValueGroup/generic-info@master
-
       #### build ######################################################################################################
       - name: "prepare ant"
         run:  |
@@ -51,7 +48,7 @@ jobs:
           . <(java -jar ~/buildtools.jar)
           generateAll
           correctEols
-          correctHeaders header
+          correctHeaders
 
       - name: "push changes back to github"
         run:  |

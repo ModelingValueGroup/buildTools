@@ -1,8 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="HeaderCorrector" type="Application" factoryName="Application" nameIsGenerated="true">
+  <configuration default="false" name="HeaderCorrector from github" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="correctors.HeaderCorrector" />
     <module name="correctors" />
-    <option name="PROGRAM_PARAMETERS" value="header" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="correctors.*" />
