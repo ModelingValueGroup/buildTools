@@ -1,0 +1,7 @@
+name: keep-for-test
+on: [ push, workflow_dispatch ]
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo "trigger succeeded"
