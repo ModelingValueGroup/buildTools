@@ -325,6 +325,10 @@ test_getGithubRepoUrl() {
     fi
 }
 test_getBranchSnapshots() {
+    mkdir -p ".github/workflows"
+    cat <<EOF > ".github/workflows/keep-for-test.yaml"
+on: [push, workflow_dispatch]
+EOF
     cat <<EOF >$PROJECT_SH
 artifacts=(
     "test.modelingvalue  test-artifact   0.0.0   jar  j--"
@@ -339,11 +343,14 @@ EOF
 
     local fakeBranch="refs/heads/test-branch-for-buildtools"
 
+    echo "=============================== storing..."
     if ! (GITHUB_REF="$fakeBranch" storeMyBranchSnapshots); then
         echo "::error::storeMyBranchSnapshots failed"
         touch "$errorDetectedMarker"
         exit 25
     fi
+
+    echo "=============================== retrieving..."
     if ! (GITHUB_REF="$fakeBranch" getAllDependencies); then
         echo "::error::getAllDependencies failed"
         touch "$errorDetectedMarker"

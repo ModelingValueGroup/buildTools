@@ -46,24 +46,23 @@ contains() {
         echo false
     fi
 }
+#
+# curl call with automatic authorisation header if token as arg and
+#   --remote-header-name : use filename as indicated by server
+#   --remote-name        : save in file in current dir
+#
 curlSave() {
     local token="$1"; shift
 
-    local headerArg=()
-    if [[ "$token" != "" ]]; then
-        headerArg+=("--header" "Authorization: token $token")
-    fi
-
-    curl \
-        --location \
-        --remote-header-name \
-        --remote-name \
-        --fail \
-        --silent \
-        --show-error \
-        "${headerArg[@]}" \
-        "$@"
+    curlPipe "$token" --remote-header-name --remote-name "$@"
 }
+#
+# curl call with automatic authorisation header if token as arg and
+#   --location      : follow redirects
+#   --fail          : fail silently
+#   --silent        : no progress or errors reported
+#   --show-error    : show error message on fail
+#
 curlPipe() {
     local token="$1"; shift
 
@@ -73,11 +72,11 @@ curlPipe() {
     fi
 
     curl \
+        "${headerArg[@]}" \
         --location \
         --fail \
         --silent \
         --show-error \
-        "${headerArg[@]}" \
         "$@"
 }
 validateToken() {

@@ -24,6 +24,11 @@ retrieveBranchSnapshots() {
     local    lib="$1"; shift
 
     prepareBranchSnapshots "${ALLREP_TOKEN:-$GITHUB_TOKEN}" "$branch"
+    local yamls=( $(findTriggerYamls) )
+
+    if [[ "${#yamls[@]}" == 0 ]]; then
+        echo "::error::could not find proper workflow files for retriggering builds (use 'on: [push, workflow_dispatch]' in one or more yaml files in '.github/workflows'"
+    fi
 
     local g a v e flags
     while read g a v e flags; do
@@ -32,7 +37,11 @@ retrieveBranchSnapshots() {
             local artiLibDir="$SNAPSHOTS_CLONE/lib/${g//./\/}/$a"
 
             mkdir -p "$artiTrgDir"
-            printf "TRIGGER_REPOSITORY='%s'\nTRIGGER_BRANCH='%s'\n" "$GITHUB_REPOSITORY" "$branch" > "$artiTrgDir/${GITHUB_REPOSITORY////#}.trigger"
+            (
+                echo "TRIGGER_REPOSITORY='$GITHUB_REPOSITORY'"
+                echo "TRIGGER_BRANCH='$branch'"
+                echo "TRIGGER_YAMLS=( $(for a in "${yamls[@]}"; do printf "'%s' " "$a"; done))"
+            ) > "$artiTrgDir/${GITHUB_REPOSITORY////#}.trigger"
 
             local parts=()
             if [[ "$flags" =~ .*j.* ]]; then parts+=("$a"        ); fi
@@ -51,6 +60,13 @@ retrieveBranchSnapshots() {
         fi
     done < <(getDependencyGavesWithFlags)
     pushBranchSnapshots # for trigger files
+}
+findTriggerYamls() {
+    if [[ -d ".github/workflows" ]]; then
+        (   cd ".github/workflows"
+            egrep "^on: " *.{yaml,yml} 2>/dev/null | fgrep workflow_dispatch | fgrep push | sed 's/:.*//'
+        )
+    fi
 }
 storeMyBranchSnapshots() {
     local g a v e flags
@@ -89,7 +105,7 @@ prepareBranchSnapshots() {
     local repoUrl="$(getGithubRepoSecureUrl "$token" "$GITHUB_REPOSITORY_OWNER/$SNAPSHOTS_REPOS")"
 
     if [[ -d "$SNAPSHOTS_CLONE/.git" ]] && (cd "$SNAPSHOTS_CLONE"; git fsck --full --no-progress >/dev/null 2>&1); then
-        echo "::info::clone of $repoUrl already on disk"
+        echo "::info::clone of $repoUrl already on disk: $SNAPSHOTS_CLONE"
         git fetch --all
     else
         rm -rf "$SNAPSHOTS_CLONE"
@@ -167,67 +183,86 @@ triggerBranchSnapshots() {
     local triggerFile
     for triggerFile in "$SNAPSHOTS_CLONE/trigger/$subPath"/*; do
         if [[ -f "$triggerFile" ]]; then
+            local TRIGGER_REPOSITORY=
+            local TRIGGER_BRANCH=
+            local TRIGGER_YAMLS=()
             . "$triggerFile"
-            triggerOther "$token" "$TRIGGER_REPOSITORY" "$TRIGGER_BRANCH"
+            triggerOtherRepoBuild "$token" "$TRIGGER_REPOSITORY" "$TRIGGER_BRANCH" "${TRIGGER_YAMLS[@]:-}"
         fi
     done
 }
-triggerOther() {
+triggerOtherRepoBuild() {
     local   token="$1"; shift
     local    repo="$1"; shift
     local  branch="$1"; shift
+    local   yamls=("${@:-build.yaml}")  # just take build.yaml if no yamls available (backwards compat)
 
-    local i totalCount conclusion message rerunUrl
-    local tmpJson="runs.json"
-
-    firstFieldFromJsonLog() {
-        local field="$1"; shift
-
-        (grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g') || :
-    }
-
-    echo "====== triggering: $repo  [$branch]"
-    for i in $(seq 0 600); do
-        curl -s \
-            -u "automation:$token"  \
-            "https://api.github.com/repos/$repo/actions/runs?branch=$branch" \
-            -o "$tmpJson"
-
-        totalCount="$(firstFieldFromJsonLog "totalCount")"
-        conclusion="$(firstFieldFromJsonLog "conclusion")"
-           message="$(firstFieldFromJsonLog "message")"
-          rerunUrl="$(firstFieldFromJsonLog "rerun_url")"
-
-        echo "::info::totalCount=$totalCount"
-        echo "::info::conclusion=$conclusion"
-        echo "::info::   message=$message"
-        echo "::info:: rerun_url=$rerunUrl"
-
-        if [[ "$totalCount" == 0 || "$conclusion" != "null" ]]; then
-            break
-        fi
-        echo "::info::waiting for build on $repo branch $branch to finish ($i...)"
-        sleep 2
-    done
-    if [[ "$totalCount" == 0 ]]; then
-        echo "::warning:: no build on $repo branch $branch, retrigger impossible..."
-    elif [[ "$conclusion" == "null" ]]; then
-        echo "::warning::I have waited a long time but the build on $repo branch $branch did not finish yet, giving up..."
-    elif [[ "$conclusion" != "failure" ]]; then
-        echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible, sorry..."
+    if true; then
+        # experimental feature: trigger through workflow dispatch....
+        local yaml
+        for yaml in "${yamls[@]}"; do
+            echo "::info::triggering repo=$repo branch=$branch workflow=$yaml"
+            curlPipe \
+                    "$token" \
+                    -X POST \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    -d '{"ref":"'"$branch"'"}' \
+                    "$GITHUB_API_URL/repos/$repo/actions/workflows/$yaml/dispatches" \
+                    -o -
+        done
     else
-        echo "::info::triggering: $rerunUrl"
-        curl -s \
-            -XPOST \
-            -u "automation:$token"  \
-            "$rerunUrl" \
-            -o "$tmpJson"
+        local i totalCount conclusion message rerunUrl
+        local tmpJson="runs.json"
 
-        message="$(firstFieldFromJsonLog "message")"
-        if [[ "$message" == "Unable to re-run this workflow run because it was created over a month ago" ]]; then
-            echo "::warning::the latest build on $repo branch $branch is too old, retrigger impossible, sorry..."
+        firstFieldFromJsonLog() {
+            local field="$1"; shift
+
+            (grep -E "^ *\"$field\": " "$tmpJson" | head -1 | sed 's/^[^:]*: *//;s/,$//;s/"//g') || :
+        }
+
+        echo "====== triggering: $repo  [$branch]"
+        for i in $(seq 0 600); do
+            curl -s \
+                -u "automation:$token"  \
+                "https://api.github.com/repos/$repo/actions/runs?branch=$branch" \
+                -o "$tmpJson"
+
+            totalCount="$(firstFieldFromJsonLog "totalCount")"
+            conclusion="$(firstFieldFromJsonLog "conclusion")"
+               message="$(firstFieldFromJsonLog "message")"
+              rerunUrl="$(firstFieldFromJsonLog "rerun_url")"
+
+            echo "::info::totalCount=$totalCount"
+            echo "::info::conclusion=$conclusion"
+            echo "::info::   message=$message"
+            echo "::info:: rerun_url=$rerunUrl"
+
+            if [[ "$totalCount" == 0 || "$conclusion" != "null" ]]; then
+                break
+            fi
+            echo "::info::waiting for build on $repo branch $branch to finish ($i...)"
+            sleep 2
+        done
+        if [[ "$totalCount" == 0 ]]; then
+            echo "::warning:: no build on $repo branch $branch, retrigger impossible..."
+        elif [[ "$conclusion" == "null" ]]; then
+            echo "::warning::I have waited a long time but the build on $repo branch $branch did not finish yet, giving up..."
+        elif [[ "$conclusion" != "failure" ]]; then
+            echo "::warning::the latest build on $repo branch $branch did not finish with failure (but $conclusion), retrigger impossible, sorry..."
         else
-            echo "::info::triggering yielded: $message"
+            echo "::info::triggering: $rerunUrl"
+            curl -s \
+                -XPOST \
+                -u "automation:$token"  \
+                "$rerunUrl" \
+                -o "$tmpJson"
+
+            message="$(firstFieldFromJsonLog "message")"
+            if [[ "$message" == "Unable to re-run this workflow run because it was created over a month ago" ]]; then
+                echo "::warning::the latest build on $repo branch $branch is too old, retrigger impossible, sorry..."
+            else
+                echo "::info::triggering yielded: $message"
+            fi
         fi
     fi
 }
