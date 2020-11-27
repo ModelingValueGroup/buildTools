@@ -201,14 +201,16 @@ triggerOtherRepoBuild() {
         # experimental feature: trigger through workflow dispatch....
         local yaml
         for yaml in "${yamls[@]}"; do
-            echo "::info::triggering repo=$repo branch=$branch workflow=$yaml"
+            local url="$GITHUB_API_URL/repos/$repo/actions/workflows/$yaml/dispatches"
+            echo "::info::triggering repo=$repo branch=$branch workflow=$yaml: $url"
             curlPipe \
                     "$token" \
                     -X POST \
                     -H "Accept: application/vnd.github.v3+json" \
                     -d '{"ref":"'"$branch"'"}' \
-                    "$GITHUB_API_URL/repos/$repo/actions/workflows/$yaml/dispatches" \
-                    -o -
+                    "$url" \
+                    -o - \
+                    || echo "::info::trigger failed but we ignore this for now"
         done
     else
         local i totalCount conclusion message rerunUrl
