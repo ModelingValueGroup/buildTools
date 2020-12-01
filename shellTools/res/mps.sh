@@ -36,6 +36,7 @@ installMps() {
             exit 32
         fi
         unzip -q "$tmpZip"
+        find . -type f -exec ls -l {} +
         mv "MPS "*/* .
         rm -rf "$tmpZip" "MPS "*
     )
