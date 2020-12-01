@@ -26,23 +26,18 @@ installMps() {
     local fullVersion="$1"; shift
 
     echo "::info::installing MPS $fullVersion..."
-find . -type f -exec ls -l {} + | sed 's/^/@@A@@ /'; sleep 1
-    mkdir -p "$dir"
+    rm -rf "$dir"
+    mkdir "$dir"
     (
         cd "$dir"
-find . -type f -exec ls -l {} + | sed 's/^/@@B@@ /'; sleep 1
         local tmpZip="MPS$$.zip"
         curlPipe '' -o "$tmpZip" "$(getMpsDownloadUrl "$fullVersion")"
-find . -type f -exec ls -l {} + | sed 's/^/@@C@@ /'; sleep 1
         if [[ ! -f "$tmpZip" ]]; then
             echo "::error::could not download MPS $fullVersion" 1>&2
             exit 32
         fi
-find . -type f -exec ls -l {} + | sed 's/^/@@D@@ /'; sleep 1
         unzip -q "$tmpZip"
-find . -type f -exec ls -l {} + | sed 's/^/@@E@@ /'; sleep 1
         mv "MPS "*/* .
-find . -type f -exec ls -l {} + | sed 's/^/@@F@@ /'; sleep 1
         rm -rf "$tmpZip" "MPS "*
     )
 }
